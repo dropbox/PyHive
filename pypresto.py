@@ -151,7 +151,7 @@ class Cursor(object):
         if parameters is None:
             sql = operation
         else:
-            sql = operation % parameters  # TODO escape
+            sql = operation % _escape_args(parameters)
 
         self._reset_state()
 
@@ -161,22 +161,21 @@ class Cursor(object):
         _logger.debug("Query %s", sql)
         _logger.debug("Headers %s", headers)
         response = requests.post(url, data=sql, headers=headers)
+        self._process_response(response)
 
+    def _fetch_more(self):
+        """Fetch the next URI and udpate state"""
+        self._process_response(requests.get(self._nextUri))
+
+    def _process_response(self, response):
+        """Given the JSON response from Presto's REST API, update the internal state with the next
+        URI and any data from the response
+        """
         # TODO handle HTTP 503
         if response.status_code != requests.codes.ok:
             fmt = "Unexpected status code {}\n{}"
             raise OperationalError(fmt.format(response.status_code, response.content))
-
-        self._process_response(response.json())
-
-    def _fetch_more(self):
-        """Fetch the next URI and udpate state"""
-        self._process_response(requests.get(self._nextUri).json())
-
-    def _process_response(self, response_json):
-        """Given the JSON response from Presto's REST API, update the internal state with the next
-        URI and any data from the response
-        """
+        response_json = response.json()
         _logger.debug("Got response %s", response_json)
         assert self._state == self._STATE_RUNNING, 'Should be running if processing response'
         self._nextUri = response_json.get('nextUri')
@@ -404,3 +403,25 @@ FIXED_INT_64 = DBAPITypeObject(['bigint'])
 VARIABLE_BINARY = DBAPITypeObject(['varchar'])
 DOUBLE = DBAPITypeObject(['double'])
 BOOLEAN = DBAPITypeObject(['boolean'])
+
+
+#
+# Private utilities
+#
+def _escape_args(parameters):
+    if isinstance(parameters, dict):
+        return {k: _escape_item(v) for k, v in parameters.iteritems()}
+    elif isinstance(parameters, (list, tuple)):
+        return tuple(_escape_item(x) for x in parameters)
+    else:
+        raise ProgrammingError("Unsupported param format: {}".format(parameters))
+
+
+def _escape_item(item):
+    if isinstance(item, (int, long, float)):
+        return item
+    elif isinstance(item, basestring):
+        # TODO is this good enough?
+        return "'{}'".format(item.replace("'", "''"))
+    else:
+        raise ProgrammingError("Unsupported object {}".format(item))

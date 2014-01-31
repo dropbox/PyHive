@@ -1,7 +1,8 @@
 """PyPresto integration tests.
 
-These rely on having a Presto+Hadoop cluster set up. They also require a table called one_row
+These rely on having a Presto+Hadoop cluster set up. They also require a table called one_row.
 """
+import mock
 import pypresto
 import unittest
 
@@ -101,3 +102,28 @@ class TestPyPresto(unittest.TestCase):
         cursor.close()
         connection.commit()
         connection.close()
+
+    def test_escape(self):
+        cursor = pypresto.connect(host=_HOST).cursor()
+        cursor.execute(
+            "select %d, %s from {}".format(_ONE_ROW_TABLE_NAME),
+            (1, "';")
+        )
+        self.assertEqual(cursor.fetchall(), [[1, "';"]])
+        cursor.execute(
+            "select %(a)d, %(b)s from {}".format(_ONE_ROW_TABLE_NAME),
+            {'a': 1, 'b': "';"}
+        )
+        self.assertEqual(cursor.fetchall(), [[1, "';"]])
+
+    def test_invalid_params(self):
+        cursor = pypresto.connect(host=_HOST).cursor()
+        self.assertRaises(pypresto.ProgrammingError, lambda: cursor.execute('', 'hi'))
+        self.assertRaises(pypresto.ProgrammingError, lambda: cursor.execute('', [{}]))
+
+    @mock.patch('requests.post')
+    def test_non_200(self, post):
+        cursor = pypresto.connect(host=_HOST).cursor()
+        post.return_value.status_code = 404
+        self.assertRaises(pypresto.OperationalError,
+            lambda: cursor.execute('show tables'))
