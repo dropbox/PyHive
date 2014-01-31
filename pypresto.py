@@ -119,10 +119,14 @@ class Cursor(object):
          - scale (None in current implementation)
          - null_ok (always True in current implementation)
 
-        The type_code can be interpreted by comparing it to the Type Objects specified in the section below.
+        The type_code can be interpreted by comparing it to the Type Objects specified in the
+        section below.
         """
         # Sleep until we're done or we got the columns
-        self._fetch_while(lambda: self._columns is None and self._state != self._STATE_FINISHED)
+        self._fetch_while(lambda:
+            self._columns is None
+            and self._state not in (self._STATE_NONE, self._STATE_FINISHED)
+        )
         if self._columns is None:
             return None
         return [

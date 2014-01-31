@@ -36,6 +36,18 @@ class TestPyPresto(unittest.TestCase):
         cursor.execute('select 1 as foobar from {}'.format(_ONE_ROW_TABLE_NAME))
         self.assertEqual(cursor.description, [('foobar', 'bigint', None, None, None, None, True)])
 
+    def test_description_initial(self):
+        cursor = pypresto.connect(host=_HOST).cursor()
+        self.assertIsNone(cursor.description)
+
+    def test_description_failed(self):
+        cursor = pypresto.connect(host=_HOST).cursor()
+        try:
+            cursor.execute('blah_blah')
+        except pypresto.DatabaseError:
+            pass
+        self.assertIsNone(cursor.description)
+
     def test_bad_query(self):
         cursor = pypresto.connect(host=_HOST).cursor()
 
