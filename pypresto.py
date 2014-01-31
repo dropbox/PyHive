@@ -64,8 +64,8 @@ class Cursor(object):
     _STATE_RUNNING = 1
     _STATE_FINISHED = 2
 
-    def __init__(
-        self, host, port='8080', user=None, catalog='hive', schema='default', poll_interval=1):
+    def __init__(self, host, port='8080', user=None, catalog='hive', schema='default',
+                 poll_interval=1, source='pypresto'):
         """
         :param host: hostname to connect to, e.g. ``presto.example.com``
         :param port: int -- port, defaults to 8080
@@ -74,6 +74,7 @@ class Cursor(object):
         :param schema: string -- defaults to ``default``
         :param poll_interval: int -- how often to ask the Presto REST interface for a progress
             update, defaults to a second
+        :param source: string -- arbitrary identifier (shows up in the Presto monitoring page)
         """
         # Config
         self._host = host
@@ -83,6 +84,7 @@ class Cursor(object):
         self._schema = schema
         self._arraysize = 1
         self._poll_interval = poll_interval
+        self._source = source
 
         self._reset_state()
 
@@ -141,6 +143,7 @@ class Cursor(object):
         headers = {
             'X-Presto-Catalog': self._catalog,
             'X-Presto-Schema': self._schema,
+            'X-Presto-Source': self._source,
             'X-Presto-User': self._user,
         }
 
