@@ -65,7 +65,7 @@ class Cursor(object):
     _STATE_FINISHED = 2
 
     def __init__(self, host, port='8080', user=None, catalog='hive', schema='default',
-                 poll_interval=1, source='pypresto'):
+                 poll_interval=1, source='pyhive'):
         """
         :param host: hostname to connect to, e.g. ``presto.example.com``
         :param port: int -- port, defaults to 8080

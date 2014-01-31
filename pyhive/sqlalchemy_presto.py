@@ -7,6 +7,7 @@ https://github.com/zzzeek/sqlalchemy/blob/rel_0_5/lib/sqlalchemy/databases/sqlit
 which is released under the MIT license.
 """
 
+from pyhive import presto
 from sqlalchemy import exc
 from sqlalchemy import schema
 from sqlalchemy import types
@@ -14,7 +15,6 @@ from sqlalchemy import util
 from sqlalchemy.databases import mysql
 from sqlalchemy.engine import default
 from sqlalchemy.sql import compiler
-import pypresto
 import re
 import sqlalchemy
 import sys
@@ -129,7 +129,7 @@ class PrestoDialect(default.DefaultDialect):
 
     @classmethod
     def dbapi(cls):
-        return pypresto
+        return presto
 
     def create_connect_args(self, url):
         kwargs = {
@@ -144,7 +144,7 @@ class PrestoDialect(default.DefaultDialect):
     def reflecttable(self, connection, table, include_columns=None):
         try:
             rows = connection.execute('SHOW COLUMNS FROM {}'.format(table))
-        except pypresto.DatabaseError as e:
+        except presto.DatabaseError as e:
             # Does the table exist?
             msg = e.message.get('message') if isinstance(e.message, dict) else None
             regex = r"^Table\ \'.*{}\'\ does\ not\ exist$".format(re.escape(table.name))

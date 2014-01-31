@@ -1,3 +1,5 @@
+# This import has the side effect of registering with sqlalchemy
+from pyhive import sqlalchemy_presto
 from sqlalchemy import func, select
 from sqlalchemy.engine import create_engine
 from sqlalchemy.exc import NoSuchTableError
@@ -5,8 +7,6 @@ from sqlalchemy.schema import Column
 from sqlalchemy.schema import MetaData
 from sqlalchemy.schema import Table
 from sqlalchemy.types import String
-# This import has the side effect of registering with sqlalchemy
-import sqlalchemy_pypresto
 import unittest
 
 
@@ -40,7 +40,7 @@ class TestSqlAlchemyPresto(unittest.TestCase):
         metadata = MetaData(bind=engine)
         connection = engine.connect()
         one_row = Table('one_row', metadata)
-        sqlalchemy_pypresto.dialect().reflecttable(connection, one_row, include_columns=[])
+        sqlalchemy_presto.dialect().reflecttable(connection, one_row, include_columns=[])
         self.assertEqual(len(one_row.c), 0)
 
     def test_reserved_words(self):
