@@ -34,10 +34,6 @@ class TestPyPresto(unittest.TestCase):
     def test_description(self):
         cursor = pypresto.connect(host=_HOST).cursor()
         cursor.execute('select 1 as foobar from {}'.format(_ONE_ROW_TABLE_NAME))
-        # Not a valid assumption in general. We want to check the initial period where the columns
-        # are not yet available.
-        self.assertIsNone(cursor.description)
-        cursor.fetchone()
         self.assertEqual(cursor.description, [('foobar', 'bigint', None, None, None, None, True)])
 
     def test_bad_query(self):

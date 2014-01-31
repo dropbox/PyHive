@@ -99,6 +99,12 @@ class Cursor(object):
         self._data = collections.deque()
         self._columns = None
 
+    def _fetch_while(self, fn):
+        while fn():
+            self._fetch_more()
+            if fn():
+                time.sleep(self._poll_interval)
+
     @property
     def description(self):
         """This read-only attribute is a sequence of 7-item sequences.
@@ -115,6 +121,8 @@ class Cursor(object):
 
         The type_code can be interpreted by comparing it to the Type Objects specified in the section below.
         """
+        # Sleep until we're done or we got the columns
+        self._fetch_while(lambda: self._columns is None and self._state != self._STATE_FINISHED)
         if self._columns is None:
             return None
         return [
@@ -157,9 +165,9 @@ class Cursor(object):
 
         self._state = self._STATE_RUNNING
         url = urlparse.urlunparse((
-            'http', self._host + ':' + self._port, '/v1/statement', None, None, None))
-        _logger.debug("Query %s", sql)
-        _logger.debug("Headers %s", headers)
+            'http', '{}:{}'.format(self._host, self._port), '/v1/statement', None, None, None))
+        _logger.debug("Query: %s", sql)
+        _logger.debug("Headers: %s", headers)
         response = requests.post(url, data=sql, headers=headers)
         self._process_response(response)
 
@@ -214,10 +222,7 @@ class Cursor(object):
         # The CREATE TABLE statement produces a single bigint called 'rows'
 
         # Sleep until we're done or we have some data to return
-        while not self._data and self._state != self._STATE_FINISHED:
-            self._fetch_more()
-            if not self._data and self._state != self._STATE_FINISHED:
-                time.sleep(self._poll_interval)
+        self._fetch_while(lambda: not self._data and self._state != self._STATE_FINISHED)
 
         if not self._data:
             return None
