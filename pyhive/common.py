@@ -9,7 +9,7 @@ import time
 
 
 class DBAPICursor(object):
-    """Base class for some common DBAPI logic"""
+    """Base class for some common DB-API logic"""
     __metaclass__ = abc.ABCMeta
 
     _STATE_NONE = 0
@@ -22,7 +22,7 @@ class DBAPICursor(object):
 
     def _reset_state(self):
         """Reset state about the previous query in preparation for running another query"""
-        # State to return as part of DBAPI
+        # State to return as part of DB-API
         self._rownumber = 0
 
         # Internal helper state

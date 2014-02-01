@@ -8,7 +8,7 @@ PyHive is a collection of Python `DB-API <http://www.python.org/dev/peps/pep-024
 Usage
 =====
 
-DBAPI
+DB-API
 -----
 .. code-block:: python
 
@@ -34,8 +34,8 @@ SQLAlchemy
 Requirements
 ============
 
-- Presto DBAPI: Just a Presto install
-- Hive DBAPI: HiveServer2 daemon, ``TCLIService``, ``thrift``, ``sasl``, ``thrift_sasl``
+- Presto DB-API: Just a Presto install
+- Hive DB-API: HiveServer2 daemon, ``TCLIService``, ``thrift``, ``sasl``, ``thrift_sasl``
 - SQLAlchemy integration: ``sqlalchemy`` version 0.5
 
 Testing

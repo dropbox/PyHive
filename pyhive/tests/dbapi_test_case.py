@@ -1,6 +1,4 @@
-"""
-Shared DBAPI test cases
-"""
+"""Shared DB-API test cases"""
 from pyhive import exc
 import abc
 import contextlib

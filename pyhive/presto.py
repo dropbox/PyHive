@@ -7,7 +7,7 @@ Many docstrings in this file are based on the PEP, which is in the public domain
 
 from pyhive import common
 from pyhive.common import DBAPITypeObject
-# Make all exceptions visible in this module per DBAPI
+# Make all exceptions visible in this module per DB-API
 from pyhive.exc import *
 import getpass
 import logging

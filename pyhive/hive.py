@@ -10,7 +10,7 @@ from TCLIService import constants
 from TCLIService import ttypes
 from pyhive import common
 from pyhive.common import DBAPITypeObject
-# Make all exceptions visible in this module per DBAPI
+# Make all exceptions visible in this module per DB-API
 from pyhive.exc import *
 import getpass
 import logging
