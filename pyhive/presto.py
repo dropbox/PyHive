@@ -24,12 +24,12 @@ _logger = logging.getLogger(__name__)
 _escaper = common.ParamEscaper()
 
 
-def connect(**kwargs):
+def connect(*args, **kwargs):
     """Constructor for creating a connection to the database. See class Connection for arguments.
 
     Returns a Connection object.
     """
-    return Connection(**kwargs)
+    return Connection(*args, **kwargs)
 
 
 class Connection(object):
@@ -38,8 +38,9 @@ class Connection(object):
     Thus, these objects are small stateless factories for cursors, which do all the real work.
     """
 
-    def __init__(self, **kwargs):
-        self._params = kwargs
+    def __init__(self, *args, **kwargs):
+        self._args = args
+        self._kwargs = kwargs
 
     def close(self):
         """Presto does not have anything to close"""
@@ -52,7 +53,7 @@ class Connection(object):
 
     def cursor(self):
         """Return a new Cursor object using the connection."""
-        return Cursor(**self._params)
+        return Cursor(*self._args, **self._kwargs)
 
 
 class Cursor(common.DBAPICursor):

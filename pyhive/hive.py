@@ -43,12 +43,12 @@ class HiveParamEscaper(common.ParamEscaper):
 _escaper = HiveParamEscaper()
 
 
-def connect(**kwargs):
+def connect(*args, **kwargs):
     """Constructor for creating a connection to the database. See class Connection for arguments.
 
     Returns a Connection object.
     """
-    return Connection(**kwargs)
+    return Connection(*args, **kwargs)
 
 
 class Connection(object):
@@ -144,10 +144,13 @@ class Cursor(common.DBAPICursor):
          - scale (None in current implementation)
          - null_ok (always True in current implementation)
 
+        This attribute will be ``None`` for operations that do not return rows or if the cursor has
+        not had an operation invoked via the ``execute()`` method yet.
+
         The type_code can be interpreted by comparing it to the Type Objects specified in the
         section below.
         """
-        if self._operationHandle is None:
+        if self._operationHandle is None or not self._operationHandle.hasResultSet:
             return None
         if self._description is None:
             req = ttypes.TGetResultSetMetadataReq(self._operationHandle)
@@ -199,7 +202,10 @@ class Cursor(common.DBAPICursor):
 
     def _fetch_more(self):
         """Send another TFetchResultsReq and update state"""
-        assert(self._state == self._STATE_RUNNING)
+        assert(self._state == self._STATE_RUNNING), "Should be running when in _fetch_more"
+        assert(self._operationHandle is not None), "Should have an op handle in _fetch_more"
+        if not self._operationHandle.hasResultSet:
+            raise ProgrammingError('No result set')
         req = ttypes.TFetchResultsReq(
             operationHandle=self._operationHandle,
             orientation=ttypes.TFetchOrientation.FETCH_NEXT,

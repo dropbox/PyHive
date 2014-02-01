@@ -1,6 +1,7 @@
 # This import has the side effect of registering with sqlalchemy
 from pyhive import sqlalchemy_presto
-from sqlalchemy import func, select
+from sqlalchemy import func
+from sqlalchemy import select
 from sqlalchemy.engine import create_engine
 from sqlalchemy.exc import NoSuchTableError
 from sqlalchemy.schema import Column

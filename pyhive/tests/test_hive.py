@@ -4,7 +4,6 @@ These rely on having a Hive+Hadoop cluster set up with HiveServer2 running.
 They also require a tables created by make_test_tables.sh.
 """
 from TCLIService import ttypes
-from pyhive import exc
 from pyhive import hive
 from pyhive.tests.dbapi_test_case import DBAPITestCase
 import mock
@@ -51,7 +50,7 @@ class TestHive(DBAPITestCase):
     def test_open_failed(self, open_session):
         open_session.return_value.serverProtocolVersion = \
             ttypes.TProtocolVersion.HIVE_CLI_SERVICE_PROTOCOL_V1
-        self.assertRaises(exc.OperationalError, self.connect)
+        self.assertRaises(hive.OperationalError, self.connect)
 
     def test_escape(self):
         # Hive thrift translates newlines into multiple rows. WTF.
@@ -67,3 +66,9 @@ class TestHive(DBAPITestCase):
             (' \r\n \r \n ',)
         )
         self.assertEqual(cursor.fetchall(), [[' '], [' '], [' '], [' ']])
+
+    @with_cursor
+    def test_no_result_set(self, cursor):
+        cursor.execute('USE default')
+        self.assertIsNone(cursor.description)
+        self.assertRaises(hive.ProgrammingError, cursor.fetchone)
