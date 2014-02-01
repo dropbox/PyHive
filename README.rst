@@ -16,7 +16,7 @@ DBAPI::
 
 SQLAlchemy::
 
-    engine = create_engine('presto://localhost:8080/hive?schema=default')
+    engine = create_engine('presto://localhost:8080/hive/default')
     metadata = MetaData(bind=engine)
     user = Table('user', metadata, autoload=True)
     print select([func.count('*')], from_obj=user).scalar()

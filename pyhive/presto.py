@@ -63,7 +63,7 @@ class Cursor(common.DBAPICursor):
     visible by other cursors or connections.
     """
 
-    def __init__(self, host, port='8080', user=None, catalog='hive', schema='default',
+    def __init__(self, host, port='8080', username=None, catalog='hive', schema='default',
                  poll_interval=1, source='pyhive'):
         """
         :param host: hostname to connect to, e.g. ``presto.example.com``
@@ -79,7 +79,7 @@ class Cursor(common.DBAPICursor):
         # Config
         self._host = host
         self._port = port
-        self._user = user or getpass.getuser()
+        self._username = username or getpass.getuser()
         self._catalog = catalog
         self._schema = schema
         self._arraysize = 1
@@ -136,7 +136,7 @@ class Cursor(common.DBAPICursor):
             'X-Presto-Catalog': self._catalog,
             'X-Presto-Schema': self._schema,
             'X-Presto-Source': self._source,
-            'X-Presto-User': self._user,
+            'X-Presto-User': self._username,
         }
 
         # Prepare statement

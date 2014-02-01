@@ -132,18 +132,24 @@ class PrestoDialect(default.DefaultDialect):
         return presto
 
     def create_connect_args(self, url):
+        db_parts = url.database.split('/')
         kwargs = {
             'host': url.host,
             'port': url.port,
-            'user': url.username,
-            'catalog': url.database,
+            'username': url.username,
         }
-        kwargs.update(url.query)
+        if len(db_parts) == 1:
+            kwargs['catalog'] = db_parts[0]
+        elif len(db_parts) == 2:
+            kwargs['catalog'] = db_parts[0]
+            kwargs['schema'] = db_parts[1]
+        else:
+            raise ValueError("Unexpected database format {}".format(url.database))
         return ([], kwargs)
 
     def reflecttable(self, connection, table, include_columns=None):
         try:
-            rows = connection.execute('SHOW COLUMNS FROM {}'.format(table))
+            rows = connection.execute('SHOW COLUMNS FROM "{}"'.format(table))
         except presto.DatabaseError as e:
             # Does the table exist?
             msg = e.message.get('message') if isinstance(e.message, dict) else None
