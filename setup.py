@@ -11,6 +11,7 @@ setup(
     version=pyhive.__version__,
     description="Python interface to Hive",
     long_description=long_description,
+    url='https://github.com/jingw/PyHive',
     author="Jing Wang",
     author_email="jing@dropbox.com",
     packages=['pyhive'],
@@ -30,5 +31,8 @@ setup(
         'sasl>=0.1.3',
         'sqlalchemy==0.5.8',
         'thrift>=0.9.1',
-    ]
+    ],
+    package_data={
+        '': ['*.rst'],
+    },
 )

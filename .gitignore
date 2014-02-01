@@ -1,3 +1,10 @@
+cover/
+.coverage
+/dist/
+.DS_Store
+*.egg
 .project
+*.pyc
 .pydevproject
+/PyHive.egg-info/
 .settings

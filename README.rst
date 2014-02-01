@@ -27,3 +27,11 @@ Requirements
 - Presto DBAPI: Just a Presto install
 - Hive DBAPI: HiveServer2 daemon, `TCLIService`, `thrift`, `sasl`, `thrift_sasl`
 - SQLAlchemy integration: `sqlalchemy` version 0.5
+
+Testing
+=======
+
+Run the following in an environment with Hive/Presto::
+
+    ./scripts/make_test_tables.sh
+    python setup.py test
