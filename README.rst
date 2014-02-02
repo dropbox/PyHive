@@ -35,8 +35,9 @@ Requirements
 ============
 
 - Presto DB-API: Just a Presto install
-- Hive DB-API: HiveServer2 daemon, ``TCLIService``, ``thrift``, ``sasl``, ``thrift_sasl``
-- SQLAlchemy integration: ``sqlalchemy`` version 0.5
+- Hive DB-API: HiveServer2 daemon, ``TCLIService`` (from Hive), ``thrift_sasl`` (from `Cloudera
+  <https://github.com/y-lan/python-hiveserver2/blob/master/src/cloudera/thrift_sasl.py>`_)
+- SQLAlchemy integration: ``sqlalchemy``
 
 Testing
 =======
