@@ -48,16 +48,16 @@ class SqlAlchemyTestCase(unittest.TestCase):
     @with_engine_connection
     def test_reflect(self, engine, connection):
         """reflecttable should be able to fill in a table from the name"""
-        one_row = Table('one_row', MetaData(bind=engine), autoload=True)
-        self.assertEqual(len(one_row.c), 1)
-        self.assertIsInstance(one_row.c.number_of_rows, Column)
-        self.assertEqual(select([func.count('*')], from_obj=one_row).scalar(), 1)
+        one_row_complex = Table('one_row_complex', MetaData(bind=engine), autoload=True)
+        self.assertEqual(len(one_row_complex.c), 15)
+        self.assertIsInstance(one_row_complex.c.string, Column)
+        self.assertEqual(select([func.count('*')], from_obj=one_row_complex).scalar(), 1)
 
     @with_engine_connection
     def test_reflect_include_columns(self, engine, connection):
         """When passed include_columns, reflecttable should filter out other columns"""
-        one_row = Table('one_row_complex', MetaData(bind=engine))
-        engine.dialect.reflecttable(connection, one_row, include_columns=['a'])
-        self.assertEqual(len(one_row.c), 1)
-        self.assertIsNotNone(one_row.c.a)
-        self.assertRaises(AttributeError, lambda: one_row.c.b)
+        one_row_complex = Table('one_row_complex', MetaData(bind=engine))
+        engine.dialect.reflecttable(connection, one_row_complex, include_columns=['int'])
+        self.assertEqual(len(one_row_complex.c), 1)
+        self.assertIsNotNone(one_row_complex.c.int)
+        self.assertRaises(AttributeError, lambda: one_row_complex.c.tinyint)

@@ -29,11 +29,41 @@ class TestHive(DBAPITestCase):
     @with_cursor
     def test_complex(self, cursor):
         cursor.execute('SELECT * FROM one_row_complex')
+        # TODO Presto drops the union and decimal fields
         self.assertEqual(cursor.description, [
-            ('a', 'STRING_TYPE', None, None, None, None, True),
-            ('b', 'STRING_TYPE', None, None, None, None, True),
+            ('boolean', 'BOOLEAN_TYPE', None, None, None, None, True),
+            ('tinyint', 'TINYINT_TYPE', None, None, None, None, True),
+            ('smallint', 'SMALLINT_TYPE', None, None, None, None, True),
+            ('int', 'INT_TYPE', None, None, None, None, True),
+            ('bigint', 'BIGINT_TYPE', None, None, None, None, True),
+            ('float', 'FLOAT_TYPE', None, None, None, None, True),
+            ('double', 'DOUBLE_TYPE', None, None, None, None, True),
+            ('string', 'STRING_TYPE', None, None, None, None, True),
+            ('timestamp', 'TIMESTAMP_TYPE', None, None, None, None, True),
+            ('binary', 'BINARY_TYPE', None, None, None, None, True),
+            ('array', 'STRING_TYPE', None, None, None, None, True),
+            ('map', 'STRING_TYPE', None, None, None, None, True),
+            ('struct', 'STRING_TYPE', None, None, None, None, True),
+            ('union', 'STRING_TYPE', None, None, None, None, True),
+            ('decimal', 'DECIMAL_TYPE', None, None, None, None, True),
         ])
-        self.assertEqual(cursor.fetchall(), [['{1:"a",2:"b"}', '[1,2,3]']])
+        self.assertEqual(cursor.fetchall(), [[
+            True,
+            127,
+            32767,
+            2147483647,
+            9223372036854775807,
+            0.5,
+            0.25,
+            'a string',
+            '1970-01-01 00:00:00.0',
+            '123',
+            '[1,2]',
+            '{1:2,3:4}',
+            '{"a":1,"b":2}',
+            '{0:1}',
+            '0.1',
+        ]])
 
     def test_noops(self):
         """The DB-API specification requires that certain actions exist, even though they might not

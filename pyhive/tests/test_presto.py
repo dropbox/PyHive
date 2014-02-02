@@ -26,11 +26,41 @@ class TestPresto(DBAPITestCase):
     @with_cursor
     def test_complex(self, cursor):
         cursor.execute('SELECT * FROM one_row_complex')
+        # TODO Presto drops the union and decimal fields
         self.assertEqual(cursor.description, [
-            ('a', 'varchar', None, None, None, None, True),
-            ('b', 'varchar', None, None, None, None, True),
+            ('boolean', 'boolean', None, None, None, None, True),
+            ('tinyint', 'bigint', None, None, None, None, True),
+            ('smallint', 'bigint', None, None, None, None, True),
+            ('int', 'bigint', None, None, None, None, True),
+            ('bigint', 'bigint', None, None, None, None, True),
+            ('float', 'double', None, None, None, None, True),
+            ('double', 'double', None, None, None, None, True),
+            ('string', 'varchar', None, None, None, None, True),
+            ('timestamp', 'bigint', None, None, None, None, True),
+            ('binary', 'varchar', None, None, None, None, True),
+            ('array', 'varchar', None, None, None, None, True),
+            ('map', 'varchar', None, None, None, None, True),
+            ('struct', 'varchar', None, None, None, None, True),
+            #('union', 'varchar', None, None, None, None, True),
+            #('decimal', 'double', None, None, None, None, True),
         ])
-        self.assertEqual(cursor.fetchall(), [['{1:"a",2:"b"}', '[1,2,3]']])
+        self.assertEqual(cursor.fetchall(), [[
+            True,
+            127,
+            32767,
+            2147483647,
+            9223372036854775807,
+            0.5,
+            0.25,
+            u'a string',
+            0,
+            u'123',
+            u'[1,2]',
+            u'{1:2,3:4}',
+            u'{"a":1,"b":2}',
+            #u'{0:1}',
+            #0.1,
+        ]])
 
     def test_noops(self):
         """The DB-API specification requires that certain actions exist, even though they might not
