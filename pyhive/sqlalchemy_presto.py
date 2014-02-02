@@ -147,6 +147,11 @@ class PrestoDialect(default.DefaultDialect):
         try:
             rows = connection.execute('SHOW COLUMNS FROM "{}"'.format(table))
         except presto.DatabaseError as e:
+            # Normally SQLAlchemy should wrap this exception in sqlalchemy.exc.DatabaseError, which
+            # it successfully does in the Hive version. The difference with Presto is that this
+            # error is raised when fetching the cursor's description rather than the initial execute
+            # call. SQLAlchemy doesn't handle this. Thus, we catch the unwrapped
+            # presto.DatabaseError here.
             # Does the table exist?
             msg = e.message.get('message') if isinstance(e.message, dict) else None
             regex = r"^Table\ \'.*{}\'\ does\ not\ exist$".format(re.escape(table.name))
