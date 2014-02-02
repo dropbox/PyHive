@@ -6,8 +6,6 @@ from sqlalchemy.schema import MetaData
 from sqlalchemy.schema import Table
 from sqlalchemy.types import String
 import contextlib
-# This import has the side effect of registering with sqlalchemy
-import pyhive.sqlalchemy_presto
 
 
 class TestSqlAlchemyPresto(SqlAlchemyTestCase):

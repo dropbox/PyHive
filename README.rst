@@ -20,10 +20,10 @@ DB-API
 
 SQLAlchemy
 ----------
+First install this package to register it with SQLAlchemy (see ``setup.py``).
+
 .. code-block:: python
 
-    # This import has the side effect of registering with sqlalchemy
-    from pyhive import sqlalchemy_presto
     from sqlalchemy import *
     from sqlalchemy.engine import create_engine
     from sqlalchemy.schema import *

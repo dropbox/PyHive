@@ -7,8 +7,6 @@ from sqlalchemy.schema import Table
 from sqlalchemy.types import String
 import datetime
 import decimal
-# This import has the side effect of registering with sqlalchemy
-import pyhive.sqlalchemy_hive
 
 
 class TestSqlAlchemyHive(SqlAlchemyTestCase):

@@ -16,16 +16,7 @@ from sqlalchemy.databases import mysql
 from sqlalchemy.engine import default
 from sqlalchemy.sql import compiler
 import re
-import sqlalchemy
-import sys
 import warnings
-
-
-def register_in_sqlalchemy():
-    # Register us under SQLAlchemy
-    sys.modules['sqlalchemy.databases.presto'] = sys.modules[__name__]
-    sqlalchemy.databases.presto = sys.modules[__name__]
-register_in_sqlalchemy()
 
 
 class PrestoIdentifierPreparer(compiler.IdentifierPreparer):
@@ -181,5 +172,3 @@ class PrestoDialect(default.DefaultDialect):
     def do_rollback(self, dbapi_connection):
         # No transactions for Presto
         pass
-
-dialect = PrestoDialect

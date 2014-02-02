@@ -19,20 +19,32 @@ setup(
         "Topic :: Database",
     ],
     extras_require={
-        "Presto": ['requests'],
-        "Hive": ['sasl>=0.1.3', 'thrift>=0.9.1'],
-        "SQLAlchemy": ['sqlalchemy==0.5.8'],
+        "Presto": ['requests>=1.0.0'],
+        "Hive": ['sasl>=0.1.3', 'thrift>=0.8.0'],
+        "SQLAlchemy": ['sqlalchemy>=0.5.0'],
     },
     test_suite='nose.collector',
     tests_require=[
-        'mock',
+        'mock>=1.0.0',
         'nose',
-        'requests',
+        'requests>=1.0.0',
         'sasl>=0.1.3',
-        'sqlalchemy==0.5.8',
-        'thrift>=0.9.1',
+        'sqlalchemy>=0.5.0',
+        'thrift>=0.8.0',
     ],
     package_data={
         '': ['*.rst'],
     },
+    entry_points={
+        # New versions
+        'sqlalchemy.dialects': [
+            'hive = pyhive.sqlalchemy_hive:HiveDialect',
+            'presto = pyhive.sqlalchemy_presto:PrestoDialect',
+        ],
+        # Version 0.5
+        'sqlalchemy.databases': [
+            'hive = pyhive.sqlalchemy_hive:HiveDialect',
+            'presto = pyhive.sqlalchemy_presto:PrestoDialect',
+        ],
+    }
 )

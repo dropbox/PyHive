@@ -17,8 +17,6 @@ from sqlalchemy.engine import default
 from sqlalchemy.sql import compiler
 import decimal
 import re
-import sqlalchemy
-import sys
 import warnings
 
 try:
@@ -47,13 +45,6 @@ class HiveDecimal(HiveStringTypeBase):
 
     def process_result_value(self, value, dialect):
         return decimal.Decimal(value)
-
-
-def register_in_sqlalchemy():
-    # Register us under SQLAlchemy
-    sys.modules['sqlalchemy.databases.hive'] = sys.modules[__name__]
-    sqlalchemy.databases.hive = sys.modules[__name__]
-register_in_sqlalchemy()
 
 
 class HiveIdentifierPreparer(compiler.IdentifierPreparer):
@@ -361,7 +352,7 @@ class HiveDialect(default.DefaultDialect):
         try:
             # This needs the table name to be unescaped (no backticks).
             rows = connection.execute('DESCRIBE {}'.format(table)).fetchall()
-        except sqlalchemy.exc.OperationalError as e:
+        except exc.OperationalError as e:
             # Does the table exist?
             regex_fmt = r'TExecuteStatementResp.*SemanticException.*Table not found {}'
             regex = regex_fmt.format(re.escape(table.name))
@@ -401,5 +392,3 @@ class HiveDialect(default.DefaultDialect):
     def do_rollback(self, dbapi_connection):
         # No transactions for Hive
         pass
-
-dialect = HiveDialect
