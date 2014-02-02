@@ -6,9 +6,9 @@ They also require a tables created by make_test_tables.sh.
 from TCLIService import ttypes
 from pyhive import hive
 from pyhive.tests.dbapi_test_case import DBAPITestCase
-import mock
-import contextlib
 from pyhive.tests.dbapi_test_case import with_cursor
+import contextlib
+import mock
 
 _HOST = 'localhost'
 

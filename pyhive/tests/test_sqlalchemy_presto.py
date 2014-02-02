@@ -16,6 +16,33 @@ class TestSqlAlchemyPresto(SqlAlchemyTestCase):
     def create_engine(self):
         return create_engine('presto://localhost:8080/hive/default')
 
+    @with_engine_connection
+    def test_reflect_select(self, engine, connection):
+        """reflecttable should be able to fill in a table from the name"""
+        one_row_complex = Table('one_row_complex', MetaData(bind=engine), autoload=True)
+        # Presto ignores the union and decimal columns
+        self.assertEqual(len(one_row_complex.c), 15 - 2)
+        self.assertIsInstance(one_row_complex.c.string, Column)
+        rows = one_row_complex.select().execute().fetchall()
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(list(rows[0]), [
+            True,
+            127,
+            32767,
+            2147483647,
+            9223372036854775807,
+            0.5,
+            0.25,
+            u'a string',
+            0,
+            u'123',
+            u'[1,2]',
+            u'{1:2,3:4}',
+            u'{"a":1,"b":2}',
+            #u'{0:1}',
+            #0.1,
+        ])
+
     def test_url_default(self):
         engine = create_engine('presto://localhost:8080/hive')
         try:
