@@ -77,7 +77,7 @@ class DBAPICursor(object):
         produce any result set or no call was issued yet.
         """
         if self._state == self._STATE_NONE:
-            raise exc.ProgrammingError('No query yet')
+            raise exc.ProgrammingError("No query yet")
 
         # Sleep until we're done or we have some data to return
         self._fetch_while(lambda: not self._data and self._state != self._STATE_FINISHED)

@@ -18,6 +18,7 @@ from sqlalchemy.sql import compiler
 import re
 import sqlalchemy
 import sys
+import warnings
 
 
 def register_in_sqlalchemy():
@@ -132,6 +133,8 @@ class PrestoDialect(default.DefaultDialect):
         return presto
 
     def create_connect_args(self, url):
+        if url.query:
+            warnings.warn("Ignoring query args {} in {}".format(url.query))
         db_parts = url.database.split('/')
         kwargs = {
             'host': url.host,
@@ -174,5 +177,9 @@ class PrestoDialect(default.DefaultDialect):
                     nullable=nullable,
                     index=is_partition_key,  # Translate Hive partitions to indexes
                 ))
+
+    def do_rollback(self, dbapi_connection):
+        # No transactions for Presto
+        pass
 
 dialect = PrestoDialect

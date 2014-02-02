@@ -174,6 +174,8 @@ class Cursor(common.DBAPICursor):
         if self._operationHandle is not None:
             request = ttypes.TCloseOperationReq(self._operationHandle)
             response = self._connection.client.CloseOperation(request)
+            self._reset_state()
+            # Perform status check last
             _check_status(response)
 
     def execute(self, operation, parameters=None):
@@ -205,7 +207,7 @@ class Cursor(common.DBAPICursor):
         assert(self._state == self._STATE_RUNNING), "Should be running when in _fetch_more"
         assert(self._operationHandle is not None), "Should have an op handle in _fetch_more"
         if not self._operationHandle.hasResultSet:
-            raise ProgrammingError('No result set')
+            raise ProgrammingError("No result set")
         req = ttypes.TFetchResultsReq(
             operationHandle=self._operationHandle,
             orientation=ttypes.TFetchOrientation.FETCH_NEXT,
@@ -247,5 +249,6 @@ def _unwrap_col_val(val):
 
 def _check_status(response):
     """Raise an OperationalError if the status is not success"""
+    _logger.debug(response)
     if response.status.statusCode != ttypes.TStatusCode.SUCCESS_STATUS:
         raise OperationalError(response)
