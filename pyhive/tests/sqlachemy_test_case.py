@@ -1,8 +1,11 @@
+# coding: utf-8
 from __future__ import absolute_import
 from __future__ import unicode_literals
+from sqlalchemy import select
 from sqlalchemy.exc import NoSuchTableError
 from sqlalchemy.schema import MetaData
 from sqlalchemy.schema import Table
+from sqlalchemy.sql.expression import bindparam
 import abc
 import contextlib
 import functools
@@ -67,3 +70,11 @@ class SqlAlchemyTestCase(unittest.TestCase):
         engine.dialect.reflecttable(connection, many_rows, include_columns=['b'])
         self.assertEqual(len(many_rows.c), 1)
         self.assertTrue(many_rows.c.b.index)
+
+    @with_engine_connection
+    def test_unicode(self, engine, connection):
+        """Verify that unicode strings make it through SQLAlchemy and the backend"""
+        unicode_str = "白人看不懂"
+        one_row = Table('one_row', MetaData(bind=engine))
+        returned_str = select([bindparam("好", unicode_str)], from_obj=one_row).scalar()
+        self.assertEqual(returned_str, unicode_str)

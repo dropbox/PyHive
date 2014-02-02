@@ -124,6 +124,10 @@ class PrestoDialect(default.DefaultDialect):
     supports_pk_autoincrement = False
     supports_default_values = False
     supports_empty_insert = False
+    supports_unicode_statements = True
+    supports_unicode_binds = True
+    returns_unicode_strings = True
+    description_encoding = None
 
     @classmethod
     def dbapi(cls):
@@ -188,5 +192,9 @@ class PrestoDialect(default.DefaultDialect):
         pass
 
     def _check_unicode_returns(self, connection, additional_tests=None):
+        # requests gives back Unicode strings
+        return True
+
+    def _check_unicode_description(self, connection):
         # requests gives back Unicode strings
         return True

@@ -204,6 +204,12 @@ class ParamEscaper(object):
         return item
 
     def escape_string(self, item):
+        # Need to decode UTF-8 because of old sqlalchemy.
+        # Newer SQLAlchemy checks dialect.supports_unicode_binds before encoding Unicode strings
+        # as byte strings. The old version always encodes Unicode as byte strings, which breaks
+        # string formatting here.
+        if isinstance(item, str):
+            item = item.decode('utf-8')
         # This is good enough when backslashes are literal, newlines are just followed, and the way
         # to escape a single quote is to put two single quotes.
         # (i.e. only special character is single quote)

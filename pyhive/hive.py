@@ -34,6 +34,12 @@ class HiveParamEscaper(common.ParamEscaper):
     def escape_string(self, item):
         # backslashes and single quotes need to be escaped
         # TODO verify against parser
+        # Need to decode UTF-8 because of old sqlalchemy.
+        # Newer SQLAlchemy checks dialect.supports_unicode_binds before encoding Unicode strings
+        # as byte strings. The old version always encodes Unicode as byte strings, which breaks
+        # string formatting here.
+        if isinstance(item, str):
+            item = item.decode('utf-8')
         return "'{}'".format(item
             .replace('\\', '\\\\')
             .replace("'", "\\'")
@@ -168,7 +174,10 @@ class Cursor(common.DBAPICursor):
                 else:
                     type_id = primary_type_entry.primitiveEntry.type
                     type_code = ttypes.TTypeId._VALUES_TO_NAMES[type_id]
-                self._description.append((col.columnName, type_code, None, None, None, None, True))
+                self._description.append((
+                    col.columnName.decode('utf-8'), type_code.decode('utf-8'),
+                    None, None, None, None, True
+                ))
         return self._description
 
     def close(self):
@@ -199,7 +208,8 @@ class Cursor(common.DBAPICursor):
         self._state = self._STATE_RUNNING
         _logger.debug("Query: %s", sql)
 
-        req = ttypes.TExecuteStatementReq(self._connection.sessionHandle, sql)
+        req = ttypes.TExecuteStatementReq(self._connection.sessionHandle, sql.encode('utf-8'))
+        _logger.debug(req)
         response = self._connection.client.ExecuteStatement(req)
         _check_status(response)
         self._operationHandle = response.operationHandle
@@ -245,7 +255,11 @@ def _unwrap_col_val(val):
     for _, _, attr, _, _ in filter(None, ttypes.TColumnValue.thrift_spec):
         val_obj = getattr(val, attr)
         if val_obj:
-            return val_obj.value
+            val = val_obj.value
+            if isinstance(val, str):
+                return val.decode('utf-8')
+            else:
+                return val
     raise DataError("Got empty column value {}".format(val))
 
 

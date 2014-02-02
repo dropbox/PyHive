@@ -338,6 +338,10 @@ class HiveDialect(default.DefaultDialect):
     supports_empty_insert = False
     supports_native_decimal = True
     supports_native_boolean = True
+    supports_unicode_statements = True
+    supports_unicode_binds = True
+    returns_unicode_strings = True
+    description_encoding = None
 
     @classmethod
     def dbapi(cls):
@@ -408,9 +412,9 @@ class HiveDialect(default.DefaultDialect):
         pass
 
     def _check_unicode_returns(self, connection, additional_tests=None):
-        # Thrift gives byte strings
-        return False
+        # We decode everything as UTF-8
+        return True
 
     def _check_unicode_description(self, connection):
-        # Thrift gives byte strings
-        return False
+        # We decode everything as UTF-8
+        return True

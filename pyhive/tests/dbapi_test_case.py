@@ -1,3 +1,4 @@
+# encoding: utf-8
 """Shared DB-API test cases"""
 
 from __future__ import absolute_import
@@ -149,3 +150,12 @@ class DBAPITestCase(unittest.TestCase):
         with contextlib.closing(self.connect()) as connection:
             with contextlib.closing(connection.cursor()):
                 pass
+
+    @with_cursor
+    def test_unicode(self, cursor):
+        unicode_str = "王兢"
+        cursor.execute(
+            'SELECT %s FROM one_row',
+            (unicode_str,)
+        )
+        self.assertEqual(cursor.fetchall(), [[unicode_str]])
