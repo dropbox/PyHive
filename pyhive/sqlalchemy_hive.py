@@ -305,12 +305,16 @@ class HiveIdentifierPreparer(compiler.IdentifierPreparer):
         )
 
 
+try:
+    from sqlalchemy.types import BigInteger
+except ImportError:
+    from sqlalchemy.databases.mysql import MSBigInteger as BigInteger
 _type_map = {
     'boolean': types.Boolean,
     'tinyint': mysql.MSTinyInteger,
     'smallint': types.SmallInteger,
     'int': types.Integer,
-    'bigint': mysql.MSBigInteger,
+    'bigint': BigInteger,
     'float': types.Float,
     'double': types.Float,
     'string': types.String,
@@ -326,11 +330,14 @@ _type_map = {
 
 class HiveDialect(default.DefaultDialect):
     name = 'hive'
+    driver = 'thrift'
     preparer = HiveIdentifierPreparer
-    supports_alter = False
+    supports_alter = True
     supports_pk_autoincrement = False
     supports_default_values = False
     supports_empty_insert = False
+    supports_native_decimal = True
+    supports_native_boolean = True
 
     @classmethod
     def dbapi(cls):
@@ -348,7 +355,8 @@ class HiveDialect(default.DefaultDialect):
         }
         return ([], kwargs)
 
-    def reflecttable(self, connection, table, include_columns=None):
+    def reflecttable(self, connection, table, include_columns=None, exclude_columns=None):
+        exclude_columns = exclude_columns or []
         # TODO using TGetColumnsReq hangs after sending TFetchResultsReq.
         # Using DESCRIBE works but is uglier.
         try:
@@ -375,6 +383,8 @@ class HiveDialect(default.DefaultDialect):
                 col_type = col_type.partition('<')[0]
                 if include_columns is not None and col_name not in include_columns:
                     continue
+                if col_name in exclude_columns:
+                    continue
                 try:
                     coltype = _type_map[col_type]
                 except KeyError:
@@ -389,8 +399,18 @@ class HiveDialect(default.DefaultDialect):
             for col_name, col_type, _comment in rows[i + 1:]:
                 if include_columns is not None and col_name not in include_columns:
                     continue
+                if col_name in exclude_columns:
+                    continue
                 getattr(table.c, col_name).index = True
 
     def do_rollback(self, dbapi_connection):
         # No transactions for Hive
         pass
+
+    def _check_unicode_returns(self, connection, additional_tests=None):
+        # Thrift gives byte strings
+        return False
+
+    def _check_unicode_description(self, connection):
+        # Thrift gives byte strings
+        return False

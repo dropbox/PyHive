@@ -14,7 +14,6 @@ from sqlalchemy import exc
 from sqlalchemy import schema
 from sqlalchemy import types
 from sqlalchemy import util
-from sqlalchemy.databases import mysql
 from sqlalchemy.engine import default
 from sqlalchemy.sql import compiler
 import re
@@ -105,8 +104,12 @@ class PrestoIdentifierPreparer(compiler.IdentifierPreparer):
     ])
 
 
+try:
+    from sqlalchemy.types import BigInteger
+except ImportError:
+    from sqlalchemy.databases.mysql import MSBigInteger as BigInteger
 _type_map = {
-    'bigint': mysql.MSBigInteger,  # In newer SQLAlchemy, this is types.BigInteger
+    'bigint': BigInteger,
     'boolean': types.Boolean,
     'double': types.Float,
     'varchar': types.String,
@@ -115,6 +118,7 @@ _type_map = {
 
 class PrestoDialect(default.DefaultDialect):
     name = 'presto'
+    driver = 'rest'
     preparer = PrestoIdentifierPreparer
     supports_alter = False
     supports_pk_autoincrement = False
@@ -143,7 +147,8 @@ class PrestoDialect(default.DefaultDialect):
             raise ValueError("Unexpected database format {}".format(url.database))
         return ([], kwargs)
 
-    def reflecttable(self, connection, table, include_columns=None):
+    def reflecttable(self, connection, table, include_columns=None, exclude_columns=None):
+        exclude_columns = exclude_columns or []
         try:
             rows = connection.execute('SHOW COLUMNS FROM "{}"'.format(table))
         except presto.DatabaseError as e:
@@ -164,6 +169,8 @@ class PrestoDialect(default.DefaultDialect):
                 name, coltype, nullable, is_partition_key = row
                 if include_columns is not None and name not in include_columns:
                     continue
+                if name in exclude_columns:
+                    continue
                 try:
                     coltype = _type_map[coltype]
                 except KeyError:
@@ -179,3 +186,7 @@ class PrestoDialect(default.DefaultDialect):
     def do_rollback(self, dbapi_connection):
         # No transactions for Presto
         pass
+
+    def _check_unicode_returns(self, connection, additional_tests=None):
+        # requests gives back Unicode strings
+        return True
