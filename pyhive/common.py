@@ -2,6 +2,8 @@
 Package private common utilities. Do not use directly.
 """
 
+from __future__ import absolute_import
+from __future__ import unicode_literals
 from pyhive import exc
 import abc
 import collections

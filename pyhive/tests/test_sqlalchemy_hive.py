@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import unicode_literals
 from pyhive.tests.sqlachemy_test_case import SqlAlchemyTestCase
 from pyhive.tests.sqlachemy_test_case import with_engine_connection
 from sqlalchemy.engine import create_engine

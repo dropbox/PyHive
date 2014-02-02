@@ -5,6 +5,8 @@ See http://www.python.org/dev/peps/pep-0249/
 Many docstrings in this file are based on the PEP, which is in the public domain.
 """
 
+from __future__ import absolute_import
+from __future__ import unicode_literals
 from TCLIService import TCLIService
 from TCLIService import constants
 from TCLIService import ttypes
@@ -61,14 +63,14 @@ class Connection(object):
 
         def sasl_factory():
             sasl_client = sasl.Client()
-            sasl_client.setAttr('username', username)
+            sasl_client.setAttr(b'username', username.encode('latin-1'))
             # Password doesn't matter in PLAIN mode, just needs to be nonempty.
-            sasl_client.setAttr('password', 'x')
+            sasl_client.setAttr(b'password', b'x')
             sasl_client.init()
             return sasl_client
 
         # PLAIN corresponds to hive.server2.authentication=NONE in hive-site.xml
-        self._transport = thrift_sasl.TSaslClientTransport(sasl_factory, 'PLAIN', socket)
+        self._transport = thrift_sasl.TSaslClientTransport(sasl_factory, b'PLAIN', socket)
         protocol = thrift.protocol.TBinaryProtocol.TBinaryProtocol(self._transport)
         self._client = TCLIService.Client(protocol)
 

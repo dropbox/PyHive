@@ -3,6 +3,9 @@
 These rely on having a Hive+Hadoop cluster set up with HiveServer2 running.
 They also require a tables created by make_test_tables.sh.
 """
+
+from __future__ import absolute_import
+from __future__ import unicode_literals
 from TCLIService import ttypes
 from pyhive import hive
 from pyhive.tests.dbapi_test_case import DBAPITestCase

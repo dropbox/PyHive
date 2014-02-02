@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import unicode_literals
 from sqlalchemy.exc import NoSuchTableError
 from sqlalchemy.schema import MetaData
 from sqlalchemy.schema import Table

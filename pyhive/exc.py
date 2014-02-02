@@ -1,6 +1,8 @@
 """
 Package private common utilities. Do not use directly.
 """
+from __future__ import absolute_import
+from __future__ import unicode_literals
 
 __all__ = [
     'Error', 'Warning', 'InterfaceError', 'DatabaseError', 'InternalError', 'OperationalError',

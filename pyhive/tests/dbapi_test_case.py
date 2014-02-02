@@ -1,4 +1,7 @@
 """Shared DB-API test cases"""
+
+from __future__ import absolute_import
+from __future__ import unicode_literals
 from pyhive import exc
 import abc
 import contextlib

@@ -3,6 +3,9 @@
 These rely on having a Presto+Hadoop cluster set up.
 They also require a tables created by make_test_tables.sh.
 """
+
+from __future__ import absolute_import
+from __future__ import unicode_literals
 from pyhive import exc
 from pyhive import presto
 from pyhive.tests.dbapi_test_case import DBAPITestCase
@@ -52,13 +55,13 @@ class TestPresto(DBAPITestCase):
             9223372036854775807,
             0.5,
             0.25,
-            u'a string',
+            'a string',
             0,
-            u'123',
-            u'[1,2]',
-            u'{1:2,3:4}',
-            u'{"a":1,"b":2}',
-            #u'{0:1}',
+            '123',
+            '[1,2]',
+            '{1:2,3:4}',
+            '{"a":1,"b":2}',
+            #'{0:1}',
             #0.1,
         ]])
 
