@@ -34,10 +34,13 @@ First install this package to register it with SQLAlchemy (see ``setup.py``).
 Requirements
 ============
 
-- Presto DB-API: Just a Presto install
-- Hive DB-API: HiveServer2 daemon, ``TCLIService`` (from Hive), ``thrift_sasl`` (from `Cloudera
-  <https://github.com/y-lan/python-hiveserver2/blob/master/src/cloudera/thrift_sasl.py>`_)
-- SQLAlchemy integration: ``sqlalchemy``
+- Python 2.7
+- For Presto: Just a Presto install
+- For Hive
+
+  - `HiveServer2 <https://cwiki.apache.org/confluence/display/Hive/Setting+up+HiveServer2>`_ daemon
+  - ``TCLIService`` (from Hive in ``/usr/lib/hive/lib/py``)
+  - ``thrift_sasl`` (from `Cloudera <https://github.com/y-lan/python-hiveserver2/blob/master/src/cloudera/thrift_sasl.py>`_)
 
 Testing
 =======
@@ -45,6 +48,9 @@ Testing
 Run the following in an environment with Hive/Presto::
 
     ./scripts/make_test_tables.sh
-    python setup.py test
+    virtualenv env
+    source env/bin/activate
+    pip install -r test_requirements.txt
+    nosetests
 
 WARNING: This drops/creates tables named ``one_row``, ``one_row_complex``, and ``many_rows``.
