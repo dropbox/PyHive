@@ -17,7 +17,6 @@ from sqlalchemy import util
 from sqlalchemy.engine import default
 from sqlalchemy.sql import compiler
 import re
-import warnings
 
 
 class PrestoIdentifierPreparer(compiler.IdentifierPreparer):
@@ -134,14 +133,13 @@ class PrestoDialect(default.DefaultDialect):
         return presto
 
     def create_connect_args(self, url):
-        if url.query:
-            warnings.warn("Ignoring query args {} in {}".format(url.query))
         db_parts = url.database.split('/')
         kwargs = {
             'host': url.host,
             'port': url.port,
             'username': url.username,
         }
+        kwargs.update(url.query)
         if len(db_parts) == 1:
             kwargs['catalog'] = db_parts[0]
         elif len(db_parts) == 2:

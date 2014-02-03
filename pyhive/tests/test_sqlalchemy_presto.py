@@ -14,7 +14,7 @@ class TestSqlAlchemyPresto(SqlAlchemyTestCase):
     __test__ = True
 
     def create_engine(self):
-        return create_engine('presto://localhost:8080/hive/default')
+        return create_engine('presto://localhost:8080/hive/default?source={}'.format(self.id()))
 
     @with_engine_connection
     def test_reflect_select(self, engine, connection):

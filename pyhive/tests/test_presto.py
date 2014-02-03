@@ -19,7 +19,7 @@ class TestPresto(DBAPITestCase):
     __test__ = True
 
     def connect(self):
-        return presto.connect(host=_HOST)
+        return presto.connect(host=_HOST, source=self.id())
 
     def test_description(self):
         cursor = self.connect().cursor()

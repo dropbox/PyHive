@@ -350,13 +350,12 @@ class HiveDialect(default.DefaultDialect):
     def create_connect_args(self, url):
         if url.database:
             warnings.warn("Ignoring database {} in {}".format(url.database, url))
-        if url.query:
-            warnings.warn("Ignoring query args {} in {}".format(url.query))
         kwargs = {
             'host': url.host,
             'port': url.port,
             'username': url.username,
         }
+        kwargs.update(url.query)
         return ([], kwargs)
 
     def reflecttable(self, connection, table, include_columns=None, exclude_columns=None):
