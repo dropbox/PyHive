@@ -10,6 +10,24 @@ from sqlalchemy.types import String
 import datetime
 import decimal
 
+_ONE_ROW_COMPLEX_CONTENTS = [
+    True,
+    127,
+    32767,
+    2147483647,
+    9223372036854775807,
+    0.5,
+    0.25,
+    'a string',
+    datetime.datetime(1970, 1, 1),
+    '123',
+    '[1,2]',
+    '{1:2,3:4}',
+    '{"a":1,"b":2}',
+    '{0:1}',
+    decimal.Decimal('0.1'),
+]
+
 
 class TestSqlAlchemyHive(SqlAlchemyTestCase):
     __test__ = True
@@ -25,23 +43,14 @@ class TestSqlAlchemyHive(SqlAlchemyTestCase):
         self.assertIsInstance(one_row_complex.c.string, Column)
         rows = one_row_complex.select().execute().fetchall()
         self.assertEqual(len(rows), 1)
-        self.assertEqual(list(rows[0]), [
-            True,
-            127,
-            32767,
-            2147483647,
-            9223372036854775807,
-            0.5,
-            0.25,
-            'a string',
-            datetime.datetime(1970, 1, 1, 0, 0),
-            '123',
-            '[1,2]',
-            '{1:2,3:4}',
-            '{"a":1,"b":2}',
-            '{0:1}',
-            decimal.Decimal('0.1'),
-        ])
+        self.assertEqual(list(rows[0]), _ONE_ROW_COMPLEX_CONTENTS)
+
+    @with_engine_connection
+    def test_type_map(self, engine, connection):
+        """sqlalchemy should use the dbapi_type_map to infer types from raw queries"""
+        rows = connection.execute('SELECT * FROM one_row_complex').fetchall()
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(list(rows[0]), _ONE_ROW_COMPLEX_CONTENTS)
 
     @with_engine_connection
     def test_reserved_words(self, engine, connection):

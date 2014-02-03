@@ -342,6 +342,10 @@ class HiveDialect(default.DefaultDialect):
     supports_unicode_binds = True
     returns_unicode_strings = True
     description_encoding = None
+    dbapi_type_map = {
+        'TIMESTAMP_TYPE': HiveTimestamp(),
+        'DECIMAL_TYPE': HiveDecimal(),
+    }
 
     @classmethod
     def dbapi(cls):
