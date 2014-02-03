@@ -1,13 +1,14 @@
 #!/usr/bin/env python
 
 from setuptools import setup
+import pyhive
 
 with open('README.md') as readme:
     long_description = readme.read()
 
 setup(
     name="PyHive",
-    version='0.0.1',
+    version=pyhive.__version__,
     description="Python interface to Hive",
     long_description=long_description,
     author="Jing Wang",
