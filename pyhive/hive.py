@@ -14,6 +14,7 @@ from pyhive import common
 from pyhive.common import DBAPITypeObject
 # Make all exceptions visible in this module per DB-API
 from pyhive.exc import *
+import contextlib
 import getpass
 import logging
 import sasl
@@ -62,7 +63,7 @@ def connect(*args, **kwargs):
 class Connection(object):
     """Wraps a Thrift session"""
 
-    def __init__(self, host, port=10000, username=None, configuration=None):
+    def __init__(self, host, port=10000, username=None, database='default', configuration=None):
         socket = thrift.transport.TSocket.TSocket(host, port)
         username = username or getpass.getuser()
         configuration = configuration or {}
@@ -92,6 +93,8 @@ class Connection(object):
             self._sessionHandle = response.sessionHandle
             assert(response.serverProtocolVersion == ttypes.TProtocolVersion.HIVE_CLI_SERVICE_PROTOCOL_V1), \
                 "Unable to handle protocol version {}".format(response.serverProtocolVersion)
+            with contextlib.closing(self.cursor()) as cursor:
+                cursor.execute('USE `{}`'.format(database))
         except:
             self._transport.close()
             raise

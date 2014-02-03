@@ -19,7 +19,6 @@ from sqlalchemy.engine import default
 from sqlalchemy.sql import compiler
 import decimal
 import re
-import warnings
 
 try:
     from sqlalchemy import processors
@@ -352,12 +351,11 @@ class HiveDialect(default.DefaultDialect):
         return hive
 
     def create_connect_args(self, url):
-        if url.database:
-            warnings.warn("Ignoring database {} in {}".format(url.database, url))
         kwargs = {
             'host': url.host,
             'port': url.port,
             'username': url.username,
+            'database': url.database,
         }
         kwargs.update(url.query)
         return ([], kwargs)

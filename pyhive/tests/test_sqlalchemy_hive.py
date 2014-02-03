@@ -7,6 +7,7 @@ from sqlalchemy.schema import Column
 from sqlalchemy.schema import MetaData
 from sqlalchemy.schema import Table
 from sqlalchemy.types import String
+import contextlib
 import datetime
 import decimal
 
@@ -33,7 +34,7 @@ class TestSqlAlchemyHive(SqlAlchemyTestCase):
     __test__ = True
 
     def create_engine(self):
-        return create_engine('hive://hadoop@localhost:10000/')
+        return create_engine('hive://hadoop@localhost:10000/default')
 
     @with_engine_connection
     def test_reflect_select(self, engine, connection):
@@ -62,3 +63,19 @@ class TestSqlAlchemyHive(SqlAlchemyTestCase):
         self.assertIn('`map`', query)
         self.assertNotIn('"select"', query)
         self.assertNotIn('"map"', query)
+
+    def test_switch_database(self):
+        engine = create_engine('hive://hadoop@localhost:10000/pyhive_test_database')
+        try:
+            with contextlib.closing(engine.connect()) as connection:
+                self.assertEqual(
+                    connection.execute('SHOW TABLES').fetchall(),
+                    [('dummy_table',)]
+                )
+                connection.execute('USE default')
+                self.assertIn(
+                    ('one_row',),
+                    connection.execute('SHOW TABLES').fetchall()
+                )
+        finally:
+            engine.dispose()
