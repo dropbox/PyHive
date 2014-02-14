@@ -37,7 +37,7 @@ class TestSqlAlchemyPresto(SqlAlchemyTestCase):
             0,
             '123',
             '[1,2]',
-            '{1:2,3:4}',
+            '{"1":2,"3":4}',  # Presto converts all keys to strings so that they're valid JSON
             '{"a":1,"b":2}',
             #'{0:1}',
             #0.1,
