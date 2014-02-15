@@ -132,6 +132,7 @@ class Cursor(common.DBAPICursor):
     """
 
     def __init__(self, connection):
+        self._operationHandle = None
         super(Cursor, self).__init__()
         self._connection = connection
 
@@ -139,7 +140,13 @@ class Cursor(common.DBAPICursor):
         """Reset state about the previous query in preparation for running another query"""
         super(Cursor, self)._reset_state()
         self._description = None
-        self._operationHandle = None
+        if self._operationHandle is not None:
+            request = ttypes.TCloseOperationReq(self._operationHandle)
+            try:
+                response = self._connection.client.CloseOperation(request)
+                _check_status(response)
+            finally:
+                self._operationHandle = None
 
     @property
     def description(self):
@@ -185,21 +192,13 @@ class Cursor(common.DBAPICursor):
 
     def close(self):
         """Close the operation handle"""
-        if self._operationHandle is not None:
-            request = ttypes.TCloseOperationReq(self._operationHandle)
-            response = self._connection.client.CloseOperation(request)
-            self._reset_state()
-            # Perform status check last
-            _check_status(response)
+        self._reset_state()
 
     def execute(self, operation, parameters=None):
         """Prepare and execute a database operation (query or command).
 
         Return values are not defined.
         """
-        if self._state == self._STATE_RUNNING:
-            raise ProgrammingError("Already running a query")
-
         # Prepare statement
         if parameters is None:
             sql = operation

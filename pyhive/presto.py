@@ -132,9 +132,6 @@ class Cursor(common.DBAPICursor):
 
         Return values are not defined.
         """
-        if self._state == self._STATE_RUNNING:
-            raise ProgrammingError("Already running a query")
-
         headers = {
             'X-Presto-Catalog': self._catalog,
             'X-Presto-Schema': self._schema,

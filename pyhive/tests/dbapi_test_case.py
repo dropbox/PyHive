@@ -74,8 +74,8 @@ class DBAPITestCase(unittest.TestCase):
     @with_cursor
     def test_concurrent_execution(self, cursor):
         cursor.execute('SELECT * FROM one_row')
-        self.assertRaises(exc.ProgrammingError,
-            lambda: cursor.execute('SELECT * FROM one_row'))
+        cursor.execute('SELECT * FROM one_row')
+        self.assertEqual(cursor.fetchall(), [[1]])
 
     @with_cursor
     def test_executemany(self, cursor):
