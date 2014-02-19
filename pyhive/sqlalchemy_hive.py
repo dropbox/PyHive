@@ -1,6 +1,4 @@
-"""Integration between SQLAlchemy 0.5.8 and Hive.
-
-On import, this module creates a new module sqlalchemy.databases.hive
+"""Integration between SQLAlchemy and Hive.
 
 Some code based on
 https://github.com/zzzeek/sqlalchemy/blob/rel_0_5/lib/sqlalchemy/databases/sqlite.py

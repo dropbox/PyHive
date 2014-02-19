@@ -1,6 +1,4 @@
-"""Integration between SQLAlchemy 0.5.8 and Presto.
-
-On import, this module creates a new module sqlalchemy.databases.presto
+"""Integration between SQLAlchemy and Presto.
 
 Some code based on
 https://github.com/zzzeek/sqlalchemy/blob/rel_0_5/lib/sqlalchemy/databases/sqlite.py

@@ -1,5 +1,6 @@
-"""
-Package private common utilities. Do not use directly.
+"""Package private common utilities. Do not use directly.
+
+Many docstrings in this file are based on PEP-249, which is in the public domain.
 """
 
 from __future__ import absolute_import
@@ -56,9 +57,21 @@ class DBAPICursor(object):
         """By default, return -1 to indicate that this is not supported."""
         return -1
 
+    @abc.abstractmethod
+    def execute(self, operation, parameters=None):
+        """Prepare and execute a database operation (query or command).
+
+        Parameters may be provided as sequence or mapping and will be bound to variables in the
+        operation. Variables are specified in a database-specific notation (see the module's
+        ``paramstyle`` attribute for details).
+
+        Return values are not defined.
+        """
+        raise NotImplementedError
+
     def executemany(self, operation, seq_of_parameters):
         """Prepare a database operation (query or command) and then execute it against all parameter
-        sequences or mappings found in the sequence seq_of_parameters.
+        sequences or mappings found in the sequence ``seq_of_parameters``.
 
         Only the final result set is retained.
 
@@ -72,11 +85,11 @@ class DBAPICursor(object):
             self.execute(operation, seq_of_parameters[-1])
 
     def fetchone(self):
-        """Fetch the next row of a query result set, returning a single sequence, or None when no
-        more data is available.
+        """Fetch the next row of a query result set, returning a single sequence, or ``None`` when
+        no more data is available.
 
-        An Error (or subclass) exception is raised if the previous call to execute() did not
-        produce any result set or no call was issued yet.
+        An :py:class:`~pyhive.exc.Error` (or subclass) exception is raised if the previous call to
+        :py:meth:`execute` did not produce any result set or no call was issued yet.
         """
         if self._state == self._STATE_NONE:
             raise exc.ProgrammingError("No query yet")
@@ -99,8 +112,8 @@ class DBAPICursor(object):
         fetch as many rows as indicated by the size parameter. If this is not possible due to the
         specified number of rows not being available, fewer rows may be returned.
 
-        An Error (or subclass) exception is raised if the previous call to .execute*() did not
-        produce any result set or no call was issued yet.
+        An :py:class:`~pyhive.exc.Error` (or subclass) exception is raised if the previous call to
+        :py:meth:`execute` did not produce any result set or no call was issued yet.
         """
         if size is None:
             size = self.arraysize
@@ -117,8 +130,8 @@ class DBAPICursor(object):
         """Fetch all (remaining) rows of a query result, returning them as a sequence of sequences
         (e.g. a list of tuples).
 
-        An Error (or subclass) exception is raised if the previous call to .execute*() did not
-        produce any result set or no call was issued yet.
+        An :py:class:`~pyhive.exc.Error` (or subclass) exception is raised if the previous call to
+        :py:meth:`execute` did not produce any result set or no call was issued yet.
         """
         result = []
         while True:
@@ -132,7 +145,7 @@ class DBAPICursor(object):
     @property
     def arraysize(self):
         """This read/write attribute specifies the number of rows to fetch at a time with
-        ``.fetchmany()``. It defaults to 1 meaning to fetch a single row at a time.
+        :py:meth:`fetchmany`. It defaults to 1 meaning to fetch a single row at a time.
         """
         return self._arraysize
 
@@ -158,13 +171,14 @@ class DBAPICursor(object):
         result set.
 
         The index can be seen as index of the cursor in a sequence (the result set). The next fetch
-        operation will fetch the row indexed by .rownumber in that sequence.
+        operation will fetch the row indexed by ``rownumber`` in that sequence.
         """
         return self._rownumber
 
     def next(self):
         """Return the next row from the currently executing SQL statement using the same semantics
-        as ``.fetchone()``. A StopIteration exception is raised when the result set is exhausted.
+        as :py:meth:`fetchone`. A ``StopIteration`` exception is raised when the result set is
+        exhausted.
         """
         one = self.fetchone()
         if one is None:

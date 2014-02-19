@@ -1,4 +1,4 @@
-"""DB API implementation backed by HiveServer2 (Thrift API)
+"""DB-API implementation backed by HiveServer2 (Thrift API)
 
 See http://www.python.org/dev/peps/pep-0249/
 
@@ -53,9 +53,10 @@ _escaper = HiveParamEscaper()
 
 
 def connect(*args, **kwargs):
-    """Constructor for creating a connection to the database. See class Connection for arguments.
+    """Constructor for creating a connection to the database. See class :py:class:`Connection` for
+    arguments.
 
-    Returns a Connection object.
+    :returns: a :py:class:`Connection` object.
     """
     return Connection(*args, **kwargs)
 
@@ -107,11 +108,11 @@ class Connection(object):
         _check_status(response)
 
     def commit(self):
-        """Hive does not support transactions"""
+        """Hive does not support transactions, so this does nothing."""
         pass
 
     def cursor(self):
-        """Return a new Cursor object using the connection."""
+        """Return a new :py:class:`Cursor` object using the connection."""
         return Cursor(self)
 
     @property
@@ -154,18 +155,18 @@ class Cursor(common.DBAPICursor):
 
         Each of these sequences contains information describing one result column:
 
-         - name
-         - type_code
-         - display_size (None in current implementation)
-         - internal_size (None in current implementation)
-         - precision (None in current implementation)
-         - scale (None in current implementation)
-         - null_ok (always True in current implementation)
+        - name
+        - type_code
+        - display_size (None in current implementation)
+        - internal_size (None in current implementation)
+        - precision (None in current implementation)
+        - scale (None in current implementation)
+        - null_ok (always True in current implementation)
 
         This attribute will be ``None`` for operations that do not return rows or if the cursor has
-        not had an operation invoked via the ``execute()`` method yet.
+        not had an operation invoked via the :py:meth:`execute` method yet.
 
-        The type_code can be interpreted by comparing it to the Type Objects specified in the
+        The ``type_code`` can be interpreted by comparing it to the Type Objects specified in the
         section below.
         """
         if self._operationHandle is None or not self._operationHandle.hasResultSet:

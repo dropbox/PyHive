@@ -1,4 +1,4 @@
-"""DB API implementation backed by Presto
+"""DB-API implementation backed by Presto
 
 See http://www.python.org/dev/peps/pep-0249/
 
@@ -27,9 +27,10 @@ _escaper = common.ParamEscaper()
 
 
 def connect(*args, **kwargs):
-    """Constructor for creating a connection to the database. See class Connection for arguments.
+    """Constructor for creating a connection to the database. See class :py:class:`Connection` for
+    arguments.
 
-    Returns a Connection object.
+    :returns: a :py:class:`Connection` object.
     """
     return Connection(*args, **kwargs)
 
@@ -54,7 +55,7 @@ class Connection(object):
         pass
 
     def cursor(self):
-        """Return a new Cursor object using the connection."""
+        """Return a new :py:class:`Cursor` object using the connection."""
         return Cursor(*self._args, **self._kwargs)
 
 
@@ -103,15 +104,15 @@ class Cursor(common.DBAPICursor):
 
         Each of these sequences contains information describing one result column:
 
-         - name
-         - type_code
-         - display_size (None in current implementation)
-         - internal_size (None in current implementation)
-         - precision (None in current implementation)
-         - scale (None in current implementation)
-         - null_ok (always True in current implementation)
+        - name
+        - type_code
+        - display_size (None in current implementation)
+        - internal_size (None in current implementation)
+        - precision (None in current implementation)
+        - scale (None in current implementation)
+        - null_ok (always True in current implementation)
 
-        The type_code can be interpreted by comparing it to the Type Objects specified in the
+        The ``type_code`` can be interpreted by comparing it to the Type Objects specified in the
         section below.
         """
         # Sleep until we're done or we got the columns
@@ -161,7 +162,7 @@ class Cursor(common.DBAPICursor):
         :returns: dict -- JSON status information or ``None`` if the query is done
         :raises: ``ProgrammingError`` when no query has been started
 
-        .. warning::
+        .. note::
             This is not a part of DB-API.
         """
         if self._state == self._STATE_NONE:

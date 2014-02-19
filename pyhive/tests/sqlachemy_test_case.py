@@ -5,7 +5,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import NoSuchTableError
 from sqlalchemy.schema import MetaData
 from sqlalchemy.schema import Table
-from sqlalchemy.sql.expression import bindparam
+from sqlalchemy.sql import expression
 import abc
 import contextlib
 import functools
@@ -76,5 +76,5 @@ class SqlAlchemyTestCase(unittest.TestCase):
         """Verify that unicode strings make it through SQLAlchemy and the backend"""
         unicode_str = "白人看不懂"
         one_row = Table('one_row', MetaData(bind=engine))
-        returned_str = select([bindparam("好", unicode_str)], from_obj=one_row).scalar()
+        returned_str = select([expression.bindparam("好", unicode_str)], from_obj=one_row).scalar()
         self.assertEqual(returned_str, unicode_str)
