@@ -155,6 +155,24 @@ class Cursor(common.DBAPICursor):
         response = requests.post(url, data=sql.encode('utf-8'), headers=headers)
         self._process_response(response)
 
+    def poll(self):
+        """Poll for and return the raw status data provided by the Presto REST API.
+
+        :returns: dict -- JSON status information or ``None`` if the query is done
+        :raises: ``ProgrammingError`` when no query has been started
+
+        .. warning::
+            This is not a part of DB-API.
+        """
+        if self._state == self._STATE_NONE:
+            raise ProgrammingError("No query yet")
+        if self._nextUri is None:
+            assert self._state == self._STATE_FINISHED, "Should be finished if nextUri is None"
+            return None
+        response = requests.get(self._nextUri)
+        self._process_response(response)
+        return response.json()
+
     def _fetch_more(self):
         """Fetch the next URI and update state"""
         self._process_response(requests.get(self._nextUri))
@@ -169,14 +187,14 @@ class Cursor(common.DBAPICursor):
             raise OperationalError(fmt.format(response.status_code, response.content))
         response_json = response.json()
         _logger.debug("Got response %s", response_json)
-        assert self._state == self._STATE_RUNNING, 'Should be running if processing response'
+        assert self._state == self._STATE_RUNNING, "Should be running if processing response"
         self._nextUri = response_json.get('nextUri')
         self._columns = response_json.get('columns')
         self._data += response_json.get('data', [])
         if 'nextUri' not in response_json:
             self._state = self._STATE_FINISHED
         if 'error' in response_json:
-            assert not self._nextUri, 'Should not have nextUri if failed'
+            assert not self._nextUri, "Should not have nextUri if failed"
             raise DatabaseError(response_json['error'])
 
 

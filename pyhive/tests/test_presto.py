@@ -21,8 +21,8 @@ class TestPresto(DBAPITestCase):
     def connect(self):
         return presto.connect(host=_HOST, source=self.id())
 
-    def test_description(self):
-        cursor = self.connect().cursor()
+    @with_cursor
+    def test_description(self, cursor):
         cursor.execute('SELECT 1 AS foobar FROM one_row')
         self.assertEqual(cursor.description, [('foobar', 'bigint', None, None, None, None, True)])
 
@@ -81,3 +81,17 @@ class TestPresto(DBAPITestCase):
         cursor = self.connect().cursor()
         post.return_value.status_code = 404
         self.assertRaises(exc.OperationalError, lambda: cursor.execute('show tables'))
+
+    @with_cursor
+    def test_poll(self, cursor):
+        cursor.execute('SELECT * FROM one_row')
+        while True:
+            status = cursor.poll()
+            if status is None:
+                break
+            self.assertIn('stats', status)
+
+        def fail(*args, **kwargs):
+            self.fail("Should not need requests.get after done polling")
+        with mock.patch('requests.get', fail):
+            self.assertEqual(cursor.fetchall(), [[1]])
