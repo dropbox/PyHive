@@ -209,7 +209,7 @@ class Cursor(common.DBAPICursor):
         self._reset_state()
 
         self._state = self._STATE_RUNNING
-        _logger.debug("Query: %s", sql)
+        _logger.info('%s', sql)
 
         req = ttypes.TExecuteStatementReq(self._connection.sessionHandle, sql.encode('utf-8'))
         _logger.debug(req)
