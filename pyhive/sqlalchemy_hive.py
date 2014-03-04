@@ -46,6 +46,15 @@ class HiveDecimal(HiveStringTypeBase):
         return decimal.Decimal(value)
 
 
+def _get_illegal_initial_characters():
+    if isinstance(compiler.IdentifierPreparer.illegal_initial_characters, set):
+        # Newer sqlalchemy
+        return set([str(x) for x in range(0, 10)]).union(['$', '_'])
+    else:
+        # For backwards compatibility with 0.5 (and maybe others)
+        return re.compile(r'[0-9$_]')
+
+
 class HiveIdentifierPreparer(compiler.IdentifierPreparer):
     # https://github.com/apache/hive/blob/trunk/ql/src/java/org/apache/hadoop/hive/ql/parse/HiveLexer.g
     reserved_words = frozenset([
@@ -294,6 +303,10 @@ class HiveIdentifierPreparer(compiler.IdentifierPreparer):
         'window',
         'with',
     ])
+
+    legal_characters = re.compile(r'^[A-Z0-9_]+$', re.I)
+
+    illegal_initial_characters = _get_illegal_initial_characters()
 
     def __init__(self, dialect):
         super(HiveIdentifierPreparer, self).__init__(
