@@ -3,6 +3,8 @@ cover/
 /dist/
 .DS_Store
 *.egg
+/env/
+/htmlcov/
 .project
 *.pyc
 .pydevproject

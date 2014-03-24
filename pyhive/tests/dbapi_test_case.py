@@ -7,7 +7,6 @@ from pyhive import exc
 import abc
 import contextlib
 import functools
-import unittest
 
 
 def with_cursor(fn):
@@ -23,9 +22,8 @@ def with_cursor(fn):
     return wrapped_fn
 
 
-class DBAPITestCase(unittest.TestCase):
+class DBAPITestCase(object):
     __metaclass__ = abc.ABCMeta
-    __test__ = False
 
     @abc.abstractmethod
     def connect(self):

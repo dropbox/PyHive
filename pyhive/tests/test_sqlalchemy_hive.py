@@ -10,6 +10,7 @@ from sqlalchemy.types import String
 import contextlib
 import datetime
 import decimal
+import unittest
 
 _ONE_ROW_COMPLEX_CONTENTS = [
     True,
@@ -30,9 +31,7 @@ _ONE_ROW_COMPLEX_CONTENTS = [
 ]
 
 
-class TestSqlAlchemyHive(SqlAlchemyTestCase):
-    __test__ = True
-
+class TestSqlAlchemyHive(unittest.TestCase, SqlAlchemyTestCase):
     def create_engine(self):
         return create_engine('hive://hadoop@localhost:10000/default')
 

@@ -11,11 +11,12 @@ from pyhive import presto
 from pyhive.tests.dbapi_test_case import DBAPITestCase
 from pyhive.tests.dbapi_test_case import with_cursor
 import mock
+import unittest
 
 _HOST = 'localhost'
 
 
-class TestPresto(DBAPITestCase):
+class TestPresto(unittest.TestCase, DBAPITestCase):
     __test__ = True
 
     def connect(self):

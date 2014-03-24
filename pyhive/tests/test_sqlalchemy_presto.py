@@ -8,11 +8,10 @@ from sqlalchemy.schema import MetaData
 from sqlalchemy.schema import Table
 from sqlalchemy.types import String
 import contextlib
+import unittest
 
 
-class TestSqlAlchemyPresto(SqlAlchemyTestCase):
-    __test__ = True
-
+class TestSqlAlchemyPresto(unittest.TestCase, SqlAlchemyTestCase):
     def create_engine(self):
         return create_engine('presto://localhost:8080/hive/default?source={}'.format(self.id()))
 

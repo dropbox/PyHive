@@ -9,7 +9,6 @@ from sqlalchemy.sql import expression
 import abc
 import contextlib
 import functools
-import unittest
 
 
 def with_engine_connection(fn):
@@ -28,9 +27,8 @@ def with_engine_connection(fn):
     return wrapped_fn
 
 
-class SqlAlchemyTestCase(unittest.TestCase):
+class SqlAlchemyTestCase(object):
     __metaclass__ = abc.ABCMeta
-    __test__ = False
 
     @with_engine_connection
     def test_basic_query(self, engine, connection):

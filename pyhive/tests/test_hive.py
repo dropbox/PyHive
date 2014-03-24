@@ -12,11 +12,12 @@ from pyhive.tests.dbapi_test_case import DBAPITestCase
 from pyhive.tests.dbapi_test_case import with_cursor
 import contextlib
 import mock
+import unittest
 
 _HOST = 'localhost'
 
 
-class TestHive(DBAPITestCase):
+class TestHive(unittest.TestCase, DBAPITestCase):
     __test__ = True
 
     def connect(self):

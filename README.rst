@@ -50,7 +50,7 @@ Run the following in an environment with Hive/Presto::
     ./scripts/make_test_tables.sh
     virtualenv env
     source env/bin/activate
-    pip install -r test_requirements.txt
-    nosetests
+    pip install -r dev_requirements.txt
+    py.test
 
 WARNING: This drops/creates tables named ``one_row``, ``one_row_complex``, and ``many_rows``.
