@@ -26,12 +26,16 @@ setup(
     version=pyhive.__version__,
     description="Python interface to Hive",
     long_description=long_description,
-    url='https://github.com/jingw/PyHive',
+    url='https://github.com/dropbox/PyHive',
     author="Jing Wang",
     author_email="jing@dropbox.com",
+    license="Apache License, Version 2.0",
     packages=['pyhive'],
     classifiers=[
-        "Topic :: Database",
+        "Intended Audience :: Developers",
+        "License :: OSI Approved :: Apache Software License",
+        "Operating System :: OS Independent",
+        "Topic :: Database :: Front-Ends",
     ],
     extras_require={
         "Presto": ['requests>=1.0.0'],
