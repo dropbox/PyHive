@@ -123,6 +123,9 @@ class Connection(object):
     def sessionHandle(self):
         return self._sessionHandle
 
+    def rollback(self):
+        raise NotSupportedError("Hive does not have transactions")
+
 
 class Cursor(common.DBAPICursor):
     """These objects represent a database cursor, which is used to manage the context of a fetch

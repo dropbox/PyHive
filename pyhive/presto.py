@@ -58,6 +58,9 @@ class Connection(object):
         """Return a new :py:class:`Cursor` object using the connection."""
         return Cursor(*self._args, **self._kwargs)
 
+    def rollback(self):
+        raise NotSupportedError("Presto does not have transactions")
+
 
 class Cursor(common.DBAPICursor):
     """These objects represent a database cursor, which is used to manage the context of a fetch

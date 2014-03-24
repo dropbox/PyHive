@@ -7,14 +7,15 @@ which is released under the MIT license.
 
 from __future__ import absolute_import
 from __future__ import unicode_literals
+from distutils.version import StrictVersion
 from pyhive import presto
 from sqlalchemy import exc
-from sqlalchemy import schema
 from sqlalchemy import types
 from sqlalchemy import util
 from sqlalchemy.engine import default
 from sqlalchemy.sql import compiler
 import re
+import sqlalchemy
 
 
 class PrestoIdentifierPreparer(compiler.IdentifierPreparer):
@@ -147,10 +148,12 @@ class PrestoDialect(default.DefaultDialect):
             raise ValueError("Unexpected database format {}".format(url.database))
         return ([], kwargs)
 
-    def reflecttable(self, connection, table, include_columns=None, exclude_columns=None):
-        exclude_columns = exclude_columns or []
+    def _get_table_columns(self, connection, table_name, schema):
+        full_table = self.identifier_preparer.quote_identifier(table_name)
+        if schema:
+            full_table = self.identifier_preparer.quote_identifier(schema) + '.' + full_table
         try:
-            rows = connection.execute('SHOW COLUMNS FROM "{}"'.format(table))
+            return connection.execute('SHOW COLUMNS FROM {}'.format(full_table))
         except presto.DatabaseError as e:
             # Normally SQLAlchemy should wrap this exception in sqlalchemy.exc.DatabaseError, which
             # it successfully does in the Hive version. The difference with Presto is that this
@@ -159,29 +162,61 @@ class PrestoDialect(default.DefaultDialect):
             # presto.DatabaseError here.
             # Does the table exist?
             msg = e.message.get('message') if isinstance(e.message, dict) else None
-            regex = r"^Table\ \'.*{}\'\ does\ not\ exist$".format(re.escape(table.name))
+            regex = r"^Table\ \'.*{}\'\ does\ not\ exist$".format(re.escape(table_name))
             if msg and re.match(regex, msg):
-                raise exc.NoSuchTableError(table.name)
+                raise exc.NoSuchTableError(table_name)
             else:
                 raise
+
+    def has_table(self, connection, table_name, schema=None):
+        try:
+            self._get_table_columns(connection, table_name, schema)
+            return True
+        except exc.NoSuchTableError:
+            return False
+
+    def get_columns(self, connection, table_name, schema=None, **kw):
+        rows = self._get_table_columns(connection, table_name, None)
+        result = []
+        for row in rows:
+            name, coltype, nullable, _is_partition_key = row
+            try:
+                coltype = _type_map[coltype]
+            except KeyError:
+                util.warn("Did not recognize type '%s' of column '%s'" % (coltype, name))
+                coltype = types.NullType
+            result.append({
+                'name': name,
+                'type': coltype,
+                'nullable': nullable,
+                'default': None,
+            })
+        return result
+
+    def get_foreign_keys(self, connection, table_name, schema=None, **kw):
+        # Hive has no support for foreign keys.
+        return []
+
+    def get_pk_constraint(self, connection, table_name, schema=None, **kw):
+        # Hive has no support for primary keys.
+        return []
+
+    def get_indexes(self, connection, table_name, schema=None, **kw):
+        rows = self._get_table_columns(connection, table_name, None)
+        col_names = []
+        for row in rows:
+            if row['Partition Key']:
+                col_names.append(row['Column'])
+        if col_names:
+            return [{'name': 'partition', 'column_names': col_names, 'unique': False}]
         else:
-            for row in rows:
-                name, coltype, nullable, is_partition_key = row
-                if include_columns is not None and name not in include_columns:
-                    continue
-                if name in exclude_columns:
-                    continue
-                try:
-                    coltype = _type_map[coltype]
-                except KeyError:
-                    util.warn("Did not recognize type '%s' of column '%s'" % (coltype, name))
-                    coltype = types.NullType
-                table.append_column(schema.Column(
-                    name=name,
-                    type_=coltype,
-                    nullable=nullable,
-                    index=is_partition_key,  # Translate Hive partitions to indexes
-                ))
+            return []
+
+    def get_table_names(self, connection, schema=None, **kw):
+        query = 'SHOW TABLES'
+        if schema:
+            query += ' FROM ' + self.identifier_preparer.quote_identifier(schema)
+        return [row.tab_name for row in connection.execute(query)]
 
     def do_rollback(self, dbapi_connection):
         # No transactions for Presto
@@ -194,3 +229,11 @@ class PrestoDialect(default.DefaultDialect):
     def _check_unicode_description(self, connection):
         # requests gives back Unicode strings
         return True
+
+if StrictVersion(sqlalchemy.__version__) < StrictVersion('0.6.0'):
+    from pyhive import sqlalchemy_backports
+
+    def reflecttable(self, connection, table, include_columns=None, exclude_columns=None):
+        insp = sqlalchemy_backports.Inspector.from_engine(connection)
+        return insp.reflecttable(table, include_columns, exclude_columns)
+    PrestoDialect.reflecttable = reflecttable
