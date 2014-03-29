@@ -9,7 +9,7 @@ Usage
 =====
 
 DB-API
------
+------
 .. code-block:: python
 
     from pyhive import presto
