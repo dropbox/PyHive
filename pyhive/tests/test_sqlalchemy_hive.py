@@ -33,7 +33,7 @@ _ONE_ROW_COMPLEX_CONTENTS = [
 
 class TestSqlAlchemyHive(unittest.TestCase, SqlAlchemyTestCase):
     def create_engine(self):
-        return create_engine('hive://hadoop@localhost:10000/default')
+        return create_engine('hive://localhost:10000/default')
 
     @with_engine_connection
     def test_reflect_select(self, engine, connection):
@@ -64,7 +64,7 @@ class TestSqlAlchemyHive(unittest.TestCase, SqlAlchemyTestCase):
         self.assertNotIn('"map"', query)
 
     def test_switch_database(self):
-        engine = create_engine('hive://hadoop@localhost:10000/pyhive_test_database')
+        engine = create_engine('hive://localhost:10000/pyhive_test_database')
         try:
             with contextlib.closing(engine.connect()) as connection:
                 self.assertEqual(

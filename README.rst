@@ -48,9 +48,10 @@ Testing
 Run the following in an environment with Hive/Presto::
 
     ./scripts/make_test_tables.sh
-    virtualenv env
+    virtualenv --no-site-packages env
     source env/bin/activate
     pip install -r dev_requirements.txt
     py.test
 
-WARNING: This drops/creates tables named ``one_row``, ``one_row_complex``, and ``many_rows``.
+WARNING: This drops/creates tables named ``one_row``, ``one_row_complex``, and ``many_rows``, plus a
+database called ``pyhive_test_database``.

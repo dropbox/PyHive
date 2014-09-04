@@ -21,7 +21,7 @@ class TestHive(unittest.TestCase, DBAPITestCase):
     __test__ = True
 
     def connect(self):
-        return hive.connect(host=_HOST, username='hadoop')
+        return hive.connect(host=_HOST, configuration={'mapred.job.tracker': 'local'})
 
     @with_cursor
     def test_description(self, cursor):

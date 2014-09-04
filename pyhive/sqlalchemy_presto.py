@@ -179,16 +179,15 @@ class PrestoDialect(default.DefaultDialect):
         rows = self._get_table_columns(connection, table_name, None)
         result = []
         for row in rows:
-            name, coltype, nullable, _is_partition_key = row
             try:
-                coltype = _type_map[coltype]
+                coltype = _type_map[row.Type]
             except KeyError:
-                util.warn("Did not recognize type '%s' of column '%s'" % (coltype, name))
+                util.warn("Did not recognize type '%s' of column '%s'" % (row.Type, row.Column))
                 coltype = types.NullType
             result.append({
-                'name': name,
+                'name': row.Column,
                 'type': coltype,
-                'nullable': nullable,
+                'nullable': row.Null,
                 'default': None,
             })
         return result

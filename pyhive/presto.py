@@ -11,6 +11,7 @@ from pyhive import common
 from pyhive.common import DBAPITypeObject
 # Make all exceptions visible in this module per DB-API
 from pyhive.exc import *
+import base64
 import getpass
 import logging
 import requests
@@ -181,6 +182,14 @@ class Cursor(common.DBAPICursor):
         """Fetch the next URI and update state"""
         self._process_response(requests.get(self._nextUri))
 
+    def _decode_binary(self, rows):
+        # As of Presto 0.69, binary data is returned as the varbinary type in base64 format
+        # This function decodes base64 data in place
+        for i, col in enumerate(self.description):
+            if col[1] == 'varbinary':
+                for row in rows:
+                    row[i] = base64.b64decode(row[i])
+
     def _process_response(self, response):
         """Given the JSON response from Presto's REST API, update the internal state with the next
         URI and any data from the response
@@ -194,7 +203,11 @@ class Cursor(common.DBAPICursor):
         assert self._state == self._STATE_RUNNING, "Should be running if processing response"
         self._nextUri = response_json.get('nextUri')
         self._columns = response_json.get('columns')
-        self._data += response_json.get('data', [])
+        if 'data' in response_json:
+            assert self._columns
+            new_data = response_json['data']
+            self._decode_binary(new_data)
+            self._data += new_data
         if 'nextUri' not in response_json:
             self._state = self._STATE_FINISHED
         if 'error' in response_json:
