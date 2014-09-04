@@ -33,7 +33,7 @@ class TestSqlAlchemyPresto(unittest.TestCase, SqlAlchemyTestCase):
             0.5,
             0.25,
             'a string',
-            0,
+            '1970-01-01 00:00:00.000',
             '123',
             '[1,2]',
             '{"1":2,"3":4}',  # Presto converts all keys to strings so that they're valid JSON

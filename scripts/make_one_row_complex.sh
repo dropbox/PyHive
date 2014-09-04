@@ -1,6 +1,8 @@
 #!/bin/bash -eux
-hive -e 'DROP TABLE IF EXISTS one_row_complex'
-hive -e 'CREATE TABLE one_row_complex (
+hive -e '
+set mapred.job.tracker=local;
+DROP TABLE IF EXISTS one_row_complex;
+CREATE TABLE one_row_complex (
     `boolean` BOOLEAN,
     `tinyint` TINYINT,
     `smallint` SMALLINT,
@@ -16,8 +18,8 @@ hive -e 'CREATE TABLE one_row_complex (
     `struct` STRUCT<a: int, b: int>,
     `union` UNIONTYPE<int, string>,
     `decimal` DECIMAL
-)'
-hive -e "INSERT OVERWRITE TABLE one_row_complex SELECT
+);
+INSERT OVERWRITE TABLE one_row_complex SELECT
     true,
     127,
     32767,
@@ -25,12 +27,13 @@ hive -e "INSERT OVERWRITE TABLE one_row_complex SELECT
     9223372036854775807,
     0.5,
     0.25,
-    'a string',
+    '"'"'a string'"'"',
     0,
-    '123',
+    '"'"'123'"'"',
     array(1, 2),
     map(1, 2, 3, 4),
-    named_struct('a', 1, 'b', 2),
-    create_union(0, 1, 'test_string'),
+    named_struct('"'"'a'"'"', 1, '"'"'b'"'"', 2),
+    create_union(0, 1, '"'"'test_string'"'"'),
     0.1
-FROM one_row"
+FROM one_row;
+'
