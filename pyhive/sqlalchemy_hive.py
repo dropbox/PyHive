@@ -39,6 +39,7 @@ class HiveStringTypeBase(types.TypeDecorator):
 
 class HiveTimestamp(HiveStringTypeBase):
     """Translates timestamp strings to datetime objects"""
+    impl = types.TIMESTAMP
 
     def process_result_value(self, value, dialect):
         return processors.str_to_datetime(value)
