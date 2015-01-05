@@ -37,6 +37,14 @@ class HiveStringTypeBase(types.TypeDecorator):
         raise NotImplementedError("Writing to Hive not supported")
 
 
+class HiveDate(HiveStringTypeBase):
+    """Translates date strings to date objects"""
+    impl = types.DATE
+
+    def process_result_value(self, value, dialect):
+        return processors.str_to_date(value)
+
+
 class HiveTimestamp(HiveStringTypeBase):
     """Translates timestamp strings to datetime objects"""
     impl = types.TIMESTAMP
@@ -334,6 +342,7 @@ _type_map = {
     'float': types.Float,
     'double': types.Float,
     'string': types.String,
+    'date': HiveDate,
     'timestamp': HiveTimestamp,
     'binary': types.String,
     'array': types.String,
@@ -377,6 +386,7 @@ class HiveDialect(default.DefaultDialect):
     returns_unicode_strings = True
     description_encoding = None
     dbapi_type_map = {
+        'DATE_TYPE': HiveDate(),
         'TIMESTAMP_TYPE': HiveTimestamp(),
         'DECIMAL_TYPE': HiveDecimal(),
     }
