@@ -398,9 +398,9 @@ class HiveDialect(default.DefaultDialect):
     def create_connect_args(self, url):
         kwargs = {
             'host': url.host,
-            'port': url.port,
+            'port': url.port or 10000,
             'username': url.username,
-            'database': url.database,
+            'database': url.database or 'default',
         }
         kwargs.update(url.query)
         return ([], kwargs)
