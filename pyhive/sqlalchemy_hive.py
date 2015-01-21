@@ -375,6 +375,7 @@ class HiveDialect(default.DefaultDialect):
     driver = b'thrift'
     preparer = HiveIdentifierPreparer
     statement_compiler = HiveCompiler
+    supports_views = True
     supports_alter = True
     supports_pk_autoincrement = False
     supports_default_values = False
@@ -408,6 +409,15 @@ class HiveDialect(default.DefaultDialect):
     def get_schema_names(self, connection, **kw):
         # Equivalent to SHOW DATABASES
         return [row.database_name for row in connection.execute('SHOW SCHEMAS')]
+
+    def get_view_names(self, connection, schema=None, **kw):
+
+        #HIVE does not provide functionality to query tableType
+        query = "SHOW TABLES"
+        if schema:
+            query += ' IN ' + self.identifier_preparer.quote_identifier(schema)
+        
+        return [row.tab_name for row in connection.execute(query)]
 
     def _get_table_columns(self, connection, table_name, schema):
         full_table = table_name
