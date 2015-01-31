@@ -189,10 +189,10 @@ class PrestoDialect(default.DefaultDialect):
         return presto
 
     def create_connect_args(self, url):
-        db_parts = url.database.split('/')
+        db_parts = (url.database or 'hive').split('/')
         kwargs = {
             'host': url.host,
-            'port': url.port,
+            'port': url.port or 8080,
             'username': url.username,
         }
         kwargs.update(url.query)
