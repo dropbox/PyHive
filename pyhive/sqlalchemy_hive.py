@@ -528,15 +528,24 @@ def select_star_if_all_columns(select, compiler, **kwargs):
     froms = select.froms
     select_columns = list(select.columns.keys())
     from_columns = list(chain.from_iterable((f.columns.keys() for f in froms)))
+
+    # hive special cases star, so if we want the first N rows quickly, we
+    # need to pass it a star. If we let sqlalchemy have its way, then every
+    # column is explicitly named and the mapred pipeline is triggered.
     if select_columns == from_columns:
-        res = Select(columns=['*'],
-                     whereclause=select._whereclause,
-                     from_obj=select._froms,
-                     distinct=select._distinct,
-                     having=select._having,
-                     correlate=select._correlate,
-                     prefixes=select._prefixes)
-        return util.text_type(res)
+        select = Select(columns=['`%s`.*' % f.name for f in froms],
+                        whereclause=select._whereclause,
+                        from_obj=froms,
+                        distinct=select._distinct,
+                        having=select._having,
+                        correlate=select._correlate,
+                        prefixes=select._prefixes,
+                        bind=select.bind,
+                        group_by=select._group_by_clause.clauses or None,
+                        limit=select._limit,
+                        offset=select._offset,
+                        order_by=select._order_by_clause.clauses or None,
+                        use_labels=select.use_labels)
     return compiler.visit_select(select, **kwargs)
 
 
