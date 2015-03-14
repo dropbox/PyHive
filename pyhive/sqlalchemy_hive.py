@@ -18,6 +18,7 @@ from sqlalchemy.engine import default
 import decimal
 import re
 import sqlalchemy
+from itertools import chain
 
 try:
     from sqlalchemy import processors
@@ -516,6 +517,28 @@ class HiveDialect(default.DefaultDialect):
     def _check_unicode_description(self, connection):
         # We decode everything as UTF-8
         return True
+
+
+from sqlalchemy.ext.compiler import compiles
+from sqlalchemy.sql.expression import Select
+
+
+@compiles(Select)
+def select_star_if_all_columns(select, compiler, **kwargs):
+    froms = select.froms
+    select_columns = list(select.columns.keys())
+    from_columns = list(chain.from_iterable((f.columns.keys() for f in froms)))
+    if select_columns == from_columns:
+        res = Select(columns=['*'],
+                     whereclause=select._whereclause,
+                     from_obj=select._froms,
+                     distinct=select._distinct,
+                     having=select._having,
+                     correlate=select._correlate,
+                     prefixes=select._prefixes)
+        return util.text_type(res)
+    return compiler.visit_select(select, **kwargs)
+
 
 if StrictVersion(sqlalchemy.__version__) < StrictVersion('0.6.0'):
     from pyhive import sqlalchemy_backports
