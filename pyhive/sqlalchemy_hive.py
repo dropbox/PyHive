@@ -531,7 +531,7 @@ def select_star_if_all_columns(select, compiler, **kwargs):
 
     # hive special cases star, so if we want the first N rows quickly, we
     # need to pass it a star. If we let sqlalchemy have its way, then every
-    # column is explicitly named and the mapred pipeline is triggered.
+    # column is explicitly named and mapred is triggered.
     if select_columns == from_columns:
         select = Select(columns=['`%s`.*' % f.name for f in froms],
                         whereclause=select._whereclause,
