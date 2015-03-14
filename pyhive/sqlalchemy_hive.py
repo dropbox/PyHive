@@ -533,7 +533,7 @@ def select_star_if_all_columns(select, compiler, **kwargs):
     # need to pass it a star. If we let sqlalchemy have its way, then every
     # column is explicitly named and mapred is triggered.
     if select_columns == from_columns:
-        select = Select(columns=['`%s`.*' % f.name for f in froms],
+        select = Select(columns=['*'],
                         whereclause=select._whereclause,
                         from_obj=froms,
                         distinct=select._distinct,
