@@ -22,6 +22,7 @@ class DBAPICursor(object):
     def __init__(self, poll_interval=1):
         self._poll_interval = poll_interval
         self._reset_state()
+        self.lastrowid = None
 
     def _reset_state(self):
         """Reset state about the previous query in preparation for running another query"""

@@ -122,3 +122,32 @@ class TestSqlAlchemyHive(unittest.TestCase, SqlAlchemyTestCase):
         self.assertEqual(row.hive_decimal, decimal.Decimal('0.1'),)
         self.assertEqual(row.hive_timestamp, datetime.datetime(1970, 1, 1, 0, 0, 2, 123))
         table.drop()
+
+    @with_engine_connection
+    def test_insert_select(self, engine, connection):
+        one_row = Table('one_row', MetaData(bind=engine), autoload=True)
+        table = Table('insert_test', MetaData(bind=engine),
+                      Column('a', sqlalchemy.types.Integer),
+                      schema='pyhive_test_database')
+        table.drop(checkfirst=True)
+        table.create()
+        connection.execute('SET mapred.job.tracker=local')
+        # NOTE(jing) I'm stuck on a version of Hive without INSERT ... VALUES
+        connection.execute(table.insert().from_select(['a'], one_row.select()))
+
+        result = table.select().execute().fetchall()
+        expected = [(1,)]
+        self.assertEqual(result, expected)
+
+    @with_engine_connection
+    def test_insert_values(self, engine, connection):
+        table = Table('insert_test', MetaData(bind=engine),
+                      Column('a', sqlalchemy.types.Integer),
+                      schema='pyhive_test_database')
+        table.drop(checkfirst=True)
+        table.create()
+        connection.execute(table.insert([{'a': 1}, {'a': 2}]))
+
+        result = table.select().execute().fetchall()
+        expected = [(1,), (2,)]
+        self.assertEqual(result, expected)
