@@ -517,6 +517,22 @@ class HiveDialect(default.DefaultDialect):
         # We decode everything as UTF-8
         return True
 
+
+from sqlalchemy.ext.compiler import compiles
+from sqlalchemy.sql.expression import Insert
+
+
+@compiles(Insert, 'hive')
+def insert_into_add_table_keyword(insert, compiler, **kwargs):
+    q = 'INSERT INTO TABLE %s' % compiler.process(insert.table, asfrom=True)
+    if insert.select is not None:
+        q += ' %s' % compiler.process(insert.select)
+    else:
+        colparams = compiler._get_colparams(insert, **kwargs)
+        q += ' VALUES (%s)' % ', '.join(c[1] for c in colparams)
+    return q
+
+
 if StrictVersion(sqlalchemy.__version__) < StrictVersion('0.6.0'):
     from pyhive import sqlalchemy_backports
 
