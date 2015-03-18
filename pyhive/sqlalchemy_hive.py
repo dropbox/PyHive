@@ -355,7 +355,13 @@ _type_map = {
 
 class HiveCompiler(SQLCompiler):
     def visit_concat_op_binary(self, binary, operator, **kw):
-        return "concat(%s, %s)" % (self.process(binary.left), self.process(binary.right))
+        return "concat(%s, %s)" % (self.process(binary.left),
+                                   self.process(binary.right))
+
+    def visit_insert(self, insert, **kw):
+        result = super(HiveCompiler, self).visit_insert(insert, **kw)
+        assert result.startswith('INSERT INTO')
+        return re.sub(r'^(INSERT INTO)', r'\1 TABLE', result)
 
 
 if StrictVersion(sqlalchemy.__version__) >= StrictVersion('0.6.0'):
@@ -516,21 +522,6 @@ class HiveDialect(default.DefaultDialect):
     def _check_unicode_description(self, connection):
         # We decode everything as UTF-8
         return True
-
-
-from sqlalchemy.ext.compiler import compiles
-from sqlalchemy.sql.expression import Insert
-
-
-@compiles(Insert, 'hive')
-def insert_into_add_table_keyword(insert, compiler, **kwargs):
-    q = 'INSERT INTO TABLE %s' % compiler.process(insert.table, asfrom=True)
-    if insert.select is not None:
-        q += ' %s' % compiler.process(insert.select)
-    else:
-        colparams = compiler._get_colparams(insert, **kwargs)
-        q += ' VALUES (%s)' % ', '.join(c[1] for c in colparams)
-    return q
 
 
 if StrictVersion(sqlalchemy.__version__) < StrictVersion('0.6.0'):
