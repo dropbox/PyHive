@@ -57,5 +57,4 @@ Run the following in an environment with Hive/Presto::
     pip install -r dev_requirements.txt
     py.test
 
-WARNING: This drops/creates tables named ``one_row``, ``one_row_complex``, and ``many_rows``, plus a
-database called ``pyhive_test_database``.
+WARNING: This drops/creates tables named ``one_row``, ``one_row_complex``, ``many_rows``, and ``insert_test`` plus a database called ``pyhive_test_database``.
