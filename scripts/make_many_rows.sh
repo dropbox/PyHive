@@ -11,5 +11,7 @@ CREATE TABLE many_rows (
     b STRING
 ) ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t' STORED AS TEXTFILE;
 LOAD DATA LOCAL INPATH '$temp_file' INTO TABLE many_rows PARTITION (b='blah');
+DROP TABLE IF EXISTS insert_test;
+CREATE TABLE insert_test AS SELECT * FROM many_rows;
 "
 rm -f $temp_file

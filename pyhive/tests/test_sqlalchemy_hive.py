@@ -6,7 +6,7 @@ from sqlalchemy.engine import create_engine
 from sqlalchemy.schema import Column
 from sqlalchemy.schema import MetaData
 from sqlalchemy.schema import Table
-from sqlalchemy.types import String
+from sqlalchemy.types import String, Integer
 import contextlib
 import datetime
 import decimal
@@ -78,3 +78,16 @@ class TestSqlAlchemyHive(unittest.TestCase, SqlAlchemyTestCase):
                 )
         finally:
             engine.dispose()
+
+    @with_engine_connection
+    def test_insert(self, engine, connection):
+        tb = Table('insert_test', MetaData(bind=engine), Column('a', Integer))
+
+        with engine.connect() as conn:
+            conn.execute(tb.insert(), [{'a': 10000}])
+
+        with engine.connect() as conn:
+            result = conn.execute(tb.select())
+
+        expected = [(x,) for x in list(range(10001))]
+        self.assertEqual(result, expected)
