@@ -1,6 +1,7 @@
 mock>=1.0.0
 pytest
 pytest-cov
+pytest-random
 requests>=1.0.0
 sasl>=0.1.3
 sqlalchemy>=0.9.4
