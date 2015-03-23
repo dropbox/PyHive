@@ -35,9 +35,9 @@ class TestSqlAlchemyPresto(unittest.TestCase, SqlAlchemyTestCase):
             'a string',
             '1970-01-01 00:00:00.000',
             '123',
-            '[1,2]',
-            '{"1":2,"3":4}',  # Presto converts all keys to strings so that they're valid JSON
-            '{"a":1,"b":2}',
+            [1, 2],
+            {"1": 2, "3": 4},  # Presto converts all keys to strings so that they're valid JSON
+            [1, 2],  # struct is returned as a list of elements
             #'{0:1}',
             #0.1,
         ])

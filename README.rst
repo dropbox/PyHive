@@ -54,6 +54,7 @@ Run the following in an environment with Hive/Presto::
     ./scripts/make_test_tables.sh
     virtualenv --no-site-packages env
     source env/bin/activate
+    pip install -e .
     pip install -r dev_requirements.txt
     py.test
 
