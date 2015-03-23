@@ -56,6 +56,7 @@ class HiveTimestamp(HiveStringTypeBase):
 
 class HiveDecimal(HiveStringTypeBase):
     """Translates strings to decimals"""
+    impl = types.DECIMAL
 
     def process_result_value(self, value, dialect):
         return decimal.Decimal(value)
@@ -100,11 +101,24 @@ class HiveCompiler(SQLCompiler):
     def visit_concat_op_binary(self, binary, operator, **kw):
         return "concat(%s, %s)" % (self.process(binary.left), self.process(binary.right))
 
+    def visit_column(self, *args, **kwargs):
+        result = super(HiveCompiler, self).visit_column(*args, **kwargs)
+        dot_count = result.count('.')
+        assert dot_count in (0, 1, 2), "Unexpected visit_column result {}".format(result)
+        if dot_count == 2:
+            # we have something of the form schema.table.column
+            # hive doesn't like the schema in front, so chop it out
+            result = result[result.index('.') + 1:]
+        return result
+
 
 if StrictVersion(sqlalchemy.__version__) >= StrictVersion('0.6.0'):
     class HiveTypeCompiler(compiler.GenericTypeCompiler):
         def visit_INTEGER(self, type_):
             return 'INT'
+
+        def visit_NUMERIC(self, type_):
+            return 'DECIMAL'
 
         def visit_CHAR(self, type_):
             return 'STRING'
@@ -112,6 +126,26 @@ if StrictVersion(sqlalchemy.__version__) >= StrictVersion('0.6.0'):
         def visit_VARCHAR(self, type_):
             return 'STRING'
 
+        def visit_NCHAR(self, type_):
+            return 'STRING'
+
+        def visit_TEXT(self, type_):
+            return 'STRING'
+
+        def visit_CLOB(self, type_):
+            return 'STRING'
+
+        def visit_BLOB(self, type_):
+            return 'BINARY'
+
+        def visit_TIME(self, type_):
+            return 'TIMESTAMP'
+
+        def visit_DATE(self, type_):
+            return 'TIMESTAMP'
+
+        def visit_DATETIME(self, type_):
+            return 'TIMESTAMP'
 
 class HiveDialect(default.DefaultDialect):
     name = b'hive'

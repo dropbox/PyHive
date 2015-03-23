@@ -15,6 +15,12 @@ class TestSqlAlchemyPresto(unittest.TestCase, SqlAlchemyTestCase):
     def create_engine(self):
         return create_engine('presto://localhost:8080/hive/default?source={}'.format(self.id()))
 
+    def test_bad_format(self):
+        self.assertRaises(
+            ValueError,
+            lambda: create_engine('presto://localhost:8080/hive/default/what'),
+        )
+
     @with_engine_connection
     def test_reflect_select(self, engine, connection):
         """reflecttable should be able to fill in a table from the name"""

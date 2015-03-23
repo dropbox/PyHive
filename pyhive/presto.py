@@ -60,7 +60,7 @@ class Connection(object):
         return Cursor(*self._args, **self._kwargs)
 
     def rollback(self):
-        raise NotSupportedError("Presto does not have transactions")
+        raise NotSupportedError("Presto does not have transactions")  # pragma: no cover
 
 
 class Cursor(common.DBAPICursor):

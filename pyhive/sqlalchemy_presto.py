@@ -70,6 +70,9 @@ class PrestoDialect(default.DefaultDialect):
             raise ValueError("Unexpected database format {}".format(url.database))
         return ([], kwargs)
 
+    def get_schema_names(self, connection, **kw):
+        return [row.Schema for row in connection.execute('SHOW SCHEMAS')]
+
     def _get_table_columns(self, connection, table_name, schema):
         full_table = self.identifier_preparer.quote_identifier(table_name)
         if schema:
@@ -98,7 +101,7 @@ class PrestoDialect(default.DefaultDialect):
             return False
 
     def get_columns(self, connection, table_name, schema=None, **kw):
-        rows = self._get_table_columns(connection, table_name, None)
+        rows = self._get_table_columns(connection, table_name, schema)
         result = []
         for row in rows:
             try:
@@ -123,7 +126,7 @@ class PrestoDialect(default.DefaultDialect):
         return []
 
     def get_indexes(self, connection, table_name, schema=None, **kw):
-        rows = self._get_table_columns(connection, table_name, None)
+        rows = self._get_table_columns(connection, table_name, schema)
         col_names = []
         for row in rows:
             if row['Partition Key']:

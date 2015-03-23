@@ -85,6 +85,8 @@ class TestPresto(unittest.TestCase, DBAPITestCase):
 
     @with_cursor
     def test_poll(self, cursor):
+        self.assertRaises(presto.ProgrammingError, cursor.poll)
+
         cursor.execute('SELECT * FROM one_row')
         while True:
             status = cursor.poll()
@@ -93,6 +95,6 @@ class TestPresto(unittest.TestCase, DBAPITestCase):
             self.assertIn('stats', status)
 
         def fail(*args, **kwargs):
-            self.fail("Should not need requests.get after done polling")
+            self.fail("Should not need requests.get after done polling")  # pragma: no cover
         with mock.patch('requests.get', fail):
             self.assertEqual(cursor.fetchall(), [[1]])

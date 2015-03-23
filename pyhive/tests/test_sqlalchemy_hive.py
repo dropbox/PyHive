@@ -1,15 +1,18 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+from pyhive.sqlalchemy_hive import HiveDate
+from pyhive.sqlalchemy_hive import HiveDecimal
+from pyhive.sqlalchemy_hive import HiveTimestamp
 from pyhive.tests.sqlachemy_test_case import SqlAlchemyTestCase
 from pyhive.tests.sqlachemy_test_case import with_engine_connection
 from sqlalchemy.engine import create_engine
 from sqlalchemy.schema import Column
 from sqlalchemy.schema import MetaData
 from sqlalchemy.schema import Table
-from sqlalchemy.types import String
 import contextlib
 import datetime
 import decimal
+import sqlalchemy.types
 import unittest
 
 _ONE_ROW_COMPLEX_CONTENTS = [
@@ -56,7 +59,7 @@ class TestSqlAlchemyHive(unittest.TestCase, SqlAlchemyTestCase):
     def test_reserved_words(self, engine, connection):
         """Hive uses backticks"""
         # Use keywords for the table/column name
-        fake_table = Table('select', MetaData(bind=engine), Column('map', String))
+        fake_table = Table('select', MetaData(bind=engine), Column('map', sqlalchemy.types.String))
         query = str(fake_table.select(fake_table.c.map == 'a'))
         self.assertIn('`select`', query)
         self.assertIn('`map`', query)
@@ -78,3 +81,44 @@ class TestSqlAlchemyHive(unittest.TestCase, SqlAlchemyTestCase):
                 )
         finally:
             engine.dispose()
+
+    @with_engine_connection
+    def test_lots_of_types(self, engine, connection):
+        # Presto doesn't have raw CREATE TABLE support, so we ony test hive
+        # take type list from sqlalchemy.types
+        types = [
+            'INT', 'CHAR', 'VARCHAR', 'NCHAR', 'TEXT', 'Text', 'FLOAT',
+            'NUMERIC', 'DECIMAL', 'TIMESTAMP', 'DATETIME', 'CLOB', 'BLOB',
+            'BOOLEAN', 'SMALLINT', 'DATE', 'TIME',
+            'String', 'Integer', 'SmallInteger',
+            'Numeric', 'Float', 'DateTime', 'Date', 'Time', 'Binary',
+            'Boolean', 'Unicode', 'UnicodeText',
+        ]
+        cols = []
+        for i, t in enumerate(types):
+            cols.append(Column(str(i), getattr(sqlalchemy.types, t)))
+        cols.append(Column('hive_date', HiveDate))
+        cols.append(Column('hive_decimal', HiveDecimal))
+        cols.append(Column('hive_timestamp', HiveTimestamp))
+        table = Table('test_table', MetaData(bind=engine), *cols, schema='sqlalchemy_test')
+        table.drop(checkfirst=True)
+        table.create()
+        connection.execute('SET mapred.job.tracker=local')
+        connection.execute('USE sqlalchemy_test')
+        connection.execute("""
+        INSERT OVERWRITE TABLE test_table
+        SELECT
+            1, "a", "a", "a", "a", "a", 0.1,
+            0.1, 0.1, 0, 0, "a", "a",
+            false, 1, 0, 0,
+            "a", 1, 1,
+            0.1, 0.1, 0, 0, 0, "a",
+            false, "a", "a",
+            0, 0.1, 123 + 2000
+        FROM default.one_row
+        """)
+        row = connection.execute(table.select()).fetchone()
+        self.assertEqual(row.hive_date, datetime.date(1970, 1, 1))
+        self.assertEqual(row.hive_decimal, decimal.Decimal('0.1'),)
+        self.assertEqual(row.hive_timestamp, datetime.datetime(1970, 1, 1, 0, 0, 2, 123))
+        table.drop()

@@ -124,7 +124,7 @@ class Connection(object):
         return self._sessionHandle
 
     def rollback(self):
-        raise NotSupportedError("Hive does not have transactions")
+        raise NotSupportedError("Hive does not have transactions")  # pragma: no cover
 
 
 class Cursor(common.DBAPICursor):
@@ -266,7 +266,7 @@ def _unwrap_col_val(val):
                 return val.decode('utf-8')
             else:
                 return val
-    raise DataError("Got empty column value {}".format(val))
+    raise DataError("Got empty column value {}".format(val))  # pragma: no cover
 
 
 def _check_status(response):
