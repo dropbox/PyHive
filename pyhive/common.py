@@ -236,3 +236,9 @@ class ParamEscaper(object):
             return self.escape_string(item)
         else:
             raise exc.ProgrammingError("Unsupported object {}".format(item))
+
+
+class UniversalSet(object):
+    """set containing everything"""
+    def __contains__(self, item):
+        return True
