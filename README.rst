@@ -1,3 +1,4 @@
+======
 PyHive
 ======
 
@@ -30,6 +31,9 @@ First install this package to register it with SQLAlchemy (see ``setup.py``).
     engine = create_engine('presto://localhost:8080/hive/default')
     logs = Table('my_awesome_data', MetaData(bind=engine), autoload=True)
     print select([func.count('*')], from_obj=logs).scalar()
+
+Note: query generation functionality is not exhaustive or fully tested, but there should be no
+problem with raw SQL.
 
 Requirements
 ============
