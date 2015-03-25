@@ -100,11 +100,11 @@ class TestSqlAlchemyHive(unittest.TestCase, SqlAlchemyTestCase):
         cols.append(Column('hive_date', HiveDate))
         cols.append(Column('hive_decimal', HiveDecimal))
         cols.append(Column('hive_timestamp', HiveTimestamp))
-        table = Table('test_table', MetaData(bind=engine), *cols, schema='sqlalchemy_test')
+        table = Table('test_table', MetaData(bind=engine), *cols, schema='pyhive_test_database')
         table.drop(checkfirst=True)
         table.create()
         connection.execute('SET mapred.job.tracker=local')
-        connection.execute('USE sqlalchemy_test')
+        connection.execute('USE pyhive_test_database')
         connection.execute("""
         INSERT OVERWRITE TABLE test_table
         SELECT
