@@ -147,6 +147,7 @@ if StrictVersion(sqlalchemy.__version__) >= StrictVersion('0.6.0'):
         def visit_DATETIME(self, type_):
             return 'TIMESTAMP'
 
+
 class HiveDialect(default.DefaultDialect):
     name = b'hive'
     driver = b'thrift'

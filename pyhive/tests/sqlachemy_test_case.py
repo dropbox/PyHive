@@ -110,9 +110,9 @@ class SqlAlchemyTestCase(object):
         self.assertIn('one_row_complex', meta.tables)
 
         insp = sqlalchemy.inspect(engine)
-        self.assertEqual(
+        self.assertIn(
+            'dummy_table',
             insp.get_table_names(schema='pyhive_test_database'),
-            ['dummy_table'],
         )
 
     @with_engine_connection
