@@ -99,7 +99,13 @@ _type_map = {
 
 class HiveCompiler(SQLCompiler):
     def visit_concat_op_binary(self, binary, operator, **kw):
-        return "concat(%s, %s)" % (self.process(binary.left), self.process(binary.right))
+        return "concat(%s, %s)" % (self.process(binary.left),
+                                   self.process(binary.right))
+
+    def visit_insert(self, insert, **kw):
+        result = super(HiveCompiler, self).visit_insert(insert, **kw)
+        assert result.startswith('INSERT INTO')
+        return re.sub(r'^(INSERT INTO)', r'\1 TABLE', result)
 
     def visit_insert(self, *args, **kwargs):
         result = super(HiveCompiler, self).visit_insert(*args, **kwargs)
@@ -305,6 +311,7 @@ class HiveDialect(default.DefaultDialect):
     def _check_unicode_description(self, connection):
         # We decode everything as UTF-8
         return True
+
 
 if StrictVersion(sqlalchemy.__version__) < StrictVersion('0.6.0'):
     from pyhive import sqlalchemy_backports
