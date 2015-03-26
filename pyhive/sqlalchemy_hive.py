@@ -126,7 +126,9 @@ class HiveCompiler(SQLCompiler):
 
 @compiles(sa.sql.functions.char_length, 'hive')
 def compile_char_length_on_hive(element, compiler, **kwargs):
-    return compiler.visit_function(sa.func.length(element.expr), **kwargs)
+    assert len(element.clauses) == 1, \
+        'char_length must have a single clause, got %s' % list(element.clauses)
+    return compiler.visit_function(sa.func.length(*element.clauses), **kwargs)
 
 
 if StrictVersion(sqlalchemy.__version__) >= StrictVersion('0.6.0'):
