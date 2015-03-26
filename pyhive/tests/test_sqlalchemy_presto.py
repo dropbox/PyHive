@@ -15,6 +15,12 @@ class TestSqlAlchemyPresto(unittest.TestCase, SqlAlchemyTestCase):
     def create_engine(self):
         return create_engine('presto://localhost:8080/hive/default?source={}'.format(self.id()))
 
+    def test_bad_format(self):
+        self.assertRaises(
+            ValueError,
+            lambda: create_engine('presto://localhost:8080/hive/default/what'),
+        )
+
     @with_engine_connection
     def test_reflect_select(self, engine, connection):
         """reflecttable should be able to fill in a table from the name"""
@@ -35,9 +41,9 @@ class TestSqlAlchemyPresto(unittest.TestCase, SqlAlchemyTestCase):
             'a string',
             '1970-01-01 00:00:00.000',
             '123',
-            '[1,2]',
-            '{"1":2,"3":4}',  # Presto converts all keys to strings so that they're valid JSON
-            '{"a":1,"b":2}',
+            [1, 2],
+            {"1": 2, "3": 4},  # Presto converts all keys to strings so that they're valid JSON
+            [1, 2],  # struct is returned as a list of elements
             #'{0:1}',
             #0.1,
         ])

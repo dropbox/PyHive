@@ -22,6 +22,7 @@ class DBAPICursor(object):
     def __init__(self, poll_interval=1):
         self._poll_interval = poll_interval
         self._reset_state()
+        self.lastrowid = None
 
     def _reset_state(self):
         """Reset state about the previous query in preparation for running another query"""
@@ -41,7 +42,7 @@ class DBAPICursor(object):
 
     @abc.abstractproperty
     def description(self):
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: no cover
 
     def close(self):
         """By default, do nothing"""
@@ -50,7 +51,7 @@ class DBAPICursor(object):
     @abc.abstractmethod
     def _fetch_more(self):
         """Get more results, append it to ``self._data``, and update ``self._state``."""
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: no cover
 
     @property
     def rowcount(self):
@@ -67,7 +68,7 @@ class DBAPICursor(object):
 
         Return values are not defined.
         """
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: no cover
 
     def executemany(self, operation, seq_of_parameters):
         """Prepare a database operation (query or command) and then execute it against all parameter
@@ -236,3 +237,9 @@ class ParamEscaper(object):
             return self.escape_string(item)
         else:
             raise exc.ProgrammingError("Unsupported object {}".format(item))
+
+
+class UniversalSet(object):
+    """set containing everything"""
+    def __contains__(self, item):
+        return True

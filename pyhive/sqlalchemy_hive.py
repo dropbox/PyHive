@@ -9,6 +9,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from distutils.version import StrictVersion
 from pyhive import hive
+from pyhive.common import UniversalSet
 from sqlalchemy.sql import compiler
 from sqlalchemy import exc
 from sqlalchemy import types
@@ -57,272 +58,15 @@ class HiveTimestamp(HiveStringTypeBase):
 
 class HiveDecimal(HiveStringTypeBase):
     """Translates strings to decimals"""
+    impl = types.DECIMAL
 
     def process_result_value(self, value, dialect):
         return decimal.Decimal(value)
 
 
-def _get_illegal_initial_characters():
-    if isinstance(compiler.IdentifierPreparer.illegal_initial_characters, set):
-        # Newer sqlalchemy
-        return set([str(x) for x in range(0, 10)]).union(['$', '_'])
-    else:
-        # For backwards compatibility with 0.5 (and maybe others)
-        return re.compile(r'[0-9$_]')
-
-
 class HiveIdentifierPreparer(compiler.IdentifierPreparer):
-    # https://github.com/apache/hive/blob/trunk/ql/src/java/org/apache/hadoop/hive/ql/parse/HiveLexer.g
-    reserved_words = frozenset([
-        '$elem$',
-        '$key$',
-        '$value$',
-        'add',
-        'admin'
-        'after',
-        'all',
-        'alter',
-        'analyze',
-        'and',
-        'archive',
-        'array',
-        'as',
-        'asc',
-        'before',
-        'between',
-        'bigint',
-        'binary',
-        'boolean',
-        'both',
-        'bucket',
-        'buckets',
-        'by',
-        'cascade',
-        'case',
-        'cast',
-        'change',
-        'char',
-        'cluster',
-        'clustered',
-        'clusterstatus',
-        'collection',
-        'column',
-        'columns',
-        'comment',
-        'compute',
-        'concatenate',
-        'continue',
-        'create',
-        'cross',
-        'cube',
-        'current',
-        'cursor',
-        'data',
-        'database',
-        'databases',
-        'date',
-        'datetime',
-        'dbproperties',
-        'decimal',
-        'deferred',
-        'defined',
-        'delete',
-        'delimited',
-        'dependency',
-        'desc',
-        'describe',
-        'directories',
-        'directory',
-        'disable',
-        'distinct',
-        'distribute',
-        'double',
-        'drop',
-        'else',
-        'enable',
-        'end',
-        'escaped',
-        'exchange',
-        'exclusive',
-        'exists',
-        'explain',
-        'export',
-        'extended',
-        'external',
-        'false',
-        'fetch',
-        'fields',
-        'fileformat',
-        'first',
-        'float',
-        'following',
-        'for',
-        'format',
-        'formatted',
-        'from',
-        'full',
-        'function',
-        'functions',
-        'grant',
-        'group',
-        'grouping',
-        'having',
-        'hold_ddltime',
-        'idxproperties',
-        'if',
-        'ignore',
-        'import',
-        'in',
-        'index',
-        'indexes',
-        'inner',
-        'inpath',
-        'inputdriver',
-        'inputformat',
-        'insert',
-        'int',
-        'intersect',
-        'into',
-        'is',
-        'items',
-        'join',
-        'keys',
-        'lateral',
-        'left',
-        'less',
-        'like',
-        'limit',
-        'lines',
-        'load',
-        'local',
-        'location',
-        'lock',
-        'locks',
-        'logical',
-        'long',
-        'macro',
-        'map',
-        'mapjoin',
-        'materialized',
-        'minus',
-        'more',
-        'msck',
-        'no_drop',
-        'noscan',
-        'not',
-        'null',
-        'of',
-        'offline',
-        'on',
-        'option',
-        'or',
-        'orc',
-        'order',
-        'out',
-        'outer',
-        'outputdriver',
-        'outputformat',
-        'over',
-        'overwrite',
-        'partialscan',
-        'partition',
-        'partitioned',
-        'partitions',
-        'percent',
-        'plus',
-        'preceding',
-        'preserve',
-        'pretty',
-        'procedure',
-        'protection',
-        'purge',
-        'range',
-        'rcfile',
-        'read',
-        'readonly',
-        'reads',
-        'rebuild',
-        'recordreader',
-        'recordwriter',
-        'reduce',
-        'regexp',
-        'rename',
-        'repair',
-        'replace',
-        'restrict',
-        'revoke',
-        'right',
-        'rlike',
-        'role',
-        'roles',
-        'rollup',
-        'row',
-        'rows',
-        'schema',
-        'schemas',
-        'select',
-        'semi',
-        'sequencefile',
-        'serde',
-        'serdeproperties',
-        'set',
-        'sets',
-        'shared',
-        'show',
-        'show_database',
-        'skewed',
-        'smallint',
-        'sort',
-        'sorted',
-        'ssl',
-        'statistics',
-        'stored',
-        'streamtable',
-        'string',
-        'struct',
-        'table',
-        'tables',
-        'tablesample',
-        'tblproperties',
-        'temporary',
-        'terminated',
-        'textfile',
-        'then',
-        'timestamp',
-        'tinyint',
-        'to',
-        'touch',
-        'transform',
-        'trigger',
-        'true',
-        'truncate',
-        'unarchive',
-        'unbounded',
-        'undo',
-        'union',
-        'uniontype',
-        'uniquejoin',
-        'unlock',
-        'unset',
-        'unsigned',
-        'update',
-        'use',
-        'user',
-        'using',
-        'utc',
-        'utc_tmestamp',
-        'varchar',
-        'view',
-        'when',
-        'where',
-        'while',
-        'window',
-        'with',
-    ])
-
-    legal_characters = re.compile(r'^[A-Z0-9_]+$', re.I)
-
-    illegal_initial_characters = _get_illegal_initial_characters()
+    # Just quote everything to make things simpler / easier to upgrade
+    reserved_words = UniversalSet()
 
     def __init__(self, dialect):
         super(HiveIdentifierPreparer, self).__init__(
@@ -359,6 +103,26 @@ class HiveCompiler(SQLCompiler):
     def visit_concat_op_binary(self, binary, operator, **kw):
         return "concat(%s, %s)" % (self.process(binary.left), self.process(binary.right))
 
+    def visit_insert(self, *args, **kwargs):
+        result = super(HiveCompiler, self).visit_insert(*args, **kwargs)
+        # Massage the result into Hive's format
+        #   INSERT INTO `pyhive_test_database`.`test_table` (`a`) SELECT ...
+        #   =>
+        #   INSERT INTO TABLE `pyhive_test_database`.`test_table` SELECT ...
+        regex = r'^(INSERT INTO) ([^\s]+) \([^\)]*\)'
+        assert re.search(regex, result), "Unexpected visit_insert result: {}".format(result)
+        return re.sub(regex, r'\1 TABLE \2', result)
+
+    def visit_column(self, *args, **kwargs):
+        result = super(HiveCompiler, self).visit_column(*args, **kwargs)
+        dot_count = result.count('.')
+        assert dot_count in (0, 1, 2), "Unexpected visit_column result {}".format(result)
+        if dot_count == 2:
+            # we have something of the form schema.table.column
+            # hive doesn't like the schema in front, so chop it out
+            result = result[result.index('.') + 1:]
+        return result
+
 
 @compiles(sa.sql.functions.char_length, 'hive')
 def compile_char_length_on_hive(element, compiler, **kwargs):
@@ -370,11 +134,35 @@ if StrictVersion(sqlalchemy.__version__) >= StrictVersion('0.6.0'):
         def visit_INTEGER(self, type_):
             return 'INT'
 
+        def visit_NUMERIC(self, type_):
+            return 'DECIMAL'
+
         def visit_CHAR(self, type_):
             return 'STRING'
 
         def visit_VARCHAR(self, type_):
             return 'STRING'
+
+        def visit_NCHAR(self, type_):
+            return 'STRING'
+
+        def visit_TEXT(self, type_):
+            return 'STRING'
+
+        def visit_CLOB(self, type_):
+            return 'STRING'
+
+        def visit_BLOB(self, type_):
+            return 'BINARY'
+
+        def visit_TIME(self, type_):
+            return 'TIMESTAMP'
+
+        def visit_DATE(self, type_):
+            return 'TIMESTAMP'
+
+        def visit_DATETIME(self, type_):
+            return 'TIMESTAMP'
 
 
 class HiveDialect(default.DefaultDialect):
@@ -393,6 +181,7 @@ class HiveDialect(default.DefaultDialect):
     supports_unicode_binds = True
     returns_unicode_strings = True
     description_encoding = None
+    supports_multivalues_insert = True
     dbapi_type_map = {
         'DATE_TYPE': HiveDate(),
         'TIMESTAMP_TYPE': HiveTimestamp(),
