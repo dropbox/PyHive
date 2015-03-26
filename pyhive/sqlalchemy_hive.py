@@ -13,11 +13,13 @@ from sqlalchemy.sql import compiler
 from sqlalchemy import exc
 from sqlalchemy import types
 from sqlalchemy import util
+from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.databases import mysql
 from sqlalchemy.engine import default
 import decimal
 import re
 import sqlalchemy
+import sqlalchemy as sa
 
 try:
     from sqlalchemy import processors
@@ -356,6 +358,11 @@ _type_map = {
 class HiveCompiler(SQLCompiler):
     def visit_concat_op_binary(self, binary, operator, **kw):
         return "concat(%s, %s)" % (self.process(binary.left), self.process(binary.right))
+
+
+@compiles(sa.sql.functions.char_length, 'hive')
+def compile_char_length_on_hive(element, compiler, **kwargs):
+    return compiler.visit_function(sa.func.length(element.expr), **kwargs)
 
 
 if StrictVersion(sqlalchemy.__version__) >= StrictVersion('0.6.0'):
