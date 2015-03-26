@@ -42,9 +42,9 @@ class TestPresto(unittest.TestCase, DBAPITestCase):
             ('string', 'varchar', None, None, None, None, True),
             ('timestamp', 'timestamp', None, None, None, None, True),
             ('binary', 'varbinary', None, None, None, None, True),
-            ('array', 'varchar', None, None, None, None, True),
-            ('map', 'varchar', None, None, None, None, True),
-            ('struct', 'varchar', None, None, None, None, True),
+            ('array', 'array<bigint>', None, None, None, None, True),
+            ('map', 'map<bigint,bigint>', None, None, None, None, True),
+            ('struct', "row<bigint,bigint>('a','b')", None, None, None, None, True),
             #('union', 'varchar', None, None, None, None, True),
             #('decimal', 'double', None, None, None, None, True),
         ])
@@ -59,9 +59,9 @@ class TestPresto(unittest.TestCase, DBAPITestCase):
             'a string',
             '1970-01-01 00:00:00.000',
             '123',
-            '[1,2]',
-            '{"1":2,"3":4}',  # Presto converts all keys to strings so that they're valid JSON
-            '{"a":1,"b":2}',
+            [1, 2],
+            {"1": 2, "3": 4},  # Presto converts all keys to strings so that they're valid JSON
+            [1, 2],  # struct is returned as a list of elements
             #'{0:1}',
             #0.1,
         ]])
@@ -85,6 +85,8 @@ class TestPresto(unittest.TestCase, DBAPITestCase):
 
     @with_cursor
     def test_poll(self, cursor):
+        self.assertRaises(presto.ProgrammingError, cursor.poll)
+
         cursor.execute('SELECT * FROM one_row')
         while True:
             status = cursor.poll()
@@ -93,6 +95,6 @@ class TestPresto(unittest.TestCase, DBAPITestCase):
             self.assertIn('stats', status)
 
         def fail(*args, **kwargs):
-            self.fail("Should not need requests.get after done polling")
+            self.fail("Should not need requests.get after done polling")  # pragma: no cover
         with mock.patch('requests.get', fail):
             self.assertEqual(cursor.fetchall(), [[1]])

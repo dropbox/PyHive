@@ -1,7 +1,7 @@
 # coding: utf-8
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from sqlalchemy import select
+import sqlalchemy
 from sqlalchemy.exc import NoSuchTableError
 from sqlalchemy.schema import Index
 from sqlalchemy.schema import MetaData
@@ -43,6 +43,9 @@ class SqlAlchemyTestCase(object):
         """reflecttable should throw an exception on an invalid table"""
         self.assertRaises(NoSuchTableError,
             lambda: Table('this_does_not_exist', MetaData(bind=engine), autoload=True))
+        self.assertRaises(NoSuchTableError,
+            lambda: Table('this_does_not_exist', MetaData(bind=engine),
+                          schema='also_does_not_exist', autoload=True))
 
     @with_engine_connection
     def test_reflect_include_columns(self, engine, connection):
@@ -53,6 +56,13 @@ class SqlAlchemyTestCase(object):
         self.assertEqual(len(one_row_complex.c), 1)
         self.assertIsNotNone(one_row_complex.c.int)
         self.assertRaises(AttributeError, lambda: one_row_complex.c.tinyint)
+
+    @with_engine_connection
+    def test_reflect_with_schema(self, engine, connection):
+        dummy = Table('dummy_table', MetaData(bind=engine), schema='pyhive_test_database',
+                      autoload=True)
+        self.assertEqual(len(dummy.c), 1)
+        self.assertIsNotNone(dummy.c.a)
 
     @with_engine_connection
     def test_reflect_partitions(self, engine, connection):
@@ -79,5 +89,33 @@ class SqlAlchemyTestCase(object):
         """Verify that unicode strings make it through SQLAlchemy and the backend"""
         unicode_str = "白人看不懂"
         one_row = Table('one_row', MetaData(bind=engine))
-        returned_str = select([expression.bindparam("好", unicode_str)], from_obj=one_row).scalar()
+        returned_str = sqlalchemy.select(
+            [expression.bindparam("好", unicode_str)],
+            from_obj=one_row,
+        ).scalar()
         self.assertEqual(returned_str, unicode_str)
+
+    @with_engine_connection
+    def test_reflect_schemas(self, engine, connection):
+        insp = sqlalchemy.inspect(engine)
+        schemas = insp.get_schema_names()
+        self.assertIn('pyhive_test_database', schemas)
+        self.assertIn('default', schemas)
+
+    @with_engine_connection
+    def test_get_table_names(self, engine, connection):
+        meta = MetaData()
+        meta.reflect(bind=engine)
+        self.assertIn('one_row', meta.tables)
+        self.assertIn('one_row_complex', meta.tables)
+
+        insp = sqlalchemy.inspect(engine)
+        self.assertEqual(
+            insp.get_table_names(schema='pyhive_test_database'),
+            ['dummy_table'],
+        )
+
+    @with_engine_connection
+    def test_has_table(self, engine, connection):
+        self.assertTrue(Table('one_row', MetaData(bind=engine)).exists())
+        self.assertFalse(Table('this_table_does_not_exist', MetaData(bind=engine)).exists())

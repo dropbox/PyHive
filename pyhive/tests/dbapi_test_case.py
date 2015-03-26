@@ -27,7 +27,7 @@ class DBAPITestCase(object):
 
     @abc.abstractmethod
     def connect(self):
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: no cover
 
     @with_cursor
     def test_fetchone(self, cursor):

@@ -9,6 +9,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from distutils.version import StrictVersion
 from pyhive import presto
+from pyhive.common import UniversalSet
 from sqlalchemy import exc
 from sqlalchemy import types
 from sqlalchemy import util
@@ -19,144 +20,8 @@ import sqlalchemy
 
 
 class PrestoIdentifierPreparer(compiler.IdentifierPreparer):
-    # https://github.com/facebook/presto/blob/master/presto-parser/src/main/antlr3/com/facebook/presto/sql/parser/Statement.g
-    reserved_words = frozenset([
-        'all',
-        'alter',
-        'and',
-        'approximate',
-        'array',
-        'as',
-        'asc',
-        'at',
-        'bernoulli',
-        'between',
-        'bigint',
-        'boolean',
-        'by',
-        'case',
-        'cast',
-        'catalog',
-        'catalogs',
-        'char',
-        'character',
-        'coalesce',
-        'columns',
-        'confidence',
-        'constraint',
-        'create',
-        'cross',
-        'current',
-        'current_date',
-        'current_time',
-        'current_timestamp',
-        'date',
-        'day',
-        'dec',
-        'decimal',
-        'desc',
-        'describe',
-        'distinct',
-        'distributed',
-        'double',
-        'drop',
-        'else',
-        'end',
-        'escape',
-        'except',
-        'exists',
-        'explain',
-        'extract',
-        'false',
-        'first',
-        'following',
-        'for',
-        'format',
-        'from',
-        'full',
-        'functions',
-        'graphviz',
-        'group',
-        'having',
-        'hour',
-        'if',
-        'in',
-        'inner',
-        'insert',
-        'int',
-        'integer',
-        'intersect',
-        'interval',
-        'into',
-        'is',
-        'join',
-        'json',
-        'last',
-        'left',
-        'like',
-        'limit',
-        'localtime',
-        'localtimestamp',
-        'logical',
-        'minute',
-        'month',
-        'natural',
-        'not',
-        'null',
-        'nullif',
-        'nulls',
-        'number',
-        'numeric',
-        'on',
-        'or',
-        'order',
-        'outer',
-        'over',
-        'partition',
-        'partitions',
-        'poissonized',
-        'preceding',
-        'range',
-        'recursive',
-        'rename',
-        'replace',
-        'rescaled',
-        'right',
-        'row',
-        'rows',
-        'schema',
-        'schemas',
-        'second',
-        'select',
-        'show',
-        'stratify',
-        'substring',
-        'system',
-        'table',
-        'tables',
-        'tablesample',
-        'text',
-        'then',
-        'time',
-        'timestamp',
-        'to',
-        'true',
-        'try_cast',
-        'type',
-        'unbounded',
-        'union',
-        'use',
-        'using',
-        'values',
-        'varchar',
-        'varying',
-        'view',
-        'when',
-        'where',
-        'with',
-        'year',
-        'zone',
-    ])
+    # Just quote everything to make things simpler / easier to upgrade
+    reserved_words = UniversalSet()
 
 
 try:
@@ -205,6 +70,9 @@ class PrestoDialect(default.DefaultDialect):
             raise ValueError("Unexpected database format {}".format(url.database))
         return ([], kwargs)
 
+    def get_schema_names(self, connection, **kw):
+        return [row.Schema for row in connection.execute('SHOW SCHEMAS')]
+
     def _get_table_columns(self, connection, table_name, schema):
         full_table = self.identifier_preparer.quote_identifier(table_name)
         if schema:
@@ -233,7 +101,7 @@ class PrestoDialect(default.DefaultDialect):
             return False
 
     def get_columns(self, connection, table_name, schema=None, **kw):
-        rows = self._get_table_columns(connection, table_name, None)
+        rows = self._get_table_columns(connection, table_name, schema)
         result = []
         for row in rows:
             try:
@@ -258,7 +126,7 @@ class PrestoDialect(default.DefaultDialect):
         return []
 
     def get_indexes(self, connection, table_name, schema=None, **kw):
-        rows = self._get_table_columns(connection, table_name, None)
+        rows = self._get_table_columns(connection, table_name, schema)
         col_names = []
         for row in rows:
             if row['Partition Key']:

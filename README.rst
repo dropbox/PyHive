@@ -1,3 +1,4 @@
+======
 PyHive
 ======
 
@@ -31,6 +32,9 @@ First install this package to register it with SQLAlchemy (see ``setup.py``).
     logs = Table('my_awesome_data', MetaData(bind=engine), autoload=True)
     print select([func.count('*')], from_obj=logs).scalar()
 
+Note: query generation functionality is not exhaustive or fully tested, but there should be no
+problem with raw SQL.
+
 Requirements
 ============
 
@@ -54,6 +58,7 @@ Run the following in an environment with Hive/Presto::
     ./scripts/make_test_tables.sh
     virtualenv --no-site-packages env
     source env/bin/activate
+    pip install -e .
     pip install -r dev_requirements.txt
     py.test
 
