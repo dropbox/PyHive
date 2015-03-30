@@ -14,11 +14,13 @@ from sqlalchemy.sql import compiler
 from sqlalchemy import exc
 from sqlalchemy import types
 from sqlalchemy import util
+from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.databases import mysql
 from sqlalchemy.engine import default
 import decimal
 import re
 import sqlalchemy
+import sqlalchemy as sa
 
 try:
     from sqlalchemy import processors
@@ -98,6 +100,10 @@ _type_map = {
 
 
 class HiveCompiler(SQLCompiler):
+    function_rewrites = {
+        'char_length': 'length'
+    }
+
     def visit_concat_op_binary(self, binary, operator, **kw):
         return "concat(%s, %s)" % (self.process(binary.left), self.process(binary.right))
 
@@ -120,6 +126,11 @@ class HiveCompiler(SQLCompiler):
             # hive doesn't like the schema in front, so chop it out
             result = result[result.index('.') + 1:]
         return result
+
+    def visit_function(self, element, **kwargs):
+        name = element.name
+        func = getattr(sa.func, self.function_rewrites.get(name, name))
+        return self.process(func(*element.clauses), **kwargs)
 
 
 if StrictVersion(sqlalchemy.__version__) >= StrictVersion('0.6.0'):
