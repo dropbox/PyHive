@@ -100,6 +100,10 @@ _type_map = {
 
 
 class HiveCompiler(SQLCompiler):
+    function_rewrites = {
+        'char_length': 'length'
+    }
+
     def visit_concat_op_binary(self, binary, operator, **kw):
         return "concat(%s, %s)" % (self.process(binary.left), self.process(binary.right))
 
@@ -123,12 +127,10 @@ class HiveCompiler(SQLCompiler):
             result = result[result.index('.') + 1:]
         return result
 
-
-@compiles(sa.sql.functions.char_length, 'hive')
-def compile_char_length_on_hive(element, compiler, **kwargs):
-    assert len(element.clauses) == 1, \
-        'char_length must have a single clause, got %s' % list(element.clauses)
-    return compiler.visit_function(sa.func.length(*element.clauses), **kwargs)
+    def visit_function(self, element, **kwargs):
+        name = element.name
+        func = getattr(sa.func, self.function_rewrites.get(name, name))
+        return self.process(func(*element.clauses), **kwargs)
 
 
 if StrictVersion(sqlalchemy.__version__) >= StrictVersion('0.6.0'):
