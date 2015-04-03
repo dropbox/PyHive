@@ -119,3 +119,11 @@ class SqlAlchemyTestCase(object):
     def test_has_table(self, engine, connection):
         self.assertTrue(Table('one_row', MetaData(bind=engine)).exists())
         self.assertFalse(Table('this_table_does_not_exist', MetaData(bind=engine)).exists())
+
+    @with_engine_connection
+    def test_char_length(self, engine, connection):
+        one_row_complex = Table('one_row_complex', MetaData(bind=engine), autoload=True)
+        result = sqlalchemy.select([
+            sqlalchemy.func.char_length(one_row_complex.c.string)
+        ]).execute().scalar()
+        self.assertEqual(result, len('a string'))

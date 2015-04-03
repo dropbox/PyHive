@@ -18,6 +18,10 @@ from sqlalchemy.sql import compiler
 import re
 import sqlalchemy
 
+try:
+    from sqlalchemy.sql.compiler import SQLCompiler
+except ImportError:
+    from sqlalchemy.sql.compiler import DefaultCompiler as SQLCompiler
 
 class PrestoIdentifierPreparer(compiler.IdentifierPreparer):
     # Just quote everything to make things simpler / easier to upgrade
@@ -36,10 +40,16 @@ _type_map = {
 }
 
 
+class PrestoCompiler(SQLCompiler):
+    def visit_char_length_func(self, fn, **kw):
+        return 'length{}'.format(self.function_argspec(fn, **kw))
+
+
 class PrestoDialect(default.DefaultDialect):
     name = 'presto'
     driver = 'rest'
     preparer = PrestoIdentifierPreparer
+    statement_compiler = PrestoCompiler
     supports_alter = False
     supports_pk_autoincrement = False
     supports_default_values = False

@@ -121,6 +121,9 @@ class HiveCompiler(SQLCompiler):
             result = result[result.index('.') + 1:]
         return result
 
+    def visit_char_length_func(self, fn, **kw):
+        return 'length{}'.format(self.function_argspec(fn, **kw))
+
 
 if StrictVersion(sqlalchemy.__version__) >= StrictVersion('0.6.0'):
     class HiveTypeCompiler(compiler.GenericTypeCompiler):
