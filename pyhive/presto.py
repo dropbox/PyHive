@@ -66,7 +66,7 @@ class Connection(object):
         return self
 
     def __exit__(self, type, value, traceback):
-        close()
+        self.close()
 
 
 class Cursor(common.DBAPICursor):
