@@ -30,7 +30,7 @@ setup(
     author="Jing Wang",
     author_email="jing@dropbox.com",
     license="Apache License, Version 2.0",
-    packages=['pyhive'],
+    packages=['pyhive', 'TCLIService'],
     classifiers=[
         "Intended Audience :: Developers",
         "License :: OSI Approved :: Apache Software License",

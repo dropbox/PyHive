@@ -45,7 +45,6 @@ Install using ``pip install pyhive``.
 - For Hive
 
   - `HiveServer2 <https://cwiki.apache.org/confluence/display/Hive/Setting+up+HiveServer2>`_ daemon
-  - ``TCLIService`` (from Hive in ``/usr/lib/hive/lib/py``)
   - ``thrift_sasl`` (from `Cloudera <https://github.com/y-lan/python-hiveserver2/blob/master/src/cloudera/thrift_sasl.py>`_)
 
 There's also a `third party Conda package <https://binstar.org/blaze/pyhive>`_.
