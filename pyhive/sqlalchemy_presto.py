@@ -58,6 +58,7 @@ class PrestoDialect(default.DefaultDialect):
     supports_unicode_binds = True
     returns_unicode_strings = True
     description_encoding = None
+    supports_native_boolean = True
 
     @classmethod
     def dbapi(cls):
