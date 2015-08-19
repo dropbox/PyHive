@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from setuptools import setup
+from setuptools import setup, find_packages
 from setuptools.command.test import test as TestCommand
 import pyhive
 import sys
@@ -21,6 +21,13 @@ class PyTest(TestCommand):
 with open('README.rst') as readme:
     long_description = readme.read()
 
+
+pckg = ['pyhive']
+apache_thrift_pkgs = find_packages(include=['TCLIService',
+                                                'TCLIService.*'])
+pckg.extend(apache_thrift_pkgs)
+
+
 setup(
     name="PyHive",
     version=pyhive.__version__,
@@ -30,7 +37,7 @@ setup(
     author="Jing Wang",
     author_email="jing@dropbox.com",
     license="Apache License, Version 2.0",
-    packages=['pyhive'],
+    packages=pckg,
     classifiers=[
         "Intended Audience :: Developers",
         "License :: OSI Approved :: Apache Software License",
