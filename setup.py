@@ -39,7 +39,7 @@ setup(
     ],
     extras_require={
         "Presto": ['requests>=1.0.0'],
-        "Hive": ['sasl>=0.1.3', 'thrift>=0.8.0'],
+        "Hive": ['sasl>=0.1.3', 'thrift>=0.8.0', 'thrift_sasl>=0.1.0'],
         "SQLAlchemy": ['sqlalchemy>=0.5.0'],
     },
     tests_require=[

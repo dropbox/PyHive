@@ -41,11 +41,8 @@ Requirements
 Install using ``pip install pyhive``.
 
 - Python 2.7
-- For Presto: Just a Presto install
-- For Hive
-
-  - `HiveServer2 <https://cwiki.apache.org/confluence/display/Hive/Setting+up+HiveServer2>`_ daemon
-  - ``thrift_sasl`` (from `Cloudera <https://github.com/y-lan/python-hiveserver2/blob/master/src/cloudera/thrift_sasl.py>`_)
+- For Presto: Presto install
+- For Hive: `HiveServer2 <https://cwiki.apache.org/confluence/display/Hive/Setting+up+HiveServer2>`_ daemon
 
 There's also a `third party Conda package <https://binstar.org/blaze/pyhive>`_.
 
