@@ -38,7 +38,7 @@ problem with raw SQL.
 Requirements
 ============
 
-Install using ``pip install pyhive``.
+Install using ``pip install pyhive[hive,presto]``.
 
 - Python 2.7
 - For Presto: Presto install
