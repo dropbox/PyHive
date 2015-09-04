@@ -1052,15 +1052,15 @@ class OpenSession_args(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.STRUCT:
-	  self.req = TOpenSessionReq()
-	  self.req.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.req = TOpenSessionReq()
+          self.req.read(iprot)
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -1112,15 +1112,15 @@ class OpenSession_result(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 0:
-	if ftype == TType.STRUCT:
-	  self.success = TOpenSessionResp()
-	  self.success.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.success = TOpenSessionResp()
+          self.success.read(iprot)
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -1173,15 +1173,15 @@ class CloseSession_args(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.STRUCT:
-	  self.req = TCloseSessionReq()
-	  self.req.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.req = TCloseSessionReq()
+          self.req.read(iprot)
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -1233,15 +1233,15 @@ class CloseSession_result(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 0:
-	if ftype == TType.STRUCT:
-	  self.success = TCloseSessionResp()
-	  self.success.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.success = TCloseSessionResp()
+          self.success.read(iprot)
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -1294,15 +1294,15 @@ class GetInfo_args(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.STRUCT:
-	  self.req = TGetInfoReq()
-	  self.req.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.req = TGetInfoReq()
+          self.req.read(iprot)
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -1354,15 +1354,15 @@ class GetInfo_result(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 0:
-	if ftype == TType.STRUCT:
-	  self.success = TGetInfoResp()
-	  self.success.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.success = TGetInfoResp()
+          self.success.read(iprot)
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -1415,15 +1415,15 @@ class ExecuteStatement_args(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.STRUCT:
-	  self.req = TExecuteStatementReq()
-	  self.req.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.req = TExecuteStatementReq()
+          self.req.read(iprot)
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -1475,15 +1475,15 @@ class ExecuteStatement_result(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 0:
-	if ftype == TType.STRUCT:
-	  self.success = TExecuteStatementResp()
-	  self.success.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.success = TExecuteStatementResp()
+          self.success.read(iprot)
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -1536,15 +1536,15 @@ class GetTypeInfo_args(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.STRUCT:
-	  self.req = TGetTypeInfoReq()
-	  self.req.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.req = TGetTypeInfoReq()
+          self.req.read(iprot)
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -1596,15 +1596,15 @@ class GetTypeInfo_result(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 0:
-	if ftype == TType.STRUCT:
-	  self.success = TGetTypeInfoResp()
-	  self.success.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.success = TGetTypeInfoResp()
+          self.success.read(iprot)
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -1657,15 +1657,15 @@ class GetCatalogs_args(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.STRUCT:
-	  self.req = TGetCatalogsReq()
-	  self.req.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.req = TGetCatalogsReq()
+          self.req.read(iprot)
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -1717,15 +1717,15 @@ class GetCatalogs_result(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 0:
-	if ftype == TType.STRUCT:
-	  self.success = TGetCatalogsResp()
-	  self.success.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.success = TGetCatalogsResp()
+          self.success.read(iprot)
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -1778,15 +1778,15 @@ class GetSchemas_args(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.STRUCT:
-	  self.req = TGetSchemasReq()
-	  self.req.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.req = TGetSchemasReq()
+          self.req.read(iprot)
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -1838,15 +1838,15 @@ class GetSchemas_result(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 0:
-	if ftype == TType.STRUCT:
-	  self.success = TGetSchemasResp()
-	  self.success.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.success = TGetSchemasResp()
+          self.success.read(iprot)
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -1899,15 +1899,15 @@ class GetTables_args(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.STRUCT:
-	  self.req = TGetTablesReq()
-	  self.req.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.req = TGetTablesReq()
+          self.req.read(iprot)
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -1959,15 +1959,15 @@ class GetTables_result(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 0:
-	if ftype == TType.STRUCT:
-	  self.success = TGetTablesResp()
-	  self.success.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.success = TGetTablesResp()
+          self.success.read(iprot)
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -2020,15 +2020,15 @@ class GetTableTypes_args(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.STRUCT:
-	  self.req = TGetTableTypesReq()
-	  self.req.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.req = TGetTableTypesReq()
+          self.req.read(iprot)
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -2080,15 +2080,15 @@ class GetTableTypes_result(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 0:
-	if ftype == TType.STRUCT:
-	  self.success = TGetTableTypesResp()
-	  self.success.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.success = TGetTableTypesResp()
+          self.success.read(iprot)
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -2141,15 +2141,15 @@ class GetColumns_args(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.STRUCT:
-	  self.req = TGetColumnsReq()
-	  self.req.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.req = TGetColumnsReq()
+          self.req.read(iprot)
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -2201,15 +2201,15 @@ class GetColumns_result(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 0:
-	if ftype == TType.STRUCT:
-	  self.success = TGetColumnsResp()
-	  self.success.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.success = TGetColumnsResp()
+          self.success.read(iprot)
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -2262,15 +2262,15 @@ class GetFunctions_args(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.STRUCT:
-	  self.req = TGetFunctionsReq()
-	  self.req.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.req = TGetFunctionsReq()
+          self.req.read(iprot)
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -2322,15 +2322,15 @@ class GetFunctions_result(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 0:
-	if ftype == TType.STRUCT:
-	  self.success = TGetFunctionsResp()
-	  self.success.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.success = TGetFunctionsResp()
+          self.success.read(iprot)
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -2383,15 +2383,15 @@ class GetOperationStatus_args(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.STRUCT:
-	  self.req = TGetOperationStatusReq()
-	  self.req.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.req = TGetOperationStatusReq()
+          self.req.read(iprot)
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -2443,15 +2443,15 @@ class GetOperationStatus_result(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 0:
-	if ftype == TType.STRUCT:
-	  self.success = TGetOperationStatusResp()
-	  self.success.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.success = TGetOperationStatusResp()
+          self.success.read(iprot)
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -2504,15 +2504,15 @@ class CancelOperation_args(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.STRUCT:
-	  self.req = TCancelOperationReq()
-	  self.req.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.req = TCancelOperationReq()
+          self.req.read(iprot)
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -2564,15 +2564,15 @@ class CancelOperation_result(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 0:
-	if ftype == TType.STRUCT:
-	  self.success = TCancelOperationResp()
-	  self.success.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.success = TCancelOperationResp()
+          self.success.read(iprot)
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -2625,15 +2625,15 @@ class CloseOperation_args(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.STRUCT:
-	  self.req = TCloseOperationReq()
-	  self.req.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.req = TCloseOperationReq()
+          self.req.read(iprot)
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -2685,15 +2685,15 @@ class CloseOperation_result(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 0:
-	if ftype == TType.STRUCT:
-	  self.success = TCloseOperationResp()
-	  self.success.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.success = TCloseOperationResp()
+          self.success.read(iprot)
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -2746,15 +2746,15 @@ class GetResultSetMetadata_args(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.STRUCT:
-	  self.req = TGetResultSetMetadataReq()
-	  self.req.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.req = TGetResultSetMetadataReq()
+          self.req.read(iprot)
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -2806,15 +2806,15 @@ class GetResultSetMetadata_result(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 0:
-	if ftype == TType.STRUCT:
-	  self.success = TGetResultSetMetadataResp()
-	  self.success.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.success = TGetResultSetMetadataResp()
+          self.success.read(iprot)
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -2867,15 +2867,15 @@ class FetchResults_args(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.STRUCT:
-	  self.req = TFetchResultsReq()
-	  self.req.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.req = TFetchResultsReq()
+          self.req.read(iprot)
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -2927,15 +2927,15 @@ class FetchResults_result(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 0:
-	if ftype == TType.STRUCT:
-	  self.success = TFetchResultsResp()
-	  self.success.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.success = TFetchResultsResp()
+          self.success.read(iprot)
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -2988,15 +2988,15 @@ class GetDelegationToken_args(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.STRUCT:
-	  self.req = TGetDelegationTokenReq()
-	  self.req.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.req = TGetDelegationTokenReq()
+          self.req.read(iprot)
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -3048,15 +3048,15 @@ class GetDelegationToken_result(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 0:
-	if ftype == TType.STRUCT:
-	  self.success = TGetDelegationTokenResp()
-	  self.success.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.success = TGetDelegationTokenResp()
+          self.success.read(iprot)
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -3109,15 +3109,15 @@ class CancelDelegationToken_args(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.STRUCT:
-	  self.req = TCancelDelegationTokenReq()
-	  self.req.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.req = TCancelDelegationTokenReq()
+          self.req.read(iprot)
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -3169,15 +3169,15 @@ class CancelDelegationToken_result(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 0:
-	if ftype == TType.STRUCT:
-	  self.success = TCancelDelegationTokenResp()
-	  self.success.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.success = TCancelDelegationTokenResp()
+          self.success.read(iprot)
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -3230,15 +3230,15 @@ class RenewDelegationToken_args(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.STRUCT:
-	  self.req = TRenewDelegationTokenReq()
-	  self.req.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.req = TRenewDelegationTokenReq()
+          self.req.read(iprot)
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -3290,15 +3290,15 @@ class RenewDelegationToken_result(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 0:
-	if ftype == TType.STRUCT:
-	  self.success = TRenewDelegationTokenResp()
-	  self.success.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.success = TRenewDelegationTokenResp()
+          self.success.read(iprot)
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -3351,15 +3351,15 @@ class GetLog_args(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.STRUCT:
-	  self.req = TGetLogReq()
-	  self.req.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.req = TGetLogReq()
+          self.req.read(iprot)
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -3411,15 +3411,15 @@ class GetLog_result(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 0:
-	if ftype == TType.STRUCT:
-	  self.success = TGetLogResp()
-	  self.success.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.success = TGetLogResp()
+          self.success.read(iprot)
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
