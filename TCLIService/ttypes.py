@@ -404,19 +404,19 @@ class TTypeQualifierValue(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.I32:
-	  self.i32Value = iprot.readI32();
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.I32:
+          self.i32Value = iprot.readI32();
+        else:
+          iprot.skip(ftype)
       elif fid == 2:
-	if ftype == TType.STRING:
-	  self.stringValue = iprot.readString();
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRING:
+          self.stringValue = iprot.readString();
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -473,21 +473,21 @@ class TTypeQualifiers(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.MAP:
-	  self.qualifiers = {}
-	  (_ktype1, _vtype2, _size0 ) = iprot.readMapBegin()
-	  for _i4 in xrange(_size0):
-	    _key5 = iprot.readString();
-	    _val6 = TTypeQualifierValue()
-	    _val6.read(iprot)
-	    self.qualifiers[_key5] = _val6
-	  iprot.readMapEnd()
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.MAP:
+          self.qualifiers = {}
+          (_ktype1, _vtype2, _size0 ) = iprot.readMapBegin()
+          for _i4 in xrange(_size0):
+            _key5 = iprot.readString();
+            _val6 = TTypeQualifierValue()
+            _val6.read(iprot)
+            self.qualifiers[_key5] = _val6
+          iprot.readMapEnd()
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -500,8 +500,8 @@ class TTypeQualifiers(object):
       oprot.writeFieldBegin('qualifiers', TType.MAP, 1)
       oprot.writeMapBegin(TType.STRING, TType.STRUCT, len(self.qualifiers))
       for kiter7,viter8 in self.qualifiers.items():
-	oprot.writeString(kiter7)
-	viter8.write(oprot)
+        oprot.writeString(kiter7)
+        viter8.write(oprot)
       oprot.writeMapEnd()
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
@@ -549,20 +549,20 @@ class TPrimitiveTypeEntry(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.I32:
-	  self.type = iprot.readI32();
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.I32:
+          self.type = iprot.readI32();
+        else:
+          iprot.skip(ftype)
       elif fid == 2:
-	if ftype == TType.STRUCT:
-	  self.typeQualifiers = TTypeQualifiers()
-	  self.typeQualifiers.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.typeQualifiers = TTypeQualifiers()
+          self.typeQualifiers.read(iprot)
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -621,14 +621,14 @@ class TArrayTypeEntry(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.I32:
-	  self.objectTypePtr = iprot.readI32();
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.I32:
+          self.objectTypePtr = iprot.readI32();
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -686,19 +686,19 @@ class TMapTypeEntry(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.I32:
-	  self.keyTypePtr = iprot.readI32();
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.I32:
+          self.keyTypePtr = iprot.readI32();
+        else:
+          iprot.skip(ftype)
       elif fid == 2:
-	if ftype == TType.I32:
-	  self.valueTypePtr = iprot.readI32();
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.I32:
+          self.valueTypePtr = iprot.readI32();
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -759,20 +759,20 @@ class TStructTypeEntry(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.MAP:
-	  self.nameToTypePtr = {}
-	  (_ktype10, _vtype11, _size9 ) = iprot.readMapBegin()
-	  for _i13 in xrange(_size9):
-	    _key14 = iprot.readString();
-	    _val15 = iprot.readI32();
-	    self.nameToTypePtr[_key14] = _val15
-	  iprot.readMapEnd()
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.MAP:
+          self.nameToTypePtr = {}
+          (_ktype10, _vtype11, _size9 ) = iprot.readMapBegin()
+          for _i13 in xrange(_size9):
+            _key14 = iprot.readString();
+            _val15 = iprot.readI32();
+            self.nameToTypePtr[_key14] = _val15
+          iprot.readMapEnd()
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -785,8 +785,8 @@ class TStructTypeEntry(object):
       oprot.writeFieldBegin('nameToTypePtr', TType.MAP, 1)
       oprot.writeMapBegin(TType.STRING, TType.I32, len(self.nameToTypePtr))
       for kiter16,viter17 in self.nameToTypePtr.items():
-	oprot.writeString(kiter16)
-	oprot.writeI32(viter17)
+        oprot.writeString(kiter16)
+        oprot.writeI32(viter17)
       oprot.writeMapEnd()
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
@@ -831,20 +831,20 @@ class TUnionTypeEntry(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.MAP:
-	  self.nameToTypePtr = {}
-	  (_ktype19, _vtype20, _size18 ) = iprot.readMapBegin()
-	  for _i22 in xrange(_size18):
-	    _key23 = iprot.readString();
-	    _val24 = iprot.readI32();
-	    self.nameToTypePtr[_key23] = _val24
-	  iprot.readMapEnd()
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.MAP:
+          self.nameToTypePtr = {}
+          (_ktype19, _vtype20, _size18 ) = iprot.readMapBegin()
+          for _i22 in xrange(_size18):
+            _key23 = iprot.readString();
+            _val24 = iprot.readI32();
+            self.nameToTypePtr[_key23] = _val24
+          iprot.readMapEnd()
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -857,8 +857,8 @@ class TUnionTypeEntry(object):
       oprot.writeFieldBegin('nameToTypePtr', TType.MAP, 1)
       oprot.writeMapBegin(TType.STRING, TType.I32, len(self.nameToTypePtr))
       for kiter25,viter26 in self.nameToTypePtr.items():
-	oprot.writeString(kiter25)
-	oprot.writeI32(viter26)
+        oprot.writeString(kiter25)
+        oprot.writeI32(viter26)
       oprot.writeMapEnd()
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
@@ -903,14 +903,14 @@ class TUserDefinedTypeEntry(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.STRING:
-	  self.typeClassName = iprot.readString();
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRING:
+          self.typeClassName = iprot.readString();
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -980,45 +980,45 @@ class TTypeEntry(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.STRUCT:
-	  self.primitiveEntry = TPrimitiveTypeEntry()
-	  self.primitiveEntry.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.primitiveEntry = TPrimitiveTypeEntry()
+          self.primitiveEntry.read(iprot)
+        else:
+          iprot.skip(ftype)
       elif fid == 2:
-	if ftype == TType.STRUCT:
-	  self.arrayEntry = TArrayTypeEntry()
-	  self.arrayEntry.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.arrayEntry = TArrayTypeEntry()
+          self.arrayEntry.read(iprot)
+        else:
+          iprot.skip(ftype)
       elif fid == 3:
-	if ftype == TType.STRUCT:
-	  self.mapEntry = TMapTypeEntry()
-	  self.mapEntry.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.mapEntry = TMapTypeEntry()
+          self.mapEntry.read(iprot)
+        else:
+          iprot.skip(ftype)
       elif fid == 4:
-	if ftype == TType.STRUCT:
-	  self.structEntry = TStructTypeEntry()
-	  self.structEntry.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.structEntry = TStructTypeEntry()
+          self.structEntry.read(iprot)
+        else:
+          iprot.skip(ftype)
       elif fid == 5:
-	if ftype == TType.STRUCT:
-	  self.unionEntry = TUnionTypeEntry()
-	  self.unionEntry.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.unionEntry = TUnionTypeEntry()
+          self.unionEntry.read(iprot)
+        else:
+          iprot.skip(ftype)
       elif fid == 6:
-	if ftype == TType.STRUCT:
-	  self.userDefinedTypeEntry = TUserDefinedTypeEntry()
-	  self.userDefinedTypeEntry.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.userDefinedTypeEntry = TUserDefinedTypeEntry()
+          self.userDefinedTypeEntry.read(iprot)
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -1091,20 +1091,20 @@ class TTypeDesc(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.LIST:
-	  self.types = []
-	  (_etype30, _size27) = iprot.readListBegin()
-	  for _i31 in xrange(_size27):
-	    _elem32 = TTypeEntry()
-	    _elem32.read(iprot)
-	    self.types.append(_elem32)
-	  iprot.readListEnd()
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.LIST:
+          self.types = []
+          (_etype30, _size27) = iprot.readListBegin()
+          for _i31 in xrange(_size27):
+            _elem32 = TTypeEntry()
+            _elem32.read(iprot)
+            self.types.append(_elem32)
+          iprot.readListEnd()
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -1117,7 +1117,7 @@ class TTypeDesc(object):
       oprot.writeFieldBegin('types', TType.LIST, 1)
       oprot.writeListBegin(TType.STRUCT, len(self.types))
       for iter33 in self.types:
-	iter33.write(oprot)
+        iter33.write(oprot)
       oprot.writeListEnd()
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
@@ -1171,30 +1171,30 @@ class TColumnDesc(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.STRING:
-	  self.columnName = iprot.readString();
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRING:
+          self.columnName = iprot.readString();
+        else:
+          iprot.skip(ftype)
       elif fid == 2:
-	if ftype == TType.STRUCT:
-	  self.typeDesc = TTypeDesc()
-	  self.typeDesc.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.typeDesc = TTypeDesc()
+          self.typeDesc.read(iprot)
+        else:
+          iprot.skip(ftype)
       elif fid == 3:
-	if ftype == TType.I32:
-	  self.position = iprot.readI32();
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.I32:
+          self.position = iprot.readI32();
+        else:
+          iprot.skip(ftype)
       elif fid == 4:
-	if ftype == TType.STRING:
-	  self.comment = iprot.readString();
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRING:
+          self.comment = iprot.readString();
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -1265,20 +1265,20 @@ class TTableSchema(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.LIST:
-	  self.columns = []
-	  (_etype37, _size34) = iprot.readListBegin()
-	  for _i38 in xrange(_size34):
-	    _elem39 = TColumnDesc()
-	    _elem39.read(iprot)
-	    self.columns.append(_elem39)
-	  iprot.readListEnd()
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.LIST:
+          self.columns = []
+          (_etype37, _size34) = iprot.readListBegin()
+          for _i38 in xrange(_size34):
+            _elem39 = TColumnDesc()
+            _elem39.read(iprot)
+            self.columns.append(_elem39)
+          iprot.readListEnd()
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -1291,7 +1291,7 @@ class TTableSchema(object):
       oprot.writeFieldBegin('columns', TType.LIST, 1)
       oprot.writeListBegin(TType.STRUCT, len(self.columns))
       for iter40 in self.columns:
-	iter40.write(oprot)
+        iter40.write(oprot)
       oprot.writeListEnd()
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
@@ -1336,14 +1336,14 @@ class TBoolValue(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.BOOL:
-	  self.value = iprot.readBool();
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.BOOL:
+          self.value = iprot.readBool();
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -1396,14 +1396,14 @@ class TByteValue(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.BYTE:
-	  self.value = iprot.readByte();
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.BYTE:
+          self.value = iprot.readByte();
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -1456,14 +1456,14 @@ class TI16Value(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.I16:
-	  self.value = iprot.readI16();
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.I16:
+          self.value = iprot.readI16();
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -1516,14 +1516,14 @@ class TI32Value(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.I32:
-	  self.value = iprot.readI32();
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.I32:
+          self.value = iprot.readI32();
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -1576,14 +1576,14 @@ class TI64Value(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.I64:
-	  self.value = iprot.readI64();
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.I64:
+          self.value = iprot.readI64();
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -1636,14 +1636,14 @@ class TDoubleValue(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.DOUBLE:
-	  self.value = iprot.readDouble();
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.DOUBLE:
+          self.value = iprot.readDouble();
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -1696,14 +1696,14 @@ class TStringValue(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.STRING:
-	  self.value = iprot.readString();
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRING:
+          self.value = iprot.readString();
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -1774,51 +1774,51 @@ class TColumnValue(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.STRUCT:
-	  self.boolVal = TBoolValue()
-	  self.boolVal.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.boolVal = TBoolValue()
+          self.boolVal.read(iprot)
+        else:
+          iprot.skip(ftype)
       elif fid == 2:
-	if ftype == TType.STRUCT:
-	  self.byteVal = TByteValue()
-	  self.byteVal.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.byteVal = TByteValue()
+          self.byteVal.read(iprot)
+        else:
+          iprot.skip(ftype)
       elif fid == 3:
-	if ftype == TType.STRUCT:
-	  self.i16Val = TI16Value()
-	  self.i16Val.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.i16Val = TI16Value()
+          self.i16Val.read(iprot)
+        else:
+          iprot.skip(ftype)
       elif fid == 4:
-	if ftype == TType.STRUCT:
-	  self.i32Val = TI32Value()
-	  self.i32Val.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.i32Val = TI32Value()
+          self.i32Val.read(iprot)
+        else:
+          iprot.skip(ftype)
       elif fid == 5:
-	if ftype == TType.STRUCT:
-	  self.i64Val = TI64Value()
-	  self.i64Val.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.i64Val = TI64Value()
+          self.i64Val.read(iprot)
+        else:
+          iprot.skip(ftype)
       elif fid == 6:
-	if ftype == TType.STRUCT:
-	  self.doubleVal = TDoubleValue()
-	  self.doubleVal.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.doubleVal = TDoubleValue()
+          self.doubleVal.read(iprot)
+        else:
+          iprot.skip(ftype)
       elif fid == 7:
-	if ftype == TType.STRUCT:
-	  self.stringVal = TStringValue()
-	  self.stringVal.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.stringVal = TStringValue()
+          self.stringVal.read(iprot)
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -1895,20 +1895,20 @@ class TRow(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.LIST:
-	  self.colVals = []
-	  (_etype44, _size41) = iprot.readListBegin()
-	  for _i45 in xrange(_size41):
-	    _elem46 = TColumnValue()
-	    _elem46.read(iprot)
-	    self.colVals.append(_elem46)
-	  iprot.readListEnd()
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.LIST:
+          self.colVals = []
+          (_etype44, _size41) = iprot.readListBegin()
+          for _i45 in xrange(_size41):
+            _elem46 = TColumnValue()
+            _elem46.read(iprot)
+            self.colVals.append(_elem46)
+          iprot.readListEnd()
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -1921,7 +1921,7 @@ class TRow(object):
       oprot.writeFieldBegin('colVals', TType.LIST, 1)
       oprot.writeListBegin(TType.STRUCT, len(self.colVals))
       for iter47 in self.colVals:
-	iter47.write(oprot)
+        iter47.write(oprot)
       oprot.writeListEnd()
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
@@ -1969,24 +1969,24 @@ class TBoolColumn(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.LIST:
-	  self.values = []
-	  (_etype51, _size48) = iprot.readListBegin()
-	  for _i52 in xrange(_size48):
-	    _elem53 = iprot.readBool();
-	    self.values.append(_elem53)
-	  iprot.readListEnd()
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.LIST:
+          self.values = []
+          (_etype51, _size48) = iprot.readListBegin()
+          for _i52 in xrange(_size48):
+            _elem53 = iprot.readBool();
+            self.values.append(_elem53)
+          iprot.readListEnd()
+        else:
+          iprot.skip(ftype)
       elif fid == 2:
-	if ftype == TType.STRING:
-	  self.nulls = iprot.readString();
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRING:
+          self.nulls = iprot.readString();
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -1999,7 +1999,7 @@ class TBoolColumn(object):
       oprot.writeFieldBegin('values', TType.LIST, 1)
       oprot.writeListBegin(TType.BOOL, len(self.values))
       for iter54 in self.values:
-	oprot.writeBool(iter54)
+        oprot.writeBool(iter54)
       oprot.writeListEnd()
       oprot.writeFieldEnd()
     if self.nulls is not None:
@@ -2053,24 +2053,24 @@ class TByteColumn(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.LIST:
-	  self.values = []
-	  (_etype58, _size55) = iprot.readListBegin()
-	  for _i59 in xrange(_size55):
-	    _elem60 = iprot.readByte();
-	    self.values.append(_elem60)
-	  iprot.readListEnd()
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.LIST:
+          self.values = []
+          (_etype58, _size55) = iprot.readListBegin()
+          for _i59 in xrange(_size55):
+            _elem60 = iprot.readByte();
+            self.values.append(_elem60)
+          iprot.readListEnd()
+        else:
+          iprot.skip(ftype)
       elif fid == 2:
-	if ftype == TType.STRING:
-	  self.nulls = iprot.readString();
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRING:
+          self.nulls = iprot.readString();
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -2083,7 +2083,7 @@ class TByteColumn(object):
       oprot.writeFieldBegin('values', TType.LIST, 1)
       oprot.writeListBegin(TType.BYTE, len(self.values))
       for iter61 in self.values:
-	oprot.writeByte(iter61)
+        oprot.writeByte(iter61)
       oprot.writeListEnd()
       oprot.writeFieldEnd()
     if self.nulls is not None:
@@ -2137,24 +2137,24 @@ class TI16Column(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.LIST:
-	  self.values = []
-	  (_etype65, _size62) = iprot.readListBegin()
-	  for _i66 in xrange(_size62):
-	    _elem67 = iprot.readI16();
-	    self.values.append(_elem67)
-	  iprot.readListEnd()
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.LIST:
+          self.values = []
+          (_etype65, _size62) = iprot.readListBegin()
+          for _i66 in xrange(_size62):
+            _elem67 = iprot.readI16();
+            self.values.append(_elem67)
+          iprot.readListEnd()
+        else:
+          iprot.skip(ftype)
       elif fid == 2:
-	if ftype == TType.STRING:
-	  self.nulls = iprot.readString();
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRING:
+          self.nulls = iprot.readString();
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -2167,7 +2167,7 @@ class TI16Column(object):
       oprot.writeFieldBegin('values', TType.LIST, 1)
       oprot.writeListBegin(TType.I16, len(self.values))
       for iter68 in self.values:
-	oprot.writeI16(iter68)
+        oprot.writeI16(iter68)
       oprot.writeListEnd()
       oprot.writeFieldEnd()
     if self.nulls is not None:
@@ -2221,24 +2221,24 @@ class TI32Column(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.LIST:
-	  self.values = []
-	  (_etype72, _size69) = iprot.readListBegin()
-	  for _i73 in xrange(_size69):
-	    _elem74 = iprot.readI32();
-	    self.values.append(_elem74)
-	  iprot.readListEnd()
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.LIST:
+          self.values = []
+          (_etype72, _size69) = iprot.readListBegin()
+          for _i73 in xrange(_size69):
+            _elem74 = iprot.readI32();
+            self.values.append(_elem74)
+          iprot.readListEnd()
+        else:
+          iprot.skip(ftype)
       elif fid == 2:
-	if ftype == TType.STRING:
-	  self.nulls = iprot.readString();
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRING:
+          self.nulls = iprot.readString();
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -2251,7 +2251,7 @@ class TI32Column(object):
       oprot.writeFieldBegin('values', TType.LIST, 1)
       oprot.writeListBegin(TType.I32, len(self.values))
       for iter75 in self.values:
-	oprot.writeI32(iter75)
+        oprot.writeI32(iter75)
       oprot.writeListEnd()
       oprot.writeFieldEnd()
     if self.nulls is not None:
@@ -2305,24 +2305,24 @@ class TI64Column(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.LIST:
-	  self.values = []
-	  (_etype79, _size76) = iprot.readListBegin()
-	  for _i80 in xrange(_size76):
-	    _elem81 = iprot.readI64();
-	    self.values.append(_elem81)
-	  iprot.readListEnd()
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.LIST:
+          self.values = []
+          (_etype79, _size76) = iprot.readListBegin()
+          for _i80 in xrange(_size76):
+            _elem81 = iprot.readI64();
+            self.values.append(_elem81)
+          iprot.readListEnd()
+        else:
+          iprot.skip(ftype)
       elif fid == 2:
-	if ftype == TType.STRING:
-	  self.nulls = iprot.readString();
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRING:
+          self.nulls = iprot.readString();
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -2335,7 +2335,7 @@ class TI64Column(object):
       oprot.writeFieldBegin('values', TType.LIST, 1)
       oprot.writeListBegin(TType.I64, len(self.values))
       for iter82 in self.values:
-	oprot.writeI64(iter82)
+        oprot.writeI64(iter82)
       oprot.writeListEnd()
       oprot.writeFieldEnd()
     if self.nulls is not None:
@@ -2389,24 +2389,24 @@ class TDoubleColumn(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.LIST:
-	  self.values = []
-	  (_etype86, _size83) = iprot.readListBegin()
-	  for _i87 in xrange(_size83):
-	    _elem88 = iprot.readDouble();
-	    self.values.append(_elem88)
-	  iprot.readListEnd()
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.LIST:
+          self.values = []
+          (_etype86, _size83) = iprot.readListBegin()
+          for _i87 in xrange(_size83):
+            _elem88 = iprot.readDouble();
+            self.values.append(_elem88)
+          iprot.readListEnd()
+        else:
+          iprot.skip(ftype)
       elif fid == 2:
-	if ftype == TType.STRING:
-	  self.nulls = iprot.readString();
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRING:
+          self.nulls = iprot.readString();
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -2419,7 +2419,7 @@ class TDoubleColumn(object):
       oprot.writeFieldBegin('values', TType.LIST, 1)
       oprot.writeListBegin(TType.DOUBLE, len(self.values))
       for iter89 in self.values:
-	oprot.writeDouble(iter89)
+        oprot.writeDouble(iter89)
       oprot.writeListEnd()
       oprot.writeFieldEnd()
     if self.nulls is not None:
@@ -2473,24 +2473,24 @@ class TStringColumn(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.LIST:
-	  self.values = []
-	  (_etype93, _size90) = iprot.readListBegin()
-	  for _i94 in xrange(_size90):
-	    _elem95 = iprot.readString();
-	    self.values.append(_elem95)
-	  iprot.readListEnd()
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.LIST:
+          self.values = []
+          (_etype93, _size90) = iprot.readListBegin()
+          for _i94 in xrange(_size90):
+            _elem95 = iprot.readString();
+            self.values.append(_elem95)
+          iprot.readListEnd()
+        else:
+          iprot.skip(ftype)
       elif fid == 2:
-	if ftype == TType.STRING:
-	  self.nulls = iprot.readString();
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRING:
+          self.nulls = iprot.readString();
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -2503,7 +2503,7 @@ class TStringColumn(object):
       oprot.writeFieldBegin('values', TType.LIST, 1)
       oprot.writeListBegin(TType.STRING, len(self.values))
       for iter96 in self.values:
-	oprot.writeString(iter96)
+        oprot.writeString(iter96)
       oprot.writeListEnd()
       oprot.writeFieldEnd()
     if self.nulls is not None:
@@ -2557,24 +2557,24 @@ class TBinaryColumn(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.LIST:
-	  self.values = []
-	  (_etype100, _size97) = iprot.readListBegin()
-	  for _i101 in xrange(_size97):
-	    _elem102 = iprot.readString();
-	    self.values.append(_elem102)
-	  iprot.readListEnd()
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.LIST:
+          self.values = []
+          (_etype100, _size97) = iprot.readListBegin()
+          for _i101 in xrange(_size97):
+            _elem102 = iprot.readString();
+            self.values.append(_elem102)
+          iprot.readListEnd()
+        else:
+          iprot.skip(ftype)
       elif fid == 2:
-	if ftype == TType.STRING:
-	  self.nulls = iprot.readString();
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRING:
+          self.nulls = iprot.readString();
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -2587,7 +2587,7 @@ class TBinaryColumn(object):
       oprot.writeFieldBegin('values', TType.LIST, 1)
       oprot.writeListBegin(TType.STRING, len(self.values))
       for iter103 in self.values:
-	oprot.writeString(iter103)
+        oprot.writeString(iter103)
       oprot.writeListEnd()
       oprot.writeFieldEnd()
     if self.nulls is not None:
@@ -2659,57 +2659,57 @@ class TColumn(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.STRUCT:
-	  self.boolVal = TBoolColumn()
-	  self.boolVal.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.boolVal = TBoolColumn()
+          self.boolVal.read(iprot)
+        else:
+          iprot.skip(ftype)
       elif fid == 2:
-	if ftype == TType.STRUCT:
-	  self.byteVal = TByteColumn()
-	  self.byteVal.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.byteVal = TByteColumn()
+          self.byteVal.read(iprot)
+        else:
+          iprot.skip(ftype)
       elif fid == 3:
-	if ftype == TType.STRUCT:
-	  self.i16Val = TI16Column()
-	  self.i16Val.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.i16Val = TI16Column()
+          self.i16Val.read(iprot)
+        else:
+          iprot.skip(ftype)
       elif fid == 4:
-	if ftype == TType.STRUCT:
-	  self.i32Val = TI32Column()
-	  self.i32Val.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.i32Val = TI32Column()
+          self.i32Val.read(iprot)
+        else:
+          iprot.skip(ftype)
       elif fid == 5:
-	if ftype == TType.STRUCT:
-	  self.i64Val = TI64Column()
-	  self.i64Val.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.i64Val = TI64Column()
+          self.i64Val.read(iprot)
+        else:
+          iprot.skip(ftype)
       elif fid == 6:
-	if ftype == TType.STRUCT:
-	  self.doubleVal = TDoubleColumn()
-	  self.doubleVal.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.doubleVal = TDoubleColumn()
+          self.doubleVal.read(iprot)
+        else:
+          iprot.skip(ftype)
       elif fid == 7:
-	if ftype == TType.STRUCT:
-	  self.stringVal = TStringColumn()
-	  self.stringVal.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.stringVal = TStringColumn()
+          self.stringVal.read(iprot)
+        else:
+          iprot.skip(ftype)
       elif fid == 8:
-	if ftype == TType.STRUCT:
-	  self.binaryVal = TBinaryColumn()
-	  self.binaryVal.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.binaryVal = TBinaryColumn()
+          self.binaryVal.read(iprot)
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -2796,36 +2796,36 @@ class TRowSet(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.I64:
-	  self.startRowOffset = iprot.readI64();
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.I64:
+          self.startRowOffset = iprot.readI64();
+        else:
+          iprot.skip(ftype)
       elif fid == 2:
-	if ftype == TType.LIST:
-	  self.rows = []
-	  (_etype107, _size104) = iprot.readListBegin()
-	  for _i108 in xrange(_size104):
-	    _elem109 = TRow()
-	    _elem109.read(iprot)
-	    self.rows.append(_elem109)
-	  iprot.readListEnd()
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.LIST:
+          self.rows = []
+          (_etype107, _size104) = iprot.readListBegin()
+          for _i108 in xrange(_size104):
+            _elem109 = TRow()
+            _elem109.read(iprot)
+            self.rows.append(_elem109)
+          iprot.readListEnd()
+        else:
+          iprot.skip(ftype)
       elif fid == 3:
-	if ftype == TType.LIST:
-	  self.columns = []
-	  (_etype113, _size110) = iprot.readListBegin()
-	  for _i114 in xrange(_size110):
-	    _elem115 = TColumn()
-	    _elem115.read(iprot)
-	    self.columns.append(_elem115)
-	  iprot.readListEnd()
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.LIST:
+          self.columns = []
+          (_etype113, _size110) = iprot.readListBegin()
+          for _i114 in xrange(_size110):
+            _elem115 = TColumn()
+            _elem115.read(iprot)
+            self.columns.append(_elem115)
+          iprot.readListEnd()
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -2842,14 +2842,14 @@ class TRowSet(object):
       oprot.writeFieldBegin('rows', TType.LIST, 2)
       oprot.writeListBegin(TType.STRUCT, len(self.rows))
       for iter116 in self.rows:
-	iter116.write(oprot)
+        iter116.write(oprot)
       oprot.writeListEnd()
       oprot.writeFieldEnd()
     if self.columns is not None:
       oprot.writeFieldBegin('columns', TType.LIST, 3)
       oprot.writeListBegin(TType.STRUCT, len(self.columns))
       for iter117 in self.columns:
-	iter117.write(oprot)
+        iter117.write(oprot)
       oprot.writeListEnd()
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
@@ -2908,39 +2908,39 @@ class TStatus(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.I32:
-	  self.statusCode = iprot.readI32();
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.I32:
+          self.statusCode = iprot.readI32();
+        else:
+          iprot.skip(ftype)
       elif fid == 2:
-	if ftype == TType.LIST:
-	  self.infoMessages = []
-	  (_etype121, _size118) = iprot.readListBegin()
-	  for _i122 in xrange(_size118):
-	    _elem123 = iprot.readString();
-	    self.infoMessages.append(_elem123)
-	  iprot.readListEnd()
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.LIST:
+          self.infoMessages = []
+          (_etype121, _size118) = iprot.readListBegin()
+          for _i122 in xrange(_size118):
+            _elem123 = iprot.readString();
+            self.infoMessages.append(_elem123)
+          iprot.readListEnd()
+        else:
+          iprot.skip(ftype)
       elif fid == 3:
-	if ftype == TType.STRING:
-	  self.sqlState = iprot.readString();
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRING:
+          self.sqlState = iprot.readString();
+        else:
+          iprot.skip(ftype)
       elif fid == 4:
-	if ftype == TType.I32:
-	  self.errorCode = iprot.readI32();
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.I32:
+          self.errorCode = iprot.readI32();
+        else:
+          iprot.skip(ftype)
       elif fid == 5:
-	if ftype == TType.STRING:
-	  self.errorMessage = iprot.readString();
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRING:
+          self.errorMessage = iprot.readString();
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -2957,7 +2957,7 @@ class TStatus(object):
       oprot.writeFieldBegin('infoMessages', TType.LIST, 2)
       oprot.writeListBegin(TType.STRING, len(self.infoMessages))
       for iter124 in self.infoMessages:
-	oprot.writeString(iter124)
+        oprot.writeString(iter124)
       oprot.writeListEnd()
       oprot.writeFieldEnd()
     if self.sqlState is not None:
@@ -3017,19 +3017,19 @@ class THandleIdentifier(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.STRING:
-	  self.guid = iprot.readString();
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRING:
+          self.guid = iprot.readString();
+        else:
+          iprot.skip(ftype)
       elif fid == 2:
-	if ftype == TType.STRING:
-	  self.secret = iprot.readString();
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRING:
+          self.secret = iprot.readString();
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -3090,15 +3090,15 @@ class TSessionHandle(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.STRUCT:
-	  self.sessionId = THandleIdentifier()
-	  self.sessionId.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.sessionId = THandleIdentifier()
+          self.sessionId.read(iprot)
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -3162,30 +3162,30 @@ class TOperationHandle(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.STRUCT:
-	  self.operationId = THandleIdentifier()
-	  self.operationId.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.operationId = THandleIdentifier()
+          self.operationId.read(iprot)
+        else:
+          iprot.skip(ftype)
       elif fid == 2:
-	if ftype == TType.I32:
-	  self.operationType = iprot.readI32();
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.I32:
+          self.operationType = iprot.readI32();
+        else:
+          iprot.skip(ftype)
       elif fid == 3:
-	if ftype == TType.BOOL:
-	  self.hasResultSet = iprot.readBool();
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.BOOL:
+          self.hasResultSet = iprot.readBool();
+        else:
+          iprot.skip(ftype)
       elif fid == 4:
-	if ftype == TType.DOUBLE:
-	  self.modifiedRowCount = iprot.readDouble();
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.DOUBLE:
+          self.modifiedRowCount = iprot.readDouble();
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -3265,35 +3265,35 @@ class TOpenSessionReq(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.I32:
-	  self.client_protocol = iprot.readI32();
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.I32:
+          self.client_protocol = iprot.readI32();
+        else:
+          iprot.skip(ftype)
       elif fid == 2:
-	if ftype == TType.STRING:
-	  self.username = iprot.readString();
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRING:
+          self.username = iprot.readString();
+        else:
+          iprot.skip(ftype)
       elif fid == 3:
-	if ftype == TType.STRING:
-	  self.password = iprot.readString();
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRING:
+          self.password = iprot.readString();
+        else:
+          iprot.skip(ftype)
       elif fid == 4:
-	if ftype == TType.MAP:
-	  self.configuration = {}
-	  (_ktype126, _vtype127, _size125 ) = iprot.readMapBegin()
-	  for _i129 in xrange(_size125):
-	    _key130 = iprot.readString();
-	    _val131 = iprot.readString();
-	    self.configuration[_key130] = _val131
-	  iprot.readMapEnd()
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.MAP:
+          self.configuration = {}
+          (_ktype126, _vtype127, _size125 ) = iprot.readMapBegin()
+          for _i129 in xrange(_size125):
+            _key130 = iprot.readString();
+            _val131 = iprot.readString();
+            self.configuration[_key130] = _val131
+          iprot.readMapEnd()
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -3318,8 +3318,8 @@ class TOpenSessionReq(object):
       oprot.writeFieldBegin('configuration', TType.MAP, 4)
       oprot.writeMapBegin(TType.STRING, TType.STRING, len(self.configuration))
       for kiter132,viter133 in self.configuration.items():
-	oprot.writeString(kiter132)
-	oprot.writeString(viter133)
+        oprot.writeString(kiter132)
+        oprot.writeString(viter133)
       oprot.writeMapEnd()
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
@@ -3373,37 +3373,37 @@ class TOpenSessionResp(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.STRUCT:
-	  self.status = TStatus()
-	  self.status.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.status = TStatus()
+          self.status.read(iprot)
+        else:
+          iprot.skip(ftype)
       elif fid == 2:
-	if ftype == TType.I32:
-	  self.serverProtocolVersion = iprot.readI32();
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.I32:
+          self.serverProtocolVersion = iprot.readI32();
+        else:
+          iprot.skip(ftype)
       elif fid == 3:
-	if ftype == TType.STRUCT:
-	  self.sessionHandle = TSessionHandle()
-	  self.sessionHandle.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.sessionHandle = TSessionHandle()
+          self.sessionHandle.read(iprot)
+        else:
+          iprot.skip(ftype)
       elif fid == 4:
-	if ftype == TType.MAP:
-	  self.configuration = {}
-	  (_ktype135, _vtype136, _size134 ) = iprot.readMapBegin()
-	  for _i138 in xrange(_size134):
-	    _key139 = iprot.readString();
-	    _val140 = iprot.readString();
-	    self.configuration[_key139] = _val140
-	  iprot.readMapEnd()
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.MAP:
+          self.configuration = {}
+          (_ktype135, _vtype136, _size134 ) = iprot.readMapBegin()
+          for _i138 in xrange(_size134):
+            _key139 = iprot.readString();
+            _val140 = iprot.readString();
+            self.configuration[_key139] = _val140
+          iprot.readMapEnd()
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -3428,8 +3428,8 @@ class TOpenSessionResp(object):
       oprot.writeFieldBegin('configuration', TType.MAP, 4)
       oprot.writeMapBegin(TType.STRING, TType.STRING, len(self.configuration))
       for kiter141,viter142 in self.configuration.items():
-	oprot.writeString(kiter141)
-	oprot.writeString(viter142)
+        oprot.writeString(kiter141)
+        oprot.writeString(viter142)
       oprot.writeMapEnd()
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
@@ -3476,15 +3476,15 @@ class TCloseSessionReq(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.STRUCT:
-	  self.sessionHandle = TSessionHandle()
-	  self.sessionHandle.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.sessionHandle = TSessionHandle()
+          self.sessionHandle.read(iprot)
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -3539,15 +3539,15 @@ class TCloseSessionResp(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.STRUCT:
-	  self.status = TStatus()
-	  self.status.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.status = TStatus()
+          self.status.read(iprot)
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -3617,39 +3617,39 @@ class TGetInfoValue(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.STRING:
-	  self.stringValue = iprot.readString();
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRING:
+          self.stringValue = iprot.readString();
+        else:
+          iprot.skip(ftype)
       elif fid == 2:
-	if ftype == TType.I16:
-	  self.smallIntValue = iprot.readI16();
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.I16:
+          self.smallIntValue = iprot.readI16();
+        else:
+          iprot.skip(ftype)
       elif fid == 3:
-	if ftype == TType.I32:
-	  self.integerBitmask = iprot.readI32();
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.I32:
+          self.integerBitmask = iprot.readI32();
+        else:
+          iprot.skip(ftype)
       elif fid == 4:
-	if ftype == TType.I32:
-	  self.integerFlag = iprot.readI32();
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.I32:
+          self.integerFlag = iprot.readI32();
+        else:
+          iprot.skip(ftype)
       elif fid == 5:
-	if ftype == TType.I32:
-	  self.binaryValue = iprot.readI32();
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.I32:
+          self.binaryValue = iprot.readI32();
+        else:
+          iprot.skip(ftype)
       elif fid == 6:
-	if ftype == TType.I64:
-	  self.lenValue = iprot.readI64();
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.I64:
+          self.lenValue = iprot.readI64();
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -3725,20 +3725,20 @@ class TGetInfoReq(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.STRUCT:
-	  self.sessionHandle = TSessionHandle()
-	  self.sessionHandle.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.sessionHandle = TSessionHandle()
+          self.sessionHandle.read(iprot)
+        else:
+          iprot.skip(ftype)
       elif fid == 2:
-	if ftype == TType.I32:
-	  self.infoType = iprot.readI32();
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.I32:
+          self.infoType = iprot.readI32();
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -3802,21 +3802,21 @@ class TGetInfoResp(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.STRUCT:
-	  self.status = TStatus()
-	  self.status.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.status = TStatus()
+          self.status.read(iprot)
+        else:
+          iprot.skip(ftype)
       elif fid == 2:
-	if ftype == TType.STRUCT:
-	  self.infoValue = TGetInfoValue()
-	  self.infoValue.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.infoValue = TGetInfoValue()
+          self.infoValue.read(iprot)
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -3886,36 +3886,36 @@ class TExecuteStatementReq(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.STRUCT:
-	  self.sessionHandle = TSessionHandle()
-	  self.sessionHandle.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.sessionHandle = TSessionHandle()
+          self.sessionHandle.read(iprot)
+        else:
+          iprot.skip(ftype)
       elif fid == 2:
-	if ftype == TType.STRING:
-	  self.statement = iprot.readString();
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRING:
+          self.statement = iprot.readString();
+        else:
+          iprot.skip(ftype)
       elif fid == 3:
-	if ftype == TType.MAP:
-	  self.confOverlay = {}
-	  (_ktype144, _vtype145, _size143 ) = iprot.readMapBegin()
-	  for _i147 in xrange(_size143):
-	    _key148 = iprot.readString();
-	    _val149 = iprot.readString();
-	    self.confOverlay[_key148] = _val149
-	  iprot.readMapEnd()
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.MAP:
+          self.confOverlay = {}
+          (_ktype144, _vtype145, _size143 ) = iprot.readMapBegin()
+          for _i147 in xrange(_size143):
+            _key148 = iprot.readString();
+            _val149 = iprot.readString();
+            self.confOverlay[_key148] = _val149
+          iprot.readMapEnd()
+        else:
+          iprot.skip(ftype)
       elif fid == 4:
-	if ftype == TType.BOOL:
-	  self.runAsync = iprot.readBool();
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.BOOL:
+          self.runAsync = iprot.readBool();
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -3936,8 +3936,8 @@ class TExecuteStatementReq(object):
       oprot.writeFieldBegin('confOverlay', TType.MAP, 3)
       oprot.writeMapBegin(TType.STRING, TType.STRING, len(self.confOverlay))
       for kiter150,viter151 in self.confOverlay.items():
-	oprot.writeString(kiter150)
-	oprot.writeString(viter151)
+        oprot.writeString(kiter150)
+        oprot.writeString(viter151)
       oprot.writeMapEnd()
       oprot.writeFieldEnd()
     if self.runAsync is not None:
@@ -3991,21 +3991,21 @@ class TExecuteStatementResp(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.STRUCT:
-	  self.status = TStatus()
-	  self.status.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.status = TStatus()
+          self.status.read(iprot)
+        else:
+          iprot.skip(ftype)
       elif fid == 2:
-	if ftype == TType.STRUCT:
-	  self.operationHandle = TOperationHandle()
-	  self.operationHandle.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.operationHandle = TOperationHandle()
+          self.operationHandle.read(iprot)
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -4064,15 +4064,15 @@ class TGetTypeInfoReq(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.STRUCT:
-	  self.sessionHandle = TSessionHandle()
-	  self.sessionHandle.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.sessionHandle = TSessionHandle()
+          self.sessionHandle.read(iprot)
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -4130,21 +4130,21 @@ class TGetTypeInfoResp(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.STRUCT:
-	  self.status = TStatus()
-	  self.status.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.status = TStatus()
+          self.status.read(iprot)
+        else:
+          iprot.skip(ftype)
       elif fid == 2:
-	if ftype == TType.STRUCT:
-	  self.operationHandle = TOperationHandle()
-	  self.operationHandle.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.operationHandle = TOperationHandle()
+          self.operationHandle.read(iprot)
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -4203,15 +4203,15 @@ class TGetCatalogsReq(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.STRUCT:
-	  self.sessionHandle = TSessionHandle()
-	  self.sessionHandle.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.sessionHandle = TSessionHandle()
+          self.sessionHandle.read(iprot)
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -4269,21 +4269,21 @@ class TGetCatalogsResp(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.STRUCT:
-	  self.status = TStatus()
-	  self.status.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.status = TStatus()
+          self.status.read(iprot)
+        else:
+          iprot.skip(ftype)
       elif fid == 2:
-	if ftype == TType.STRUCT:
-	  self.operationHandle = TOperationHandle()
-	  self.operationHandle.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.operationHandle = TOperationHandle()
+          self.operationHandle.read(iprot)
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -4348,25 +4348,25 @@ class TGetSchemasReq(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.STRUCT:
-	  self.sessionHandle = TSessionHandle()
-	  self.sessionHandle.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.sessionHandle = TSessionHandle()
+          self.sessionHandle.read(iprot)
+        else:
+          iprot.skip(ftype)
       elif fid == 2:
-	if ftype == TType.STRING:
-	  self.catalogName = iprot.readString();
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRING:
+          self.catalogName = iprot.readString();
+        else:
+          iprot.skip(ftype)
       elif fid == 3:
-	if ftype == TType.STRING:
-	  self.schemaName = iprot.readString();
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRING:
+          self.schemaName = iprot.readString();
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -4432,21 +4432,21 @@ class TGetSchemasResp(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.STRUCT:
-	  self.status = TStatus()
-	  self.status.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.status = TStatus()
+          self.status.read(iprot)
+        else:
+          iprot.skip(ftype)
       elif fid == 2:
-	if ftype == TType.STRUCT:
-	  self.operationHandle = TOperationHandle()
-	  self.operationHandle.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.operationHandle = TOperationHandle()
+          self.operationHandle.read(iprot)
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -4517,40 +4517,40 @@ class TGetTablesReq(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.STRUCT:
-	  self.sessionHandle = TSessionHandle()
-	  self.sessionHandle.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.sessionHandle = TSessionHandle()
+          self.sessionHandle.read(iprot)
+        else:
+          iprot.skip(ftype)
       elif fid == 2:
-	if ftype == TType.STRING:
-	  self.catalogName = iprot.readString();
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRING:
+          self.catalogName = iprot.readString();
+        else:
+          iprot.skip(ftype)
       elif fid == 3:
-	if ftype == TType.STRING:
-	  self.schemaName = iprot.readString();
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRING:
+          self.schemaName = iprot.readString();
+        else:
+          iprot.skip(ftype)
       elif fid == 4:
-	if ftype == TType.STRING:
-	  self.tableName = iprot.readString();
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRING:
+          self.tableName = iprot.readString();
+        else:
+          iprot.skip(ftype)
       elif fid == 5:
-	if ftype == TType.LIST:
-	  self.tableTypes = []
-	  (_etype155, _size152) = iprot.readListBegin()
-	  for _i156 in xrange(_size152):
-	    _elem157 = iprot.readString();
-	    self.tableTypes.append(_elem157)
-	  iprot.readListEnd()
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.LIST:
+          self.tableTypes = []
+          (_etype155, _size152) = iprot.readListBegin()
+          for _i156 in xrange(_size152):
+            _elem157 = iprot.readString();
+            self.tableTypes.append(_elem157)
+          iprot.readListEnd()
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -4579,7 +4579,7 @@ class TGetTablesReq(object):
       oprot.writeFieldBegin('tableTypes', TType.LIST, 5)
       oprot.writeListBegin(TType.STRING, len(self.tableTypes))
       for iter158 in self.tableTypes:
-	oprot.writeString(iter158)
+        oprot.writeString(iter158)
       oprot.writeListEnd()
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
@@ -4627,21 +4627,21 @@ class TGetTablesResp(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.STRUCT:
-	  self.status = TStatus()
-	  self.status.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.status = TStatus()
+          self.status.read(iprot)
+        else:
+          iprot.skip(ftype)
       elif fid == 2:
-	if ftype == TType.STRUCT:
-	  self.operationHandle = TOperationHandle()
-	  self.operationHandle.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.operationHandle = TOperationHandle()
+          self.operationHandle.read(iprot)
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -4700,15 +4700,15 @@ class TGetTableTypesReq(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.STRUCT:
-	  self.sessionHandle = TSessionHandle()
-	  self.sessionHandle.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.sessionHandle = TSessionHandle()
+          self.sessionHandle.read(iprot)
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -4766,21 +4766,21 @@ class TGetTableTypesResp(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.STRUCT:
-	  self.status = TStatus()
-	  self.status.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.status = TStatus()
+          self.status.read(iprot)
+        else:
+          iprot.skip(ftype)
       elif fid == 2:
-	if ftype == TType.STRUCT:
-	  self.operationHandle = TOperationHandle()
-	  self.operationHandle.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.operationHandle = TOperationHandle()
+          self.operationHandle.read(iprot)
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -4851,35 +4851,35 @@ class TGetColumnsReq(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.STRUCT:
-	  self.sessionHandle = TSessionHandle()
-	  self.sessionHandle.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.sessionHandle = TSessionHandle()
+          self.sessionHandle.read(iprot)
+        else:
+          iprot.skip(ftype)
       elif fid == 2:
-	if ftype == TType.STRING:
-	  self.catalogName = iprot.readString();
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRING:
+          self.catalogName = iprot.readString();
+        else:
+          iprot.skip(ftype)
       elif fid == 3:
-	if ftype == TType.STRING:
-	  self.schemaName = iprot.readString();
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRING:
+          self.schemaName = iprot.readString();
+        else:
+          iprot.skip(ftype)
       elif fid == 4:
-	if ftype == TType.STRING:
-	  self.tableName = iprot.readString();
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRING:
+          self.tableName = iprot.readString();
+        else:
+          iprot.skip(ftype)
       elif fid == 5:
-	if ftype == TType.STRING:
-	  self.columnName = iprot.readString();
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRING:
+          self.columnName = iprot.readString();
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -4953,21 +4953,21 @@ class TGetColumnsResp(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.STRUCT:
-	  self.status = TStatus()
-	  self.status.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.status = TStatus()
+          self.status.read(iprot)
+        else:
+          iprot.skip(ftype)
       elif fid == 2:
-	if ftype == TType.STRUCT:
-	  self.operationHandle = TOperationHandle()
-	  self.operationHandle.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.operationHandle = TOperationHandle()
+          self.operationHandle.read(iprot)
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -5035,30 +5035,30 @@ class TGetFunctionsReq(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.STRUCT:
-	  self.sessionHandle = TSessionHandle()
-	  self.sessionHandle.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.sessionHandle = TSessionHandle()
+          self.sessionHandle.read(iprot)
+        else:
+          iprot.skip(ftype)
       elif fid == 2:
-	if ftype == TType.STRING:
-	  self.catalogName = iprot.readString();
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRING:
+          self.catalogName = iprot.readString();
+        else:
+          iprot.skip(ftype)
       elif fid == 3:
-	if ftype == TType.STRING:
-	  self.schemaName = iprot.readString();
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRING:
+          self.schemaName = iprot.readString();
+        else:
+          iprot.skip(ftype)
       elif fid == 4:
-	if ftype == TType.STRING:
-	  self.functionName = iprot.readString();
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRING:
+          self.functionName = iprot.readString();
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -5130,21 +5130,21 @@ class TGetFunctionsResp(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.STRUCT:
-	  self.status = TStatus()
-	  self.status.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.status = TStatus()
+          self.status.read(iprot)
+        else:
+          iprot.skip(ftype)
       elif fid == 2:
-	if ftype == TType.STRUCT:
-	  self.operationHandle = TOperationHandle()
-	  self.operationHandle.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.operationHandle = TOperationHandle()
+          self.operationHandle.read(iprot)
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -5203,15 +5203,15 @@ class TGetOperationStatusReq(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.STRUCT:
-	  self.operationHandle = TOperationHandle()
-	  self.operationHandle.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.operationHandle = TOperationHandle()
+          self.operationHandle.read(iprot)
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -5278,35 +5278,35 @@ class TGetOperationStatusResp(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.STRUCT:
-	  self.status = TStatus()
-	  self.status.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.status = TStatus()
+          self.status.read(iprot)
+        else:
+          iprot.skip(ftype)
       elif fid == 2:
-	if ftype == TType.I32:
-	  self.operationState = iprot.readI32();
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.I32:
+          self.operationState = iprot.readI32();
+        else:
+          iprot.skip(ftype)
       elif fid == 3:
-	if ftype == TType.STRING:
-	  self.sqlState = iprot.readString();
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRING:
+          self.sqlState = iprot.readString();
+        else:
+          iprot.skip(ftype)
       elif fid == 4:
-	if ftype == TType.I32:
-	  self.errorCode = iprot.readI32();
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.I32:
+          self.errorCode = iprot.readI32();
+        else:
+          iprot.skip(ftype)
       elif fid == 5:
-	if ftype == TType.STRING:
-	  self.errorMessage = iprot.readString();
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRING:
+          self.errorMessage = iprot.readString();
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -5377,15 +5377,15 @@ class TCancelOperationReq(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.STRUCT:
-	  self.operationHandle = TOperationHandle()
-	  self.operationHandle.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.operationHandle = TOperationHandle()
+          self.operationHandle.read(iprot)
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -5440,15 +5440,15 @@ class TCancelOperationResp(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.STRUCT:
-	  self.status = TStatus()
-	  self.status.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.status = TStatus()
+          self.status.read(iprot)
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -5503,15 +5503,15 @@ class TCloseOperationReq(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.STRUCT:
-	  self.operationHandle = TOperationHandle()
-	  self.operationHandle.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.operationHandle = TOperationHandle()
+          self.operationHandle.read(iprot)
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -5566,15 +5566,15 @@ class TCloseOperationResp(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.STRUCT:
-	  self.status = TStatus()
-	  self.status.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.status = TStatus()
+          self.status.read(iprot)
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -5629,15 +5629,15 @@ class TGetResultSetMetadataReq(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.STRUCT:
-	  self.operationHandle = TOperationHandle()
-	  self.operationHandle.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.operationHandle = TOperationHandle()
+          self.operationHandle.read(iprot)
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -5695,21 +5695,21 @@ class TGetResultSetMetadataResp(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.STRUCT:
-	  self.status = TStatus()
-	  self.status.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.status = TStatus()
+          self.status.read(iprot)
+        else:
+          iprot.skip(ftype)
       elif fid == 2:
-	if ftype == TType.STRUCT:
-	  self.schema = TTableSchema()
-	  self.schema.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.schema = TTableSchema()
+          self.schema.read(iprot)
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -5774,25 +5774,25 @@ class TFetchResultsReq(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.STRUCT:
-	  self.operationHandle = TOperationHandle()
-	  self.operationHandle.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.operationHandle = TOperationHandle()
+          self.operationHandle.read(iprot)
+        else:
+          iprot.skip(ftype)
       elif fid == 2:
-	if ftype == TType.I32:
-	  self.orientation = iprot.readI32();
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.I32:
+          self.orientation = iprot.readI32();
+        else:
+          iprot.skip(ftype)
       elif fid == 3:
-	if ftype == TType.I64:
-	  self.maxRows = iprot.readI64();
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.I64:
+          self.maxRows = iprot.readI64();
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -5865,26 +5865,26 @@ class TFetchResultsResp(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.STRUCT:
-	  self.status = TStatus()
-	  self.status.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.status = TStatus()
+          self.status.read(iprot)
+        else:
+          iprot.skip(ftype)
       elif fid == 2:
-	if ftype == TType.BOOL:
-	  self.hasMoreRows = iprot.readBool();
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.BOOL:
+          self.hasMoreRows = iprot.readBool();
+        else:
+          iprot.skip(ftype)
       elif fid == 3:
-	if ftype == TType.STRUCT:
-	  self.results = TRowSet()
-	  self.results.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.results = TRowSet()
+          self.results.read(iprot)
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -5953,25 +5953,25 @@ class TGetDelegationTokenReq(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.STRUCT:
-	  self.sessionHandle = TSessionHandle()
-	  self.sessionHandle.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.sessionHandle = TSessionHandle()
+          self.sessionHandle.read(iprot)
+        else:
+          iprot.skip(ftype)
       elif fid == 2:
-	if ftype == TType.STRING:
-	  self.owner = iprot.readString();
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRING:
+          self.owner = iprot.readString();
+        else:
+          iprot.skip(ftype)
       elif fid == 3:
-	if ftype == TType.STRING:
-	  self.renewer = iprot.readString();
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRING:
+          self.renewer = iprot.readString();
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -6041,20 +6041,20 @@ class TGetDelegationTokenResp(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.STRUCT:
-	  self.status = TStatus()
-	  self.status.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.status = TStatus()
+          self.status.read(iprot)
+        else:
+          iprot.skip(ftype)
       elif fid == 2:
-	if ftype == TType.STRING:
-	  self.delegationToken = iprot.readString();
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRING:
+          self.delegationToken = iprot.readString();
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -6116,20 +6116,20 @@ class TCancelDelegationTokenReq(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.STRUCT:
-	  self.sessionHandle = TSessionHandle()
-	  self.sessionHandle.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.sessionHandle = TSessionHandle()
+          self.sessionHandle.read(iprot)
+        else:
+          iprot.skip(ftype)
       elif fid == 2:
-	if ftype == TType.STRING:
-	  self.delegationToken = iprot.readString();
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRING:
+          self.delegationToken = iprot.readString();
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -6190,15 +6190,15 @@ class TCancelDelegationTokenResp(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.STRUCT:
-	  self.status = TStatus()
-	  self.status.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.status = TStatus()
+          self.status.read(iprot)
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -6256,20 +6256,20 @@ class TRenewDelegationTokenReq(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.STRUCT:
-	  self.sessionHandle = TSessionHandle()
-	  self.sessionHandle.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.sessionHandle = TSessionHandle()
+          self.sessionHandle.read(iprot)
+        else:
+          iprot.skip(ftype)
       elif fid == 2:
-	if ftype == TType.STRING:
-	  self.delegationToken = iprot.readString();
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRING:
+          self.delegationToken = iprot.readString();
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -6330,15 +6330,15 @@ class TRenewDelegationTokenResp(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.STRUCT:
-	  self.status = TStatus()
-	  self.status.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.status = TStatus()
+          self.status.read(iprot)
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -6393,15 +6393,15 @@ class TGetLogReq(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.STRUCT:
-	  self.operationHandle = TOperationHandle()
-	  self.operationHandle.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.operationHandle = TOperationHandle()
+          self.operationHandle.read(iprot)
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
@@ -6459,20 +6459,20 @@ class TGetLogResp(object):
     while True:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
-	break
+        break
       if fid == 1:
-	if ftype == TType.STRUCT:
-	  self.status = TStatus()
-	  self.status.read(iprot)
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRUCT:
+          self.status = TStatus()
+          self.status.read(iprot)
+        else:
+          iprot.skip(ftype)
       elif fid == 2:
-	if ftype == TType.STRING:
-	  self.log = iprot.readString();
-	else:
-	  iprot.skip(ftype)
+        if ftype == TType.STRING:
+          self.log = iprot.readString();
+        else:
+          iprot.skip(ftype)
       else:
-	iprot.skip(ftype)
+        iprot.skip(ftype)
       iprot.readFieldEnd()
     iprot.readStructEnd()
 
