@@ -1,6 +1,7 @@
 # coding: utf-8
 from __future__ import absolute_import
 from __future__ import unicode_literals
+from distutils.version import StrictVersion
 import sqlalchemy
 from sqlalchemy.exc import NoSuchTableError
 from sqlalchemy.schema import Index
@@ -10,6 +11,7 @@ from sqlalchemy.sql import expression
 import abc
 import contextlib
 import functools
+import unittest
 
 
 def with_engine_connection(fn):
@@ -95,6 +97,8 @@ class SqlAlchemyTestCase(object):
         ).scalar()
         self.assertEqual(returned_str, unicode_str)
 
+    @unittest.skipIf(StrictVersion(sqlalchemy.__version__) < StrictVersion('0.8.0'),
+                     "inspect not available yet")
     @with_engine_connection
     def test_reflect_schemas(self, engine, connection):
         insp = sqlalchemy.inspect(engine)
@@ -102,6 +106,8 @@ class SqlAlchemyTestCase(object):
         self.assertIn('pyhive_test_database', schemas)
         self.assertIn('default', schemas)
 
+    @unittest.skipIf(StrictVersion(sqlalchemy.__version__) < StrictVersion('0.8.0'),
+                     "inspect not available yet")
     @with_engine_connection
     def test_get_table_names(self, engine, connection):
         meta = MetaData()
@@ -120,6 +126,8 @@ class SqlAlchemyTestCase(object):
         self.assertTrue(Table('one_row', MetaData(bind=engine)).exists())
         self.assertFalse(Table('this_table_does_not_exist', MetaData(bind=engine)).exists())
 
+    @unittest.skipIf(StrictVersion(sqlalchemy.__version__) < StrictVersion('0.6.0'),
+                     "visitor stuff for changing char_length -> length not available yet")
     @with_engine_connection
     def test_char_length(self, engine, connection):
         one_row_complex = Table('one_row_complex', MetaData(bind=engine), autoload=True)

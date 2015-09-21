@@ -165,7 +165,7 @@ class PrestoDialect(default.DefaultDialect):
         # requests gives back Unicode strings
         return True
 
-if StrictVersion(sqlalchemy.__version__) < StrictVersion('0.6.0'):
+if StrictVersion(sqlalchemy.__version__) < StrictVersion('0.7.0'):
     from pyhive import sqlalchemy_backports
 
     def reflecttable(self, connection, table, include_columns=None, exclude_columns=None):

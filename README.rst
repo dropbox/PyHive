@@ -48,6 +48,10 @@ There's also a `third party Conda package <https://binstar.org/blaze/pyhive>`_.
 
 Testing
 =======
+.. image:: https://travis-ci.org/dropbox/PyHive.svg
+    :target: https://travis-ci.org/dropbox/PyHive
+.. image:: http://codecov.io/github/dropbox/PyHive/coverage.svg?branch=master
+    :target: http://codecov.io/github/dropbox/PyHive?branch=master
 
 Run the following in an environment with Hive/Presto::
 

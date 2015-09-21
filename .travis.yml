@@ -1,0 +1,24 @@
+sudo: required
+language: python
+env:
+  # newest everything
+  - CDH=cdh5 PRESTO=0.118 SQLALCHEMY=1.0.8
+  # stale stuff we're still actively using
+  - CDH=cdh4 PRESTO=0.97 SQLALCHEMY=0.5.8
+  # every version of sqlalchemy with special code
+  - CDH=cdh4 PRESTO=0.118 SQLALCHEMY=0.5.8
+  - CDH=cdh4 PRESTO=0.118 SQLALCHEMY=0.6.9
+  - CDH=cdh4 PRESTO=0.118 SQLALCHEMY=0.7.10
+  - CDH=cdh4 PRESTO=0.118 SQLALCHEMY=0.8.7
+  - CDH=cdh4 PRESTO=0.118 SQLALCHEMY=1.0.8
+python:
+  - "2.7"
+before_install:
+  - ./scripts/travis-install.sh
+  - pip install codecov
+install:
+  - pip install -e .
+  - pip install sqlalchemy==$SQLALCHEMY
+  - pip install -r dev_requirements.txt
+script: py.test
+after_success: codecov

@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+from distutils.version import StrictVersion
 from pyhive.sqlalchemy_hive import HiveDate
 from pyhive.sqlalchemy_hive import HiveDecimal
 from pyhive.sqlalchemy_hive import HiveTimestamp
@@ -12,6 +13,7 @@ from sqlalchemy.schema import Table
 import contextlib
 import datetime
 import decimal
+import os
 import sqlalchemy.types
 import unittest
 
@@ -82,6 +84,8 @@ class TestSqlAlchemyHive(unittest.TestCase, SqlAlchemyTestCase):
         finally:
             engine.dispose()
 
+    @unittest.skipIf(StrictVersion(sqlalchemy.__version__) < StrictVersion('0.7.0'),
+                     "features not available yet")
     @with_engine_connection
     def test_lots_of_types(self, engine, connection):
         # Presto doesn't have raw CREATE TABLE support, so we ony test hive
@@ -105,6 +109,7 @@ class TestSqlAlchemyHive(unittest.TestCase, SqlAlchemyTestCase):
         table.create()
         connection.execute('SET mapred.job.tracker=local')
         connection.execute('USE pyhive_test_database')
+        big_number = 10 ** 10 - 1
         connection.execute("""
         INSERT OVERWRITE TABLE test_table
         SELECT
@@ -114,15 +119,17 @@ class TestSqlAlchemyHive(unittest.TestCase, SqlAlchemyTestCase):
             "a", 1, 1,
             0.1, 0.1, 0, 0, 0, "a",
             false, "a", "a",
-            0, 0.1, 123 + 2000
+            0, %d, 123 + 2000
         FROM default.one_row
-        """)
+        """, big_number)
         row = connection.execute(table.select()).fetchone()
         self.assertEqual(row.hive_date, datetime.date(1970, 1, 1))
-        self.assertEqual(row.hive_decimal, decimal.Decimal('0.1'),)
+        self.assertEqual(row.hive_decimal, decimal.Decimal(big_number))
         self.assertEqual(row.hive_timestamp, datetime.datetime(1970, 1, 1, 0, 0, 2, 123))
         table.drop()
 
+    @unittest.skipIf(StrictVersion(sqlalchemy.__version__) < StrictVersion('0.8.0'),
+                     "from_select not available yet")
     @with_engine_connection
     def test_insert_select(self, engine, connection):
         one_row = Table('one_row', MetaData(bind=engine), autoload=True)
@@ -139,6 +146,7 @@ class TestSqlAlchemyHive(unittest.TestCase, SqlAlchemyTestCase):
         expected = [(1,)]
         self.assertEqual(result, expected)
 
+    @unittest.skipIf(os.environ.get('CDH') == 'cdh4', "not supported on hive 0.10")
     @with_engine_connection
     def test_insert_values(self, engine, connection):
         table = Table('insert_test', MetaData(bind=engine),
@@ -151,3 +159,8 @@ class TestSqlAlchemyHive(unittest.TestCase, SqlAlchemyTestCase):
         result = table.select().execute().fetchall()
         expected = [(1,), (2,)]
         self.assertEqual(result, expected)
+
+    @unittest.skipIf(os.environ.get('CDH') == 'cdh4',
+                     "Hive 0.10 doesn't distinguish partition columns in DESCRIBE")
+    def test_reflect_partitions(self):
+        super(TestSqlAlchemyHive, self).test_reflect_partitions()

@@ -250,7 +250,8 @@ class HiveDialect(default.DefaultDialect):
                 break
             # Take out the more detailed type information
             # e.g. 'map<int,int>' -> 'map'
-            col_type = col_type.partition('<')[0]
+            #      'decimal(10,1)' -> decimal
+            col_type = re.search(r'^\w+', col_type).group(0)
             try:
                 coltype = _type_map[col_type]
             except KeyError:
@@ -309,7 +310,7 @@ class HiveDialect(default.DefaultDialect):
         # We decode everything as UTF-8
         return True
 
-if StrictVersion(sqlalchemy.__version__) < StrictVersion('0.6.0'):
+if StrictVersion(sqlalchemy.__version__) < StrictVersion('0.7.0'):
     from pyhive import sqlalchemy_backports
 
     def reflecttable(self, connection, table, include_columns=None, exclude_columns=None):

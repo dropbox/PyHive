@@ -12,6 +12,7 @@ from pyhive.tests.dbapi_test_case import DBAPITestCase
 from pyhive.tests.dbapi_test_case import with_cursor
 import contextlib
 import mock
+import os
 import unittest
 
 _HOST = 'localhost'
@@ -26,14 +27,14 @@ class TestHive(unittest.TestCase, DBAPITestCase):
     @with_cursor
     def test_description(self, cursor):
         cursor.execute('SELECT * FROM one_row')
+
         desc = [('number_of_rows', 'INT_TYPE', None, None, None, None, True)]
-        self.assertEqual(cursor.description, desc)
         self.assertEqual(cursor.description, desc)
 
     @with_cursor
     def test_complex(self, cursor):
         cursor.execute('SELECT * FROM one_row_complex')
-        # TODO Presto drops the union and decimal fields
+        stringly_typed = 'STRING_TYPE' if os.environ.get('CDH') == 'cdh4' else None
         self.assertEqual(cursor.description, [
             ('boolean', 'BOOLEAN_TYPE', None, None, None, None, True),
             ('tinyint', 'TINYINT_TYPE', None, None, None, None, True),
@@ -45,10 +46,10 @@ class TestHive(unittest.TestCase, DBAPITestCase):
             ('string', 'STRING_TYPE', None, None, None, None, True),
             ('timestamp', 'TIMESTAMP_TYPE', None, None, None, None, True),
             ('binary', 'BINARY_TYPE', None, None, None, None, True),
-            ('array', 'STRING_TYPE', None, None, None, None, True),
-            ('map', 'STRING_TYPE', None, None, None, None, True),
-            ('struct', 'STRING_TYPE', None, None, None, None, True),
-            ('union', 'STRING_TYPE', None, None, None, None, True),
+            ('array', stringly_typed or 'ARRAY_TYPE', None, None, None, None, True),
+            ('map', stringly_typed or 'MAP_TYPE', None, None, None, None, True),
+            ('struct', stringly_typed or 'STRUCT_TYPE', None, None, None, None, True),
+            ('union', stringly_typed or 'UNION_TYPE', None, None, None, None, True),
             ('decimal', 'DECIMAL_TYPE', None, None, None, None, True),
         ])
         self.assertEqual(cursor.fetchall(), [[
@@ -93,13 +94,18 @@ class TestHive(unittest.TestCase, DBAPITestCase):
 
     def test_newlines(self):
         """Verify that newlines are passed through in a way that doesn't fail parsing"""
-        # Hive thrift translates newlines into multiple rows. WTF.
         cursor = self.connect().cursor()
+        orig = ' \r\n \r \n '
         cursor.execute(
             'SELECT %s FROM one_row',
-            (' \r\n \r \n ',)
+            (orig,)
         )
-        self.assertEqual(cursor.fetchall(), [[' '], [' '], [' '], [' ']])
+        result = cursor.fetchall()
+        if os.environ.get('CDH') == 'cdh4':
+            # Hive thrift translates newlines into multiple rows. WTF.
+            self.assertEqual(result, [[' '], [' '], [' '], [' ']])
+        else:
+            self.assertEqual(result, [[orig]])
 
     @with_cursor
     def test_no_result_set(self, cursor):

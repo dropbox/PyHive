@@ -5,6 +5,7 @@ cover/
 *.egg
 /env/
 /htmlcov/
+.idea/
 .project
 *.pyc
 .pydevproject
