@@ -52,7 +52,12 @@ Passing Hive configuration
 Requirements
 ============
 
-Install using ``pip install pyhive[hive,presto]``.
+Install using
+
+- ``pip install pyhive[hive]`` for the Hive interface and
+- ``pip install pyhive[presto]`` for the Presto interface.
+
+`PyHive` works with
 
 - Python 2.7
 - For Presto: Presto install
