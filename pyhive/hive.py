@@ -64,7 +64,7 @@ def connect(*args, **kwargs):
 class Connection(object):
     """Wraps a Thrift session"""
 
-    def __init__(self, host, port=10000, username=None, database='default', configuration=None):
+    def __init__(self, host, port=10000, username=None, password=b'x', database='default', configuration=None):
         socket = thrift.transport.TSocket.TSocket(host, port)
         username = username or getpass.getuser()
         configuration = configuration or {}
@@ -73,7 +73,7 @@ class Connection(object):
             sasl_client = sasl.Client()
             sasl_client.setAttr(b'username', username.encode('latin-1'))
             # Password doesn't matter in PLAIN mode, just needs to be nonempty.
-            sasl_client.setAttr(b'password', b'x')
+            sasl_client.setAttr(b'password', password)
             sasl_client.init()
             return sasl_client
 
