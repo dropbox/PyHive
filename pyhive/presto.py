@@ -190,6 +190,33 @@ class Cursor(common.DBAPICursor):
                 for row in rows:
                     row[i] = base64.b64decode(row[i])
 
+
+    def _pretty(self, columns, data):
+        r = []
+        for row in data:
+            c = []
+            for (column, row) in zip(columns, row):
+                c.append(self._pretty_(column["typeSignature"], row))
+            r.append(c)
+        return r
+
+
+    def _pretty_(self, column, data):
+        type = column["rawType"]
+        if type == "row":
+            keys = column["literalArguments"]
+            values = [self._pretty_(c, d) for c, d in zip(column["typeArguments"], data)]
+            return dict(zip(keys, values))
+        elif type == "array":
+            rep = [column["typeArguments"][0]]*len(data)
+            return [self._pretty_(c, d) for c, d in zip(rep, data)]
+        elif type == "map":
+            value_type = column["typeArguments"][1]
+            return {k: self._pretty_(value_type, v) for k, v in data.iteritems()}
+        else:
+            return data
+
+
     def _process_response(self, response):
         """Given the JSON response from Presto's REST API, update the internal state with the next
         URI and any data from the response
@@ -205,7 +232,7 @@ class Cursor(common.DBAPICursor):
         self._columns = response_json.get('columns')
         if 'data' in response_json:
             assert self._columns
-            new_data = response_json['data']
+            new_data = self._pretty(self._columns, response_json['data'])
             self._decode_binary(new_data)
             self._data += new_data
         if 'nextUri' not in response_json:
