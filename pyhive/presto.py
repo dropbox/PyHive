@@ -45,6 +45,8 @@ class Connection(object):
     def __init__(self, *args, **kwargs):
         self._args = args
         self._kwargs = kwargs
+        if 'session_props' not in kwargs:
+            kwargs['session_props'] = {}
 
     def close(self):
         """Presto does not have anything to close"""
@@ -72,7 +74,7 @@ class Cursor(common.DBAPICursor):
     """
 
     def __init__(self, host, port='8080', username=None, catalog='hive', schema='default',
-                 poll_interval=1, source='pyhive'):
+                 poll_interval=1, source='pyhive', session_props=None):
         """
         :param host: hostname to connect to, e.g. ``presto.example.com``
         :param port: int -- port, defaults to 8080
@@ -93,6 +95,7 @@ class Cursor(common.DBAPICursor):
         self._arraysize = 1
         self._poll_interval = poll_interval
         self._source = source
+        self._session_props = session_props if session_props is not None else {}
 
         self._reset_state()
 
@@ -143,6 +146,12 @@ class Cursor(common.DBAPICursor):
             'X-Presto-Source': self._source,
             'X-Presto-User': self._username,
         }
+
+        if self._session_props:
+            headers['X-Presto-Session'] = ','.join(
+                '{}={}'.format(propname, propval)
+                for propname, propval in self._session_props.items()
+            )
 
         # Prepare statement
         if parameters is None:
@@ -203,6 +212,9 @@ class Cursor(common.DBAPICursor):
         assert self._state == self._STATE_RUNNING, "Should be running if processing response"
         self._nextUri = response_json.get('nextUri')
         self._columns = response_json.get('columns')
+        if 'X-Presto-Set-Session' in response.headers:
+            propname, propval = response.headers['X-Presto-Set-Session'].split('=', 1)
+            self._session_props[propname] = propval
         if 'data' in response_json:
             assert self._columns
             new_data = response_json['data']
