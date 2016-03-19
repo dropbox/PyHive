@@ -123,7 +123,7 @@ class PrestoDialect(default.DefaultDialect):
             result.append({
                 'name': row.Column,
                 'type': coltype,
-                'nullable': row.Null,
+                'nullable': getattr(row, 'Null', False),
                 'default': None,
             })
         return result
@@ -140,7 +140,7 @@ class PrestoDialect(default.DefaultDialect):
         rows = self._get_table_columns(connection, table_name, schema)
         col_names = []
         for row in rows:
-            if row['Partition Key']:
+            if ('Partition Key' in row and row['Partition Key']) or ('Partition Key' in row['Comment']):
                 col_names.append(row['Column'])
         if col_names:
             return [{'name': 'partition', 'column_names': col_names, 'unique': False}]
