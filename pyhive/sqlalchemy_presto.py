@@ -123,7 +123,8 @@ class PrestoDialect(default.DefaultDialect):
             result.append({
                 'name': row.Column,
                 'type': coltype,
-                'nullable': row.Null,
+                # newer Presto no longer includes this column
+                'nullable': getattr(row, 'Null', True),
                 'default': None,
             })
         return result
@@ -140,7 +141,9 @@ class PrestoDialect(default.DefaultDialect):
         rows = self._get_table_columns(connection, table_name, schema)
         col_names = []
         for row in rows:
-            if row['Partition Key']:
+            part_key = 'Partition Key'
+            # Newer Presto moved this information from a column to the comment
+            if (part_key in row and row[part_key]) or row['Comment'].startswith(part_key):
                 col_names.append(row['Column'])
         if col_names:
             return [{'name': 'partition', 'column_names': col_names, 'unique': False}]
