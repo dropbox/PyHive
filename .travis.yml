@@ -2,9 +2,9 @@ sudo: required
 language: python
 env:
   # newest everything
-  - CDH=cdh5 PRESTO=0.118 SQLALCHEMY=1.0.8
-  # stale stuff we're still actively using
-  - CDH=cdh4 PRESTO=0.97 SQLALCHEMY=0.5.8
+  - CDH=cdh5 PRESTO=0.142 SQLALCHEMY=1.0.12
+  # stale stuff we're still using / supporting
+  - CDH=cdh5 PRESTO=0.118 SQLALCHEMY=0.5.8
   # every version of sqlalchemy with special code
   - CDH=cdh4 PRESTO=0.118 SQLALCHEMY=0.5.8
   - CDH=cdh4 PRESTO=0.118 SQLALCHEMY=0.6.9
@@ -20,5 +20,6 @@ install:
   - pip install -e .
   - pip install sqlalchemy==$SQLALCHEMY
   - pip install -r dev_requirements.txt
-script: py.test
+# sleep so Presto has time to start up. Otherwise we might get 'No nodes available to run query'
+script: sleep 10 && py.test
 after_success: codecov

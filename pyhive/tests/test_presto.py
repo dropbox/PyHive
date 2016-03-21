@@ -30,8 +30,13 @@ class TestPresto(unittest.TestCase, DBAPITestCase):
     @with_cursor
     def test_complex(self, cursor):
         cursor.execute('SELECT * FROM one_row_complex')
+        # TODO delete this code after dropping test support for older presto
+        # old presto uses <>, while new presto uses ()
+        description = []
+        for row in cursor.description:
+            description.append((row[0], row[1].replace('<', '(').replace('>', ')')) + row[2:])
         # TODO Presto drops the union and decimal fields
-        self.assertEqual(cursor.description, [
+        self.assertEqual(description, [
             ('boolean', 'boolean', None, None, None, None, True),
             ('tinyint', 'bigint', None, None, None, None, True),
             ('smallint', 'bigint', None, None, None, None, True),
@@ -42,9 +47,9 @@ class TestPresto(unittest.TestCase, DBAPITestCase):
             ('string', 'varchar', None, None, None, None, True),
             ('timestamp', 'timestamp', None, None, None, None, True),
             ('binary', 'varbinary', None, None, None, None, True),
-            ('array', 'array<bigint>', None, None, None, None, True),
-            ('map', 'map<bigint,bigint>', None, None, None, None, True),
-            ('struct', "row<bigint,bigint>('a','b')", None, None, None, None, True),
+            ('array', 'array(bigint)', None, None, None, None, True),
+            ('map', 'map(bigint,bigint)', None, None, None, None, True),
+            ('struct', "row(bigint,bigint)('a','b')", None, None, None, None, True),
             #('union', 'varchar', None, None, None, None, True),
             #('decimal', 'double', None, None, None, None, True),
         ])

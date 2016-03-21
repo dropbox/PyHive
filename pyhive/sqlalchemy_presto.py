@@ -98,8 +98,8 @@ class PrestoDialect(default.DefaultDialect):
             # presto.DatabaseError here.
             # Does the table exist?
             msg = e.message.get('message') if isinstance(e.message, dict) else None
-            regex = r"^Table\ \'.*{}\'\ does\ not\ exist$".format(re.escape(table_name))
-            if msg and re.match(regex, msg):
+            regex = r"Table\ \'.*{}\'\ does\ not\ exist".format(re.escape(table_name))
+            if msg and re.search(regex, msg):
                 raise exc.NoSuchTableError(table_name)
             else:
                 raise
