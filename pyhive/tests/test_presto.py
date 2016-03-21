@@ -6,6 +6,9 @@ They also require a tables created by make_test_tables.sh.
 
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+import contextlib
+
 from pyhive import exc
 from pyhive import presto
 from pyhive.tests.dbapi_test_case import DBAPITestCase
@@ -103,3 +106,44 @@ class TestPresto(unittest.TestCase, DBAPITestCase):
             self.fail("Should not need requests.get after done polling")  # pragma: no cover
         with mock.patch('requests.get', fail):
             self.assertEqual(cursor.fetchall(), [[1]])
+
+    @with_cursor
+    def test_set_session(self, cursor):
+        cursor.execute("SET SESSION query_max_run_time = '1234m'")
+        cursor.fetchall()
+
+        cursor.execute('SHOW SESSION')
+        rows = [r for r in cursor.fetchall() if r[0] == 'query_max_run_time']
+        assert len(rows) == 1
+        session_prop = rows[0]
+        assert session_prop[1] == '1234m'
+
+        cursor.execute('RESET SESSION query_max_run_time')
+        cursor.fetchall()
+
+        cursor.execute('SHOW SESSION')
+        rows = [r for r in cursor.fetchall() if r[0] == 'query_max_run_time']
+        assert len(rows) == 1
+        session_prop = rows[0]
+        assert session_prop[1] != '1234m'
+
+    def test_set_session_in_consructor(self):
+        conn = presto.connect(
+            host=_HOST, source=self.id(), session_props={'query_max_run_time': '1234m'}
+        )
+        with contextlib.closing(conn):
+            with contextlib.closing(conn.cursor()) as cursor:
+                cursor.execute('SHOW SESSION')
+                rows = [r for r in cursor.fetchall() if r[0] == 'query_max_run_time']
+                assert len(rows) == 1
+                session_prop = rows[0]
+                assert session_prop[1] == '1234m'
+
+                cursor.execute('RESET SESSION query_max_run_time')
+                cursor.fetchall()
+
+                cursor.execute('SHOW SESSION')
+                rows = [r for r in cursor.fetchall() if r[0] == 'query_max_run_time']
+                assert len(rows) == 1
+                session_prop = rows[0]
+                assert session_prop[1] != '1234m'

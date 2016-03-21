@@ -45,8 +45,6 @@ class Connection(object):
     def __init__(self, *args, **kwargs):
         self._args = args
         self._kwargs = kwargs
-        if 'session_props' not in kwargs:
-            kwargs['session_props'] = {}
 
     def close(self):
         """Presto does not have anything to close"""
@@ -212,6 +210,9 @@ class Cursor(common.DBAPICursor):
         assert self._state == self._STATE_RUNNING, "Should be running if processing response"
         self._nextUri = response_json.get('nextUri')
         self._columns = response_json.get('columns')
+        if 'X-Presto-Clear-Session' in response.headers:
+            propname = response.headers['X-Presto-Clear-Session']
+            self._session_props.pop(propname, None)
         if 'X-Presto-Set-Session' in response.headers:
             propname, propval = response.headers['X-Presto-Set-Session'].split('=', 1)
             self._session_props[propname] = propval
