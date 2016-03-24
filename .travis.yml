@@ -1,18 +1,31 @@
 sudo: required
 language: python
-env:
-  # newest everything
-  - CDH=cdh5 PRESTO=0.142 SQLALCHEMY=1.0.12
-  # stale stuff we're still using / supporting
-  - CDH=cdh5 PRESTO=0.118 SQLALCHEMY=0.5.8
-  # every version of sqlalchemy with special code
-  - CDH=cdh4 PRESTO=0.118 SQLALCHEMY=0.5.8
-  - CDH=cdh4 PRESTO=0.118 SQLALCHEMY=0.6.9
-  - CDH=cdh4 PRESTO=0.118 SQLALCHEMY=0.7.10
-  - CDH=cdh4 PRESTO=0.118 SQLALCHEMY=0.8.7
-  - CDH=cdh4 PRESTO=0.118 SQLALCHEMY=1.0.8
-python:
-  - "2.7"
+matrix:
+  include:
+    # newest dependencies + a few python versions
+    - python: 3.5
+      env: CDH=cdh5 PRESTO=0.142 SQLALCHEMY=1.0.12
+    - python: 3.4
+      env: CDH=cdh5 PRESTO=0.142 SQLALCHEMY=1.0.12
+    - python: 3.3
+      env: CDH=cdh5 PRESTO=0.142 SQLALCHEMY=1.0.12
+    - python: 2.7
+      env: CDH=cdh5 PRESTO=0.142 SQLALCHEMY=1.0.12
+    # stale stuff we're still using / supporting
+    - python: 2.7
+      env: CDH=cdh5 PRESTO=0.118 SQLALCHEMY=0.5.8
+    # old python + every version of sqlalchemy with special code
+    - python: 2.7
+      env: CDH=cdh4 PRESTO=0.118 SQLALCHEMY=0.5.8
+    - python: 2.7
+      env: CDH=cdh4 PRESTO=0.118 SQLALCHEMY=0.6.9
+    - python: 2.7
+      env: CDH=cdh4 PRESTO=0.118 SQLALCHEMY=0.7.10
+    - python: 2.7
+      env: CDH=cdh4 PRESTO=0.118 SQLALCHEMY=0.8.7
+    - python: 2.7
+      env: CDH=cdh4 PRESTO=0.118 SQLALCHEMY=1.0.8
+  # exclude: python 3 against old libries
 before_install:
   - ./scripts/travis-install.sh
   - pip install codecov

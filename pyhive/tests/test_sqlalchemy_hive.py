@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+from builtins import str
 from distutils.version import StrictVersion
 from pyhive.sqlalchemy_hive import HiveDate
 from pyhive.sqlalchemy_hive import HiveDecimal
@@ -15,6 +16,7 @@ import datetime
 import decimal
 import os
 import sqlalchemy.types
+import sys
 import unittest
 
 _ONE_ROW_COMPLEX_CONTENTS = [
@@ -36,6 +38,7 @@ _ONE_ROW_COMPLEX_CONTENTS = [
 ]
 
 
+@unittest.skipIf(sys.version_info.major == 3, 'Hive not yet supported on Python 3')
 class TestSqlAlchemyHive(unittest.TestCase, SqlAlchemyTestCase):
     def create_engine(self):
         return create_engine('hive://localhost:10000/default')

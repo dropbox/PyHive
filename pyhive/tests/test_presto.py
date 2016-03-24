@@ -66,7 +66,7 @@ class TestPresto(unittest.TestCase, DBAPITestCase):
             0.25,
             'a string',
             '1970-01-01 00:00:00.000',
-            '123',
+            b'123',
             [1, 2],
             {"1": 2, "3": 4},  # Presto converts all keys to strings so that they're valid JSON
             [1, 2],  # struct is returned as a list of elements

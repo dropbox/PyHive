@@ -37,6 +37,9 @@ setup(
         "Operating System :: OS Independent",
         "Topic :: Database :: Front-Ends",
     ],
+    install_requires=[
+        'future',
+    ],
     extras_require={
         "Presto": ['requests>=1.0.0'],
         "Hive": ['sasl>=0.1.3', 'thrift>=0.8.0', 'thrift_sasl>=0.1.0'],

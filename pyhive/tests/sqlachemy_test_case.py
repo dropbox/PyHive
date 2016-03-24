@@ -1,7 +1,9 @@
 # coding: utf-8
 from __future__ import absolute_import
 from __future__ import unicode_literals
+from builtins import object
 from distutils.version import StrictVersion
+from future.utils import with_metaclass
 import sqlalchemy
 from sqlalchemy.exc import NoSuchTableError
 from sqlalchemy.schema import Index
@@ -30,9 +32,7 @@ def with_engine_connection(fn):
     return wrapped_fn
 
 
-class SqlAlchemyTestCase(object):
-    __metaclass__ = abc.ABCMeta
-
+class SqlAlchemyTestCase(with_metaclass(abc.ABCMeta, object)):
     @with_engine_connection
     def test_basic_query(self, engine, connection):
         rows = connection.execute('SELECT * FROM one_row').fetchall()

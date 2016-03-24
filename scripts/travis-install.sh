@@ -22,6 +22,7 @@ sudo -Eu hive $(dirname $0)/make_test_tables.sh
 # Presto
 #
 
+sudo apt-get install -y python # Use python2 for presto server
 sudo apt-get install -y oracle-java8-installer
 sudo update-java-alternatives -s java-8-oracle
 
@@ -36,4 +37,4 @@ then
     sed -i '/query.max-memory/d' presto-server-$PRESTO/etc/config.properties
 fi
 
-./presto-server-$PRESTO/bin/launcher start
+/usr/bin/python2.7 presto-server-$PRESTO/bin/launcher.py start

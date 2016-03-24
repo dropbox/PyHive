@@ -14,10 +14,12 @@ import contextlib
 import mock
 import os
 import unittest
+import sys
 
 _HOST = 'localhost'
 
 
+@unittest.skipIf(sys.version_info.major == 3, 'Hive not yet supported on Python 3')
 class TestHive(unittest.TestCase, DBAPITestCase):
     __test__ = True
 

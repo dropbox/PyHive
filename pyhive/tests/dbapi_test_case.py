@@ -3,6 +3,9 @@
 
 from __future__ import absolute_import
 from __future__ import unicode_literals
+from builtins import object
+from builtins import range
+from future.utils import with_metaclass
 from pyhive import exc
 import abc
 import contextlib
@@ -22,9 +25,7 @@ def with_cursor(fn):
     return wrapped_fn
 
 
-class DBAPITestCase(object):
-    __metaclass__ = abc.ABCMeta
-
+class DBAPITestCase(with_metaclass(abc.ABCMeta, object)):
     @abc.abstractmethod
     def connect(self):
         raise NotImplementedError  # pragma: no cover
@@ -42,13 +43,13 @@ class DBAPITestCase(object):
         cursor.execute('SELECT * FROM one_row')
         self.assertEqual(cursor.fetchall(), [[1]])
         cursor.execute('SELECT a FROM many_rows ORDER BY a')
-        self.assertEqual(cursor.fetchall(), [[i] for i in xrange(10000)])
+        self.assertEqual(cursor.fetchall(), [[i] for i in range(10000)])
 
     @with_cursor
     def test_iterator(self, cursor):
         cursor.execute('SELECT * FROM one_row')
         self.assertEqual(list(cursor), [[1]])
-        self.assertRaises(StopIteration, cursor.next)
+        self.assertRaises(StopIteration, cursor.__next__)
 
     @with_cursor
     def test_description_initial(self, cursor):
@@ -80,7 +81,7 @@ class DBAPITestCase(object):
         for length in 1, 2:
             cursor.executemany(
                 'SELECT %(x)d FROM one_row',
-                [{'x': i} for i in xrange(1, length + 1)]
+                [{'x': i} for i in range(1, length + 1)]
             )
             self.assertEqual(cursor.fetchall(), [[length]])
 
