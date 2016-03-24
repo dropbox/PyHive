@@ -3,10 +3,13 @@
 
 from __future__ import absolute_import
 from __future__ import unicode_literals
+from builtins import object
+from past.builtins import xrange
 from pyhive import exc
 import abc
 import contextlib
 import functools
+from future.utils import with_metaclass
 
 
 def with_cursor(fn):
@@ -22,9 +25,7 @@ def with_cursor(fn):
     return wrapped_fn
 
 
-class DBAPITestCase(object):
-    __metaclass__ = abc.ABCMeta
-
+class DBAPITestCase(with_metaclass(abc.ABCMeta, object)):
     @abc.abstractmethod
     def connect(self):
         raise NotImplementedError  # pragma: no cover
@@ -48,7 +49,7 @@ class DBAPITestCase(object):
     def test_iterator(self, cursor):
         cursor.execute('SELECT * FROM one_row')
         self.assertEqual(list(cursor), [[1]])
-        self.assertRaises(StopIteration, cursor.next)
+        self.assertRaises(StopIteration, cursor.__next__)
 
     @with_cursor
     def test_description_initial(self, cursor):

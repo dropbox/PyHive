@@ -5,15 +5,19 @@ Many docstrings in this file are based on PEP-249, which is in the public domain
 
 from __future__ import absolute_import
 from __future__ import unicode_literals
+from builtins import range
+from builtins import int
+from past.builtins import basestring, xrange
+from builtins import object
 from pyhive import exc
 import abc
 import collections
 import time
+from future.utils import with_metaclass
 
 
-class DBAPICursor(object):
+class DBAPICursor(with_metaclass(abc.ABCMeta, object)):
     """Base class for some common DB-API logic"""
-    __metaclass__ = abc.ABCMeta
 
     _STATE_NONE = 0
     _STATE_RUNNING = 1
@@ -176,7 +180,7 @@ class DBAPICursor(object):
         """
         return self._rownumber
 
-    def next(self):
+    def __next__(self):
         """Return the next row from the currently executing SQL statement using the same semantics
         as :py:meth:`fetchone`. A ``StopIteration`` exception is raised when the result set is
         exhausted.
@@ -209,7 +213,7 @@ class DBAPITypeObject(object):
 class ParamEscaper(object):
     def escape_args(self, parameters):
         if isinstance(parameters, dict):
-            return {k: self.escape_item(v) for k, v in parameters.iteritems()}
+            return {k: self.escape_item(v) for k, v in parameters.items()}
         elif isinstance(parameters, (list, tuple)):
             return tuple(self.escape_item(x) for x in parameters)
         else:
@@ -223,7 +227,7 @@ class ParamEscaper(object):
         # Newer SQLAlchemy checks dialect.supports_unicode_binds before encoding Unicode strings
         # as byte strings. The old version always encodes Unicode as byte strings, which breaks
         # string formatting here.
-        if isinstance(item, str):
+        if sys.version_info.major == 2 and isinstance(item, str):
             item = item.decode('utf-8')
         # This is good enough when backslashes are literal, newlines are just followed, and the way
         # to escape a single quote is to put two single quotes.
@@ -231,7 +235,7 @@ class ParamEscaper(object):
         return "'{}'".format(item.replace("'", "''"))
 
     def escape_item(self, item):
-        if isinstance(item, (int, long, float)):
+        if isinstance(item, (int, float)):
             return self.escape_number(item)
         elif isinstance(item, basestring):
             return self.escape_string(item)
