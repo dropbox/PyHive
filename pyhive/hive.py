@@ -21,6 +21,7 @@ import sasl
 import sys
 import thrift.protocol.TBinaryProtocol
 import thrift.transport.TSocket
+import thrift.transport.TTransport
 import thrift_sasl
 
 # PEP 249 module globals
@@ -64,21 +65,32 @@ def connect(*args, **kwargs):
 class Connection(object):
     """Wraps a Thrift session"""
 
-    def __init__(self, host, port=10000, username=None, database='default', configuration=None):
+    def __init__(self, host, port=10000, username=None, database='default', auth='NONE', configuration=None):
+        """Connect to HiveServer2
+
+        :param auth: The value of hive.server2.authentication used by HiveServer2
+        """
         socket = thrift.transport.TSocket.TSocket(host, port)
         username = username or getpass.getuser()
         configuration = configuration or {}
 
-        def sasl_factory():
-            sasl_client = sasl.Client()
-            sasl_client.setAttr(b'username', username.encode('latin-1'))
-            # Password doesn't matter in PLAIN mode, just needs to be nonempty.
-            sasl_client.setAttr(b'password', b'x')
-            sasl_client.init()
-            return sasl_client
+        if auth == 'NOSASL':
+            # NOSASL corresponds to hive.server2.authentication=NOSASL in hive-site.xml
+            self._transport = thrift.transport.TTransport.TBufferedTransport(socket)
+        elif auth == 'NONE':
+            def sasl_factory():
+                sasl_client = sasl.Client()
+                sasl_client.setAttr(b'username', username.encode('latin-1'))
+                # Password doesn't matter in NONE mode, just needs to be nonempty.
+                sasl_client.setAttr(b'password', b'x')
+                sasl_client.init()
+                return sasl_client
 
-        # PLAIN corresponds to hive.server2.authentication=NONE in hive-site.xml
-        self._transport = thrift_sasl.TSaslClientTransport(sasl_factory, b'PLAIN', socket)
+            # PLAIN corresponds to hive.server2.authentication=NONE in hive-site.xml
+            self._transport = thrift_sasl.TSaslClientTransport(sasl_factory, b'PLAIN', socket)
+        else:
+            raise NotImplementedError("Only NONE & NOSASL authentication are supported, got {}".format(auth))
+
         protocol = thrift.protocol.TBinaryProtocol.TBinaryProtocol(self._transport)
         self._client = TCLIService.Client(protocol)
 
