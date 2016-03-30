@@ -13,6 +13,11 @@ processors.
 They all share one common characteristic: None is passed through unchanged.
 
 """
+from __future__ import unicode_literals
+from builtins import str
+from builtins import zip
+from builtins import map
+from builtins import object
 
 import datetime
 import re
@@ -39,8 +44,8 @@ def str_to_datetime_processor_factory(regexp, type_):
                                 "'%s'" % (type_.__name__, value))
             if has_named_groups:
                 groups = m.groupdict(0)
-                return type_(**dict(zip(groups.iterkeys(),
-                                        map(int, groups.itervalues()))))
+                return type_(**dict(zip(groups.keys(),
+                                        map(int, groups.values()))))
             else:
                 return type_(*map(int, m.groups(0)))
     return process

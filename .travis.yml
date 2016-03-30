@@ -4,15 +4,22 @@ env:
   # newest everything
   - CDH=cdh5 PRESTO=0.142 SQLALCHEMY=1.0.12
   # stale stuff we're still using / supporting
-  - CDH=cdh5 PRESTO=0.118 SQLALCHEMY=0.5.8
+#  - CDH=cdh5 PRESTO=0.118 SQLALCHEMY=0.5.8
   # every version of sqlalchemy with special code
-  - CDH=cdh4 PRESTO=0.118 SQLALCHEMY=0.5.8
-  - CDH=cdh4 PRESTO=0.118 SQLALCHEMY=0.6.9
-  - CDH=cdh4 PRESTO=0.118 SQLALCHEMY=0.7.10
-  - CDH=cdh4 PRESTO=0.118 SQLALCHEMY=0.8.7
-  - CDH=cdh4 PRESTO=0.118 SQLALCHEMY=1.0.8
+  # - CDH=cdh4 PRESTO=0.118 SQLALCHEMY=0.5.8
+  # - CDH=cdh4 PRESTO=0.118 SQLALCHEMY=0.6.9
+  # - CDH=cdh4 PRESTO=0.118 SQLALCHEMY=0.7.10
+  # - CDH=cdh4 PRESTO=0.118 SQLALCHEMY=0.8.7
+  # - CDH=cdh4 PRESTO=0.118 SQLALCHEMY=1.0.8
 python:
-  - "2.7"
+#  - "2.7"
+  - "3.3"
+# matrix:
+#   exclude:
+#     - env: CDH=cdh4 PRESTO=0.118 SQLALCHEMY=0.5.8
+#       python: "3.3"
+#     - env: CDH=cdh4 PRESTO=0.118 SQLALCHEMY=0.5.8
+#       python: "3.3"
 before_install:
   - ./scripts/travis-install.sh
   - pip install codecov

@@ -7,6 +7,7 @@ Many docstrings in this file are based on the PEP, which is in the public domain
 
 from __future__ import absolute_import
 from __future__ import unicode_literals
+from builtins import object
 from pyhive import common
 from pyhive.common import DBAPITypeObject
 # Make all exceptions visible in this module per DB-API
@@ -15,7 +16,11 @@ import base64
 import getpass
 import logging
 import requests
-import urlparse
+
+try:  # Python 3
+    import urllib.parse as urlparse
+except ImportError:  # Python 2
+    import urlparse
 
 
 # PEP 249 module globals

@@ -7,6 +7,7 @@ Many docstrings in this file are based on the PEP, which is in the public domain
 
 from __future__ import absolute_import
 from __future__ import unicode_literals
+from builtins import object
 from TCLIService import TCLIService
 from TCLIService import constants
 from TCLIService import ttypes
@@ -19,9 +20,16 @@ import getpass
 import logging
 import sasl
 import sys
-import thrift.protocol.TBinaryProtocol
-import thrift.transport.TSocket
 import thrift_sasl
+
+if sys.version_info.major == 3:
+    from thriftpy.protocol import TBinaryProtocol
+    from thriftpy.transport import TSocket
+else:
+    from thrift.protocol.TBinaryProtocol import TBinaryProtocol
+    from thrift.transport.TSocket import TSocket
+
+
 
 # PEP 249 module globals
 apilevel = '2.0'
@@ -65,7 +73,7 @@ class Connection(object):
     """Wraps a Thrift session"""
 
     def __init__(self, host, port=10000, username=None, database='default', configuration=None):
-        socket = thrift.transport.TSocket.TSocket(host, port)
+        socket = TSocket(host, port)
         username = username or getpass.getuser()
         configuration = configuration or {}
 
@@ -79,7 +87,7 @@ class Connection(object):
 
         # PLAIN corresponds to hive.server2.authentication=NONE in hive-site.xml
         self._transport = thrift_sasl.TSaslClientTransport(sasl_factory, b'PLAIN', socket)
-        protocol = thrift.protocol.TBinaryProtocol.TBinaryProtocol(self._transport)
+        protocol = TBinaryProtocol(self._transport)
         self._client = TCLIService.Client(protocol)
 
         try:
@@ -258,7 +266,7 @@ for type_id in constants.PRIMITIVE_TYPES:
 
 def _unwrap_col_val(val):
     """Return the raw value from a TColumnValue instance."""
-    for _, _, attr, _, _ in filter(None, ttypes.TColumnValue.thrift_spec):
+    for _, _, attr, _, _ in [_f for _f in ttypes.TColumnValue.thrift_spec if _f]:
         val_obj = getattr(val, attr)
         if val_obj:
             val = val_obj.value
