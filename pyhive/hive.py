@@ -65,7 +65,7 @@ def connect(*args, **kwargs):
 class Connection(object):
     """Wraps a Thrift session"""
 
-    def __init__(self, host, port=10000, username=None, database='default', auth="PLAIN", configuration=None):
+    def __init__(self, host, port=10000, username=None, database='default', auth="NONE", configuration=None):
         socket = thrift.transport.TSocket.TSocket(host, port)
         username = username or getpass.getuser()
         configuration = configuration or {}
@@ -73,11 +73,11 @@ class Connection(object):
         if auth == "NOSASL":
             # NOSASL corresponds to hive.server2.authentication=NOSASL in hive-site.xml
             self._transport = thrift.transport.TTransport.TBufferedTransport(socket)
-        elif auth == "PLAIN":
+        elif auth == "NONE":
             def sasl_factory():
                 sasl_client = sasl.Client()
                 sasl_client.setAttr(b'username', username.encode('latin-1'))
-                # Password doesn't matter in PLAIN mode, just needs to be nonempty.
+                # Password doesn't matter in NONE mode, just needs to be nonempty.
                 sasl_client.setAttr(b'password', b'x')
                 sasl_client.init()
                 return sasl_client
@@ -85,7 +85,7 @@ class Connection(object):
             # PLAIN corresponds to hive.server2.authentication=NONE in hive-site.xml
             self._transport = thrift_sasl.TSaslClientTransport(sasl_factory, b'PLAIN', socket)
         else:
-            raise NotImplementedError("Only support PLAIN & NOSASL authentication") 
+            raise NotImplementedError("Only support NONE & NOSASL authentication") 
 
         protocol = thrift.protocol.TBinaryProtocol.TBinaryProtocol(self._transport)
         self._client = TCLIService.Client(protocol)
