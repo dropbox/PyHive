@@ -35,14 +35,14 @@ First install this package to register it with SQLAlchemy (see ``setup.py``).
 Note: query generation functionality is not exhaustive or fully tested, but there should be no
 problem with raw SQL.
 
-Passing Hive configuration
---------------------------
-(Does not apply to Presto)
+Passing session configuration
+-----------------------------
 
 .. code-block:: python
 
     # DB-API
     hive.connect('localhost', configuration={'hive.exec.reducers.max': '123'})
+    presto.connect('localhost', session_props={'query_max_run_time': '1234m'})
     # SQLAlchemy
     create_engine(
         'hive://user@host:10000/database',
