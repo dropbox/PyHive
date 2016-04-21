@@ -193,7 +193,7 @@ class Cursor(common.DBAPICursor):
 
     def _pretty(self, columns, data):
         r = []
-        for row in data:
+        for row in data: # the top-level is an iterable of records (i.e. rows)
             c = []
             for (column, row) in zip(columns, row):
                 c.append(self._pretty_(column["typeSignature"], row))
@@ -203,19 +203,20 @@ class Cursor(common.DBAPICursor):
 
     def _pretty_(self, column, data):
         type = column["rawType"]
-        if type == "row":
+        try: iter(data) # check if the data is iterable
+        except TypeError:
+            return data # non-iterables can simply be directly shown
+        if type == "row": # records should have their fields associated with types
             keys = column["literalArguments"]
             values = [self._pretty_(c, d) for c, d in zip(column["typeArguments"], data)]
             return dict(zip(keys, values))
-        elif type == "array":
+        elif type == "array": # arrays should have their element types associated with each element
             rep = [column["typeArguments"][0]]*len(data)
             return [self._pretty_(c, d) for c, d in zip(rep, data)]
-        elif type == "map":
+        elif type == "map": # maps should have their value types associated with each value (note that keys are always strings)
             value_type = column["typeArguments"][1]
             return {k: self._pretty_(value_type, v) for k, v in data.iteritems()}
-        else:
-            return data
-
+        return data # unknown type, don't process it
 
     def _process_response(self, response):
         """Given the JSON response from Presto's REST API, update the internal state with the next
