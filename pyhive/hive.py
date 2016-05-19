@@ -127,9 +127,9 @@ class Connection(object):
         """Hive does not support transactions, so this does nothing."""
         pass
 
-    def cursor(self):
+    def cursor(self, *args, **kwargs):
         """Return a new :py:class:`Cursor` object using the connection."""
-        return Cursor(self)
+        return Cursor(self, *args, **kwargs)
 
     @property
     def client(self):
@@ -151,9 +151,10 @@ class Cursor(common.DBAPICursor):
     visible by other cursors or connections.
     """
 
-    def __init__(self, connection):
+    def __init__(self, connection, arraysize=1000):
         self._operationHandle = None
         super(Cursor, self).__init__()
+        self.arraysize = arraysize
         self._connection = connection
 
     def _reset_state(self):
@@ -214,7 +215,7 @@ class Cursor(common.DBAPICursor):
         """Close the operation handle"""
         self._reset_state()
 
-    def execute(self, operation, parameters=None):
+    def execute(self, operation, parameters=None, async=False):
         """Prepare and execute a database operation (query or command).
 
         Return values are not defined.
@@ -230,11 +231,19 @@ class Cursor(common.DBAPICursor):
         self._state = self._STATE_RUNNING
         _logger.info('%s', sql)
 
-        req = ttypes.TExecuteStatementReq(self._connection.sessionHandle, sql.encode('utf-8'))
+        req = ttypes.TExecuteStatementReq(self._connection.sessionHandle,
+                                          sql.encode('utf-8'), runAsync=async)
         _logger.debug(req)
         response = self._connection.client.ExecuteStatement(req)
         _check_status(response)
         self._operationHandle = response.operationHandle
+
+    def cancel(self):
+        req = ttypes.TCancelOperationReq(
+            operationHandle=self._operationHandle,
+        )
+        response = self._connection.client.CancelOperation(req)
+        _check_status(response)
 
     def _fetch_more(self):
         """Send another TFetchResultsReq and update state"""
@@ -245,7 +254,7 @@ class Cursor(common.DBAPICursor):
         req = ttypes.TFetchResultsReq(
             operationHandle=self._operationHandle,
             orientation=ttypes.TFetchOrientation.FETCH_NEXT,
-            maxRows=1000,
+            maxRows=self.arraysize,
         )
         response = self._connection.client.FetchResults(req)
         _check_status(response)
@@ -255,6 +264,55 @@ class Cursor(common.DBAPICursor):
             self._state = self._STATE_FINISHED
         for row in response.results.rows:
             self._data.append([_unwrap_col_val(val) for val in row.colVals])
+
+    def poll(self):
+        """Poll for and return the raw status data provided by the Hive Thrift REST API.
+        :returns: ``ttypes.TGetOperationStatusResp``
+        :raises: ``ProgrammingError`` when no query has been started
+        .. note::
+            This is not a part of DB-API.
+        """
+        if self._state == self._STATE_NONE:
+            raise ProgrammingError("No query yet")
+
+        req = ttypes.TGetOperationStatusReq(
+            operationHandle=self._operationHandle
+        )
+        response = self._connection.client.GetOperationStatus(req)
+        _check_status(response)
+
+        return response
+
+    def fetch_logs(self):
+        """Retrieve the logs produced by the execution of the query.
+        Can be called multiple times to fetch the logs produced after the previous call.
+        :returns: list<str>
+        :raises: ``ProgrammingError`` when no query has been started
+        .. note::
+            This is not a part of DB-API.
+        """
+        if self._state == self._STATE_NONE:
+            raise ProgrammingError("No query yet")
+
+        logs = []
+        while True:
+            req = ttypes.TFetchResultsReq(
+                operationHandle=self._operationHandle,
+                orientation=ttypes.TFetchOrientation.FETCH_NEXT,
+                maxRows=self.arraysize,
+                fetchType=1  # 0: results, 1: logs
+            )
+            response = self._connection.client.FetchResults(req)
+            _check_status(response)
+
+            for row in response.results.rows:
+                assert len(row.colVals) == 1, row.colVals
+                logs.append(_unwrap_col_val(row.colVals[0]))
+
+            if not response.results.rows:
+                break
+
+        return logs
 
 
 #

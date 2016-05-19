@@ -72,6 +72,34 @@ class TestHive(unittest.TestCase, DBAPITestCase):
             '0.1',
         ]])
 
+    @with_cursor
+    def test_async(self, cursor):
+        cursor.execute('SELECT * FROM one_row', async=True)
+        unfinished_states = (
+            ttypes.TOperationState.INITIALIZED_STATE,
+            ttypes.TOperationState.RUNNING_STATE,
+        )
+        while cursor.poll().operationState in unfinished_states:
+            cursor.fetch_logs()
+        assert cursor.poll().operationState == ttypes.TOperationState.FINISHED_STATE
+
+        self.assertEqual(len(cursor.fetchall()), 1)
+
+    @unittest.skipIf(os.environ.get('CDH') == 'cdh4', "feature doesn't exist?")
+    @with_cursor
+    def test_cancel(self, cursor):
+        # Need to do a JOIN to force a MR job. Without it, Hive optimizes the query to a fetch
+        # operator and prematurely declares the query done.
+        cursor.execute(
+            "SELECT reflect('java.lang.Thread', 'sleep', 1000L * 1000L * 1000L) "
+            "FROM one_row a JOIN one_row b",
+            async=True
+        )
+        self.assertEqual(cursor.poll().operationState, ttypes.TOperationState.RUNNING_STATE)
+        cursor.cancel()
+        self.assertEqual(cursor.poll().operationState, ttypes.TOperationState.CANCELED_STATE)
+        assert any('Stage' in line for line in cursor.fetch_logs())
+
     def test_noops(self):
         """The DB-API specification requires that certain actions exist, even though they might not
         be applicable."""
