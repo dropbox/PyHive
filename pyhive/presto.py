@@ -11,7 +11,7 @@ from builtins import object
 from pyhive import common
 from pyhive.common import DBAPITypeObject
 # Make all exceptions visible in this module per DB-API
-from pyhive.exc import *
+from pyhive.exc import *  # noqa
 import base64
 import getpass
 import logging
@@ -126,9 +126,9 @@ class Cursor(common.DBAPICursor):
         section below.
         """
         # Sleep until we're done or we got the columns
-        self._fetch_while(lambda:
-            self._columns is None
-            and self._state not in (self._STATE_NONE, self._STATE_FINISHED)
+        self._fetch_while(
+            lambda: self._columns is None and
+            self._state not in (self._STATE_NONE, self._STATE_FINISHED)
         )
         if self._columns is None:
             return None

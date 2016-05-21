@@ -53,8 +53,8 @@ class TestPresto(unittest.TestCase, DBAPITestCase):
             ('array', 'array(bigint)', None, None, None, None, True),
             ('map', 'map(bigint,bigint)', None, None, None, None, True),
             ('struct', "row(bigint,bigint)('a','b')", None, None, None, None, True),
-            #('union', 'varchar', None, None, None, None, True),
-            #('decimal', 'double', None, None, None, None, True),
+            # ('union', 'varchar', None, None, None, None, True),
+            # ('decimal', 'double', None, None, None, None, True),
         ])
         self.assertEqual(cursor.fetchall(), [[
             True,
@@ -70,8 +70,8 @@ class TestPresto(unittest.TestCase, DBAPITestCase):
             [1, 2],
             {"1": 2, "3": 4},  # Presto converts all keys to strings so that they're valid JSON
             [1, 2],  # struct is returned as a list of elements
-            #'{0:1}',
-            #0.1,
+            # '{0:1}',
+            # 0.1,
         ]])
 
     def test_noops(self):

@@ -13,7 +13,7 @@ from TCLIService import ttypes
 from pyhive import common
 from pyhive.common import DBAPITypeObject
 # Make all exceptions visible in this module per DB-API
-from pyhive.exc import *
+from pyhive.exc import *  # noqa
 import contextlib
 import getpass
 import logging
@@ -42,7 +42,8 @@ class HiveParamEscaper(common.ParamEscaper):
         # string formatting here.
         if isinstance(item, str):
             item = item.decode('utf-8')
-        return "'{}'".format(item
+        return "'{}'".format(
+            item
             .replace('\\', '\\\\')
             .replace("'", "\\'")
             .replace('\r', '\\r')
@@ -65,7 +66,8 @@ def connect(*args, **kwargs):
 class Connection(object):
     """Wraps a Thrift session"""
 
-    def __init__(self, host, port=10000, username=None, database='default', auth='NONE', configuration=None):
+    def __init__(self, host, port=10000, username=None, database='default', auth='NONE',
+                 configuration=None):
         """Connect to HiveServer2
 
         :param auth: The value of hive.server2.authentication used by HiveServer2
@@ -89,22 +91,24 @@ class Connection(object):
             # PLAIN corresponds to hive.server2.authentication=NONE in hive-site.xml
             self._transport = thrift_sasl.TSaslClientTransport(sasl_factory, b'PLAIN', socket)
         else:
-            raise NotImplementedError("Only NONE & NOSASL authentication are supported, got {}".format(auth))
+            raise NotImplementedError(
+                "Only NONE & NOSASL authentication are supported, got {}".format(auth))
 
         protocol = thrift.protocol.TBinaryProtocol.TBinaryProtocol(self._transport)
         self._client = TCLIService.Client(protocol)
+        protocolVersion = ttypes.TProtocolVersion.HIVE_CLI_SERVICE_PROTOCOL_V1
 
         try:
             self._transport.open()
             open_session_req = ttypes.TOpenSessionReq(
-                client_protocol=ttypes.TProtocolVersion.HIVE_CLI_SERVICE_PROTOCOL_V1,
+                client_protocol=protocolVersion,
                 configuration=configuration,
             )
             response = self._client.OpenSession(open_session_req)
             _check_status(response)
-            assert(response.sessionHandle is not None), "Expected a session from OpenSession"
+            assert response.sessionHandle is not None, "Expected a session from OpenSession"
             self._sessionHandle = response.sessionHandle
-            assert(response.serverProtocolVersion == ttypes.TProtocolVersion.HIVE_CLI_SERVICE_PROTOCOL_V1), \
+            assert response.serverProtocolVersion == protocolVersion, \
                 "Unable to handle protocol version {}".format(response.serverProtocolVersion)
             with contextlib.closing(self.cursor()) as cursor:
                 cursor.execute('USE `{}`'.format(database))
@@ -246,7 +250,7 @@ class Cursor(common.DBAPICursor):
         response = self._connection.client.FetchResults(req)
         _check_status(response)
         # response.hasMoreRows seems to always be False, so we instead check the number of rows
-        #if not response.hasMoreRows:
+        # if not response.hasMoreRows:
         if not response.results.rows:
             self._state = self._STATE_FINISHED
         for row in response.results.rows:

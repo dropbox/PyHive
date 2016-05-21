@@ -23,6 +23,7 @@ try:
 except ImportError:
     from sqlalchemy.sql.compiler import DefaultCompiler as SQLCompiler
 
+
 class PrestoIdentifierPreparer(compiler.IdentifierPreparer):
     # Just quote everything to make things simpler / easier to upgrade
     reserved_words = UniversalSet()
@@ -97,7 +98,10 @@ class PrestoDialect(default.DefaultDialect):
             # call. SQLAlchemy doesn't handle this. Thus, we catch the unwrapped
             # presto.DatabaseError here.
             # Does the table exist?
-            msg = e.args[0].get('message') if len(e.args) > 0 and isinstance(e.args[0], dict) else None
+            msg = (
+                e.args[0].get('message') if len(e.args) > 0 and isinstance(e.args[0], dict)
+                else None
+            )
             regex = r"Table\ \'.*{}\'\ does\ not\ exist".format(re.escape(table_name))
             if msg and re.search(regex, msg):
                 raise exc.NoSuchTableError(table_name)

@@ -1,6 +1,7 @@
 mock>=1.0.0
-pytest
+pytest>=2.9.0
 pytest-cov
+pytest-flake8
 pytest-random
 requests>=1.0.0
 sasl>=0.1.3

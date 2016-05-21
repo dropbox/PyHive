@@ -13,7 +13,6 @@ from past.builtins import basestring
 from pyhive import exc
 import abc
 import collections
-import sys
 import time
 from future.utils import with_metaclass
 

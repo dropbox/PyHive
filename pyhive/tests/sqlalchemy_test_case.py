@@ -43,9 +43,11 @@ class SqlAlchemyTestCase(with_metaclass(abc.ABCMeta, object)):
     @with_engine_connection
     def test_reflect_no_such_table(self, engine, connection):
         """reflecttable should throw an exception on an invalid table"""
-        self.assertRaises(NoSuchTableError,
+        self.assertRaises(
+            NoSuchTableError,
             lambda: Table('this_does_not_exist', MetaData(bind=engine), autoload=True))
-        self.assertRaises(NoSuchTableError,
+        self.assertRaises(
+            NoSuchTableError,
             lambda: Table('this_does_not_exist', MetaData(bind=engine),
                           schema='also_does_not_exist', autoload=True))
 
