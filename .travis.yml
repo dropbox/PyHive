@@ -34,5 +34,5 @@ install:
   - pip install sqlalchemy==$SQLALCHEMY
   - pip install -r dev_requirements.txt
 # sleep so Presto has time to start up. Otherwise we might get 'No nodes available to run query'
-script: sleep 10 && py.test
+script: sleep 10 && py.test -v
 after_success: codecov
