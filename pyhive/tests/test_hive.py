@@ -72,6 +72,21 @@ class TestHive(unittest.TestCase, DBAPITestCase):
             '0.1',
         ]])
 
+    @with_cursor
+    def test_async(self, cursor):
+        cursor.execute('SELECT * FROM one_row', async=True)
+        while cursor.poll() != ttypes.TOperationState.FINISHED_STATE:
+            cursor.fetch_logs()
+        
+        self.assertEqual(len(cursor.fetchall()), 1)
+    
+    @with_cursor
+    def test_cancel(self, cursor):
+        cursor.execute('SELECT COUNT(*) FROM one_row', async=True)
+        cursor.cancel()
+        self.assertEqual(cursor.poll(), ttypes.TOperationState.CANCELED_STATE)
+        
+
     def test_noops(self):
         """The DB-API specification requires that certain actions exist, even though they might not
         be applicable."""
