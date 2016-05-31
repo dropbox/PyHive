@@ -52,7 +52,8 @@ class TestHive(unittest.TestCase, DBAPITestCase):
             ('union', 'UNION_TYPE', None, None, None, None, True),
             ('decimal', 'DECIMAL_TYPE', None, None, None, None, True),
         ])
-        self.assertEqual(cursor.fetchall(), [[
+        rows = cursor.fetchall()
+        expected = [(
             True,
             127,
             32767,
@@ -62,13 +63,16 @@ class TestHive(unittest.TestCase, DBAPITestCase):
             0.25,
             'a string',
             '1970-01-01 00:00:00.0',
-            '123',
+            b'123',
             '[1,2]',
             '{1:2,3:4}',
             '{"a":1,"b":2}',
             '{0:1}',
             '0.1',
-        ]])
+        )]
+        self.assertEqual(rows, expected)
+        # catch unicode/str
+        self.assertEqual(list(map(type, rows[0])), list(map(type, expected[0])))
 
     @with_cursor
     def test_async(self, cursor):
@@ -128,7 +132,7 @@ class TestHive(unittest.TestCase, DBAPITestCase):
             (orig,)
         )
         result = cursor.fetchall()
-        self.assertEqual(result, [[orig]])
+        self.assertEqual(result, [(orig,)])
 
     @with_cursor
     def test_no_result_set(self, cursor):

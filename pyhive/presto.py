@@ -225,7 +225,7 @@ class Cursor(common.DBAPICursor):
             assert self._columns
             new_data = response_json['data']
             self._decode_binary(new_data)
-            self._data += new_data
+            self._data += map(tuple, new_data)
         if 'nextUri' not in response_json:
             self._state = self._STATE_FINISHED
         if 'error' in response_json:

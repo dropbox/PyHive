@@ -96,19 +96,21 @@ class Connection(object):
 
         protocol = thrift.protocol.TBinaryProtocol.TBinaryProtocol(self._transport)
         self._client = TCLIService.Client(protocol)
-        protocolVersion = ttypes.TProtocolVersion.HIVE_CLI_SERVICE_PROTOCOL_V1
+        # oldest version that still contains features we care about
+        # "V6 uses binary type for binary payload (was string) and uses columnar result set"
+        protocol_version = ttypes.TProtocolVersion.HIVE_CLI_SERVICE_PROTOCOL_V6
 
         try:
             self._transport.open()
             open_session_req = ttypes.TOpenSessionReq(
-                client_protocol=protocolVersion,
+                client_protocol=protocol_version,
                 configuration=configuration,
             )
             response = self._client.OpenSession(open_session_req)
             _check_status(response)
             assert response.sessionHandle is not None, "Expected a session from OpenSession"
             self._sessionHandle = response.sessionHandle
-            assert response.serverProtocolVersion == protocolVersion, \
+            assert response.serverProtocolVersion == protocol_version, \
                 "Unable to handle protocol version {}".format(response.serverProtocolVersion)
             with contextlib.closing(self.cursor()) as cursor:
                 cursor.execute('USE `{}`'.format(database))
@@ -258,12 +260,15 @@ class Cursor(common.DBAPICursor):
         )
         response = self._connection.client.FetchResults(req)
         _check_status(response)
+        assert not response.results.rows, 'expected data in columnar format'
+        columns = map(_unwrap_column, response.results.columns)
+        new_data = zip(*columns)
+        self._data += new_data
         # response.hasMoreRows seems to always be False, so we instead check the number of rows
+        # https://github.com/apache/hive/blob/release-1.2.1/service/src/java/org/apache/hive/service/cli/thrift/ThriftCLIService.java#L678
         # if not response.hasMoreRows:
-        if not response.results.rows:
+        if not new_data:
             self._state = self._STATE_FINISHED
-        for row in response.results.rows:
-            self._data.append([_unwrap_col_val(val) for val in row.colVals])
 
     def poll(self):
         """Poll for and return the raw status data provided by the Hive Thrift REST API.
@@ -304,12 +309,12 @@ class Cursor(common.DBAPICursor):
             )
             response = self._connection.client.FetchResults(req)
             _check_status(response)
+            assert not response.results.rows, 'expected data in columnar format'
+            assert len(response.results.columns) == 1, response.results.columns
+            new_logs = _unwrap_column(response.results.columns[0])
+            logs += new_logs
 
-            for row in response.results.rows:
-                assert len(row.colVals) == 1, row.colVals
-                logs.append(_unwrap_col_val(row.colVals[0]))
-
-            if not response.results.rows:
+            if not new_logs:
                 break
 
         return logs
@@ -330,17 +335,24 @@ for type_id in constants.PRIMITIVE_TYPES:
 #
 
 
-def _unwrap_col_val(val):
-    """Return the raw value from a TColumnValue instance."""
-    for _, _, attr, _, _ in filter(None, ttypes.TColumnValue.thrift_spec):
-        val_obj = getattr(val, attr)
-        if val_obj:
-            val = val_obj.value
-            if isinstance(val, str):
-                return val.decode('utf-8')
+def _unwrap_column(col):
+    """Return a list of raw values from a TColumn instance."""
+    for attr, wrapper in col.__dict__.iteritems():
+        if wrapper is not None:
+            values = wrapper.values
+            nulls = wrapper.nulls  # bit set describing what's null
+            assert isinstance(nulls, str)
+            if attr == 'stringVal':
+                result = [val.decode('utf-8') for val in values]
             else:
-                return val
-    raise DataError("Got empty column value {}".format(val))  # pragma: no cover
+                result = values
+            for i, char in enumerate(nulls):
+                byte = ord(char)
+                for b in xrange(8):
+                    if byte & (1 << b):
+                        result[i * 8 + b] = None
+            return result
+    raise DataError("Got empty column value {}".format(col))  # pragma: no cover
 
 
 def _check_status(response):

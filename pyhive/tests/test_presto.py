@@ -56,7 +56,8 @@ class TestPresto(unittest.TestCase, DBAPITestCase):
             # ('union', 'varchar', None, None, None, None, True),
             # ('decimal', 'double', None, None, None, None, True),
         ])
-        self.assertEqual(cursor.fetchall(), [[
+        rows = cursor.fetchall()
+        expected = [(
             True,
             127,
             32767,
@@ -72,7 +73,10 @@ class TestPresto(unittest.TestCase, DBAPITestCase):
             [1, 2],  # struct is returned as a list of elements
             # '{0:1}',
             # 0.1,
-        ]])
+        )]
+        self.assertEqual(rows, expected)
+        # catch unicode/str
+        self.assertEqual(list(map(type, rows[0])), list(map(type, expected[0])))
 
     def test_noops(self):
         """The DB-API specification requires that certain actions exist, even though they might not
@@ -105,7 +109,7 @@ class TestPresto(unittest.TestCase, DBAPITestCase):
         def fail(*args, **kwargs):
             self.fail("Should not need requests.get after done polling")  # pragma: no cover
         with mock.patch('requests.get', fail):
-            self.assertEqual(cursor.fetchall(), [[1]])
+            self.assertEqual(cursor.fetchall(), [(1,)])
 
     @with_cursor
     def test_set_session(self, cursor):
