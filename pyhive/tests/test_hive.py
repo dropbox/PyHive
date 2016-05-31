@@ -12,7 +12,6 @@ from pyhive.tests.dbapi_test_case import DBAPITestCase
 from pyhive.tests.dbapi_test_case import with_cursor
 import contextlib
 import mock
-import os
 import unittest
 import sys
 
@@ -36,7 +35,6 @@ class TestHive(unittest.TestCase, DBAPITestCase):
     @with_cursor
     def test_complex(self, cursor):
         cursor.execute('SELECT * FROM one_row_complex')
-        stringly_typed = 'STRING_TYPE' if os.environ.get('CDH') == 'cdh4' else None
         self.assertEqual(cursor.description, [
             ('boolean', 'BOOLEAN_TYPE', None, None, None, None, True),
             ('tinyint', 'TINYINT_TYPE', None, None, None, None, True),
@@ -48,10 +46,10 @@ class TestHive(unittest.TestCase, DBAPITestCase):
             ('string', 'STRING_TYPE', None, None, None, None, True),
             ('timestamp', 'TIMESTAMP_TYPE', None, None, None, None, True),
             ('binary', 'BINARY_TYPE', None, None, None, None, True),
-            ('array', stringly_typed or 'ARRAY_TYPE', None, None, None, None, True),
-            ('map', stringly_typed or 'MAP_TYPE', None, None, None, None, True),
-            ('struct', stringly_typed or 'STRUCT_TYPE', None, None, None, None, True),
-            ('union', stringly_typed or 'UNION_TYPE', None, None, None, None, True),
+            ('array', 'ARRAY_TYPE', None, None, None, None, True),
+            ('map', 'MAP_TYPE', None, None, None, None, True),
+            ('struct', 'STRUCT_TYPE', None, None, None, None, True),
+            ('union', 'UNION_TYPE', None, None, None, None, True),
             ('decimal', 'DECIMAL_TYPE', None, None, None, None, True),
         ])
         self.assertEqual(cursor.fetchall(), [[
@@ -85,7 +83,6 @@ class TestHive(unittest.TestCase, DBAPITestCase):
 
         self.assertEqual(len(cursor.fetchall()), 1)
 
-    @unittest.skipIf(os.environ.get('CDH') == 'cdh4', "feature doesn't exist?")
     @with_cursor
     def test_cancel(self, cursor):
         # Need to do a JOIN to force a MR job. Without it, Hive optimizes the query to a fetch
@@ -123,7 +120,7 @@ class TestHive(unittest.TestCase, DBAPITestCase):
         self.run_escape_case(bad_str)
 
     def test_newlines(self):
-        """Verify that newlines are passed through in a way that doesn't fail parsing"""
+        """Verify that newlines are passed through correctly"""
         cursor = self.connect().cursor()
         orig = ' \r\n \r \n '
         cursor.execute(
@@ -131,11 +128,7 @@ class TestHive(unittest.TestCase, DBAPITestCase):
             (orig,)
         )
         result = cursor.fetchall()
-        if os.environ.get('CDH') == 'cdh4':
-            # Hive thrift translates newlines into multiple rows. WTF.
-            self.assertEqual(result, [[' '], [' '], [' '], [' ']])
-        else:
-            self.assertEqual(result, [[orig]])
+        self.assertEqual(result, [[orig]])
 
     @with_cursor
     def test_no_result_set(self, cursor):

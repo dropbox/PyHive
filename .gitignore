@@ -11,3 +11,5 @@ cover/
 .pydevproject
 /PyHive.egg-info/
 .settings
+.cache/
+*.iml

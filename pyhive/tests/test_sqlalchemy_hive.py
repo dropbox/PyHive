@@ -149,8 +149,7 @@ class TestSqlAlchemyHive(unittest.TestCase, SqlAlchemyTestCase):
         expected = [(1,)]
         self.assertEqual(result, expected)
 
-    @unittest.skipIf(os.environ.get('CDH') == 'cdh4' or os.environ.get('SQLALCHEMY') == '0.5.8',
-                     "not supported on hive 0.10 or old sqlalchemy")
+    @unittest.skipIf(os.environ.get('SQLALCHEMY') == '0.5.8', "not supported on old sqlalchemy")
     @with_engine_connection
     def test_insert_values(self, engine, connection):
         table = Table('insert_test', MetaData(bind=engine),
@@ -163,8 +162,3 @@ class TestSqlAlchemyHive(unittest.TestCase, SqlAlchemyTestCase):
         result = table.select().execute().fetchall()
         expected = [(1,), (2,)]
         self.assertEqual(result, expected)
-
-    @unittest.skipIf(os.environ.get('CDH') == 'cdh4',
-                     "Hive 0.10 doesn't distinguish partition columns in DESCRIBE")
-    def test_reflect_partitions(self):
-        super(TestSqlAlchemyHive, self).test_reflect_partitions()

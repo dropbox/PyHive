@@ -1,12 +1,5 @@
 #!/bin/bash -eux
 
-if [ "${CDH:-}" == 'cdh4' ]
-then
-    DECIMAL_TYPE='DECIMAL'
-else
-    DECIMAL_TYPE='DECIMAL(10,1)'
-fi
-
 hive -e '
 set mapred.job.tracker=local;
 DROP TABLE IF EXISTS one_row_complex;
@@ -25,7 +18,7 @@ CREATE TABLE one_row_complex (
     `map` MAP<int, int>,
     `struct` STRUCT<a: int, b: int>,
     `union` UNIONTYPE<int, string>,
-    `decimal` '"$DECIMAL_TYPE"'
+    `decimal` DECIMAL(10,1)
 );
 INSERT OVERWRITE TABLE one_row_complex SELECT
     true,
