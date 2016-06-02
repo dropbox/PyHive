@@ -87,6 +87,10 @@ Install using
 
 There's also a `third party Conda package <https://binstar.org/blaze/pyhive>`_.
 
+Changelog
+=========
+See https://github.com/dropbox/PyHive/releases.
+
 Testing
 =======
 .. image:: https://travis-ci.org/dropbox/PyHive.svg
