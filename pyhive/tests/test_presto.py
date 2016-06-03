@@ -28,7 +28,7 @@ class TestPresto(unittest.TestCase, DBAPITestCase):
     @with_cursor
     def test_description(self, cursor):
         cursor.execute('SELECT 1 AS foobar FROM one_row')
-        self.assertEqual(cursor.description, [('foobar', 'bigint', None, None, None, None, True)])
+        self.assertEqual(cursor.description, [('foobar', 'integer', None, None, None, None, True)])
 
     @with_cursor
     def test_complex(self, cursor):
@@ -38,23 +38,23 @@ class TestPresto(unittest.TestCase, DBAPITestCase):
         description = []
         for row in cursor.description:
             description.append((row[0], row[1].replace('<', '(').replace('>', ')')) + row[2:])
-        # TODO Presto drops the union and decimal fields
+        # TODO Presto drops the union field
         self.assertEqual(description, [
             ('boolean', 'boolean', None, None, None, None, True),
-            ('tinyint', 'bigint', None, None, None, None, True),
-            ('smallint', 'bigint', None, None, None, None, True),
-            ('int', 'bigint', None, None, None, None, True),
+            ('tinyint', 'integer', None, None, None, None, True),
+            ('smallint', 'integer', None, None, None, None, True),
+            ('int', 'integer', None, None, None, None, True),
             ('bigint', 'bigint', None, None, None, None, True),
             ('float', 'double', None, None, None, None, True),
             ('double', 'double', None, None, None, None, True),
             ('string', 'varchar', None, None, None, None, True),
             ('timestamp', 'timestamp', None, None, None, None, True),
             ('binary', 'varbinary', None, None, None, None, True),
-            ('array', 'array(bigint)', None, None, None, None, True),
-            ('map', 'map(bigint,bigint)', None, None, None, None, True),
-            ('struct', "row(bigint,bigint)('a','b')", None, None, None, None, True),
+            ('array', 'array(integer)', None, None, None, None, True),
+            ('map', 'map(integer,integer)', None, None, None, None, True),
+            ('struct', 'row(a integer,b integer)', None, None, None, None, True),
             # ('union', 'varchar', None, None, None, None, True),
-            # ('decimal', 'double', None, None, None, None, True),
+            ('decimal', 'decimal(10,1)', None, None, None, None, True),
         ])
         rows = cursor.fetchall()
         expected = [(
@@ -72,7 +72,7 @@ class TestPresto(unittest.TestCase, DBAPITestCase):
             {"1": 2, "3": 4},  # Presto converts all keys to strings so that they're valid JSON
             [1, 2],  # struct is returned as a list of elements
             # '{0:1}',
-            # 0.1,
+            '0.1',
         )]
         self.assertEqual(rows, expected)
         # catch unicode/str

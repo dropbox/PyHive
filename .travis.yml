@@ -4,16 +4,16 @@ matrix:
   include:
     # newest dependencies + a few python versions
     - python: 3.5
-      env: CDH=cdh5 PRESTO=0.142 SQLALCHEMY=1.0.12
+      env: CDH=cdh5 PRESTO=0.147 SQLALCHEMY=1.0.12
     - python: 3.4
-      env: CDH=cdh5 PRESTO=0.142 SQLALCHEMY=1.0.12
+      env: CDH=cdh5 PRESTO=0.147 SQLALCHEMY=1.0.12
     - python: 3.3
-      env: CDH=cdh5 PRESTO=0.142 SQLALCHEMY=1.0.12
+      env: CDH=cdh5 PRESTO=0.147 SQLALCHEMY=1.0.12
     - python: 2.7
-      env: CDH=cdh5 PRESTO=0.142 SQLALCHEMY=1.0.12
+      env: CDH=cdh5 PRESTO=0.147 SQLALCHEMY=1.0.12
     # stale stuff we're still using / supporting
     - python: 2.7
-      env: CDH=cdh5 PRESTO=0.118 SQLALCHEMY=0.5.8
+      env: CDH=cdh5 PRESTO=0.147 SQLALCHEMY=0.5.8
   # exclude: python 3 against old libries
 before_install:
   - ./scripts/travis-install.sh
