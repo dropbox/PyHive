@@ -44,7 +44,7 @@ class TestPresto(unittest.TestCase, DBAPITestCase):
             ('tinyint', 'integer', None, None, None, None, True),
             ('smallint', 'integer', None, None, None, None, True),
             ('int', 'integer', None, None, None, None, True),
-            ('bigint', 'integer', None, None, None, None, True),
+            ('bigint', 'bigint', None, None, None, None, True),
             ('float', 'double', None, None, None, None, True),
             ('double', 'double', None, None, None, None, True),
             ('string', 'varchar', None, None, None, None, True),
