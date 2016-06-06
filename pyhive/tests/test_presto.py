@@ -72,7 +72,7 @@ class TestPresto(unittest.TestCase, DBAPITestCase):
             {"1": 2, "3": 4},  # Presto converts all keys to strings so that they're valid JSON
             [1, 2],  # struct is returned as a list of elements
             # '{0:1}',
-            0.1,
+            '0.1',
         )]
         self.assertEqual(rows, expected)
         # catch unicode/str
