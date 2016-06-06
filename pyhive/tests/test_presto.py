@@ -50,9 +50,9 @@ class TestPresto(unittest.TestCase, DBAPITestCase):
             ('string', 'varchar', None, None, None, None, True),
             ('timestamp', 'timestamp', None, None, None, None, True),
             ('binary', 'varbinary', None, None, None, None, True),
-            ('array', 'array(bigint)', None, None, None, None, True),
-            ('map', 'map(bigint,bigint)', None, None, None, None, True),
-            ('struct', "row(bigint,bigint)('a','b')", None, None, None, None, True),
+            ('array', 'array(integer)', None, None, None, None, True),
+            ('map', 'map(integer,integer)', None, None, None, None, True),
+            ('struct', "row(integer,integer)('a','b')", None, None, None, None, True),
             # ('union', 'varchar', None, None, None, None, True),
             ('decimal', 'decimal(10,1)', None, None, None, None, True),
         ])
