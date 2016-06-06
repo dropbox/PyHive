@@ -46,7 +46,7 @@ class TestSqlAlchemyPresto(unittest.TestCase, SqlAlchemyTestCase):
             {"1": 2, "3": 4},  # Presto converts all keys to strings so that they're valid JSON
             [1, 2],  # struct is returned as a list of elements
             # '{0:1}',
-            0.1,
+            '0.1',
         ])
 
     def test_url_default(self):
