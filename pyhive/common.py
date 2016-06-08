@@ -238,7 +238,9 @@ class ParamEscaper(object):
         return "'{}'".format(item.replace("'", "''"))
 
     def escape_item(self, item):
-        if isinstance(item, (int, float)):
+        if item is None:
+            return 'NULL'
+        elif isinstance(item, (int, float)):
             return self.escape_number(item)
         elif isinstance(item, basestring):
             return self.escape_string(item)

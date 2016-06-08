@@ -46,6 +46,11 @@ class DBAPITestCase(with_metaclass(abc.ABCMeta, object)):
         self.assertEqual(cursor.fetchall(), [(i,) for i in range(10000)])
 
     @with_cursor
+    def test_null_param(self, cursor):
+        cursor.execute('SELECT %s FROM one_row', (None,))
+        self.assertEqual(cursor.fetchall(), [(None,)])
+
+    @with_cursor
     def test_iterator(self, cursor):
         cursor.execute('SELECT * FROM one_row')
         self.assertEqual(list(cursor), [(1,)])
