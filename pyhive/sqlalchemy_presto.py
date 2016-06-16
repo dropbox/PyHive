@@ -38,6 +38,8 @@ _type_map = {
     'boolean': types.Boolean,
     'double': types.Float,
     'varchar': types.String,
+    'timestamp': types.TIMESTAMP,
+    'date': types.DATE,
 }
 
 
