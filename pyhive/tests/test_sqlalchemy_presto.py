@@ -26,8 +26,8 @@ class TestSqlAlchemyPresto(unittest.TestCase, SqlAlchemyTestCase):
     def test_reflect_select(self, engine, connection):
         """reflecttable should be able to fill in a table from the name"""
         one_row_complex = Table('one_row_complex', MetaData(bind=engine), autoload=True)
-        # Presto ignores the union and decimal columns
-        self.assertEqual(len(one_row_complex.c), 15 - 2)
+        # Presto ignores the union column
+        self.assertEqual(len(one_row_complex.c), 15 - 1)
         self.assertIsInstance(one_row_complex.c.string, Column)
         rows = one_row_complex.select().execute().fetchall()
         self.assertEqual(len(rows), 1)
@@ -46,7 +46,7 @@ class TestSqlAlchemyPresto(unittest.TestCase, SqlAlchemyTestCase):
             {"1": 2, "3": 4},  # Presto converts all keys to strings so that they're valid JSON
             [1, 2],  # struct is returned as a list of elements
             # '{0:1}',
-            # 0.1,
+            '0.1',
         ])
 
     def test_url_default(self):
