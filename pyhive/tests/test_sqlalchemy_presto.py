@@ -50,7 +50,7 @@ class TestSqlAlchemyPresto(unittest.TestCase, SqlAlchemyTestCase):
             # '{0:1}',
             '0.1',
         ])
-        self.assertEqual(one_row_complex.c.boolean.type, Boolean)
+        self.assertEqual(one_row_complex.c.boolean.type, Boolean())
 
     def test_url_default(self):
         engine = create_engine('presto://localhost:8080/hive')
