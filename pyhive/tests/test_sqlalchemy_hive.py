@@ -53,6 +53,27 @@ class TestSqlAlchemyHive(unittest.TestCase, SqlAlchemyTestCase):
         self.assertEqual(len(rows), 1)
         self.assertEqual(list(rows[0]), _ONE_ROW_COMPLEX_CONTENTS)
 
+        try:
+            from sqlalchemy.types import BigInteger
+        except ImportError:
+            from sqlalchemy.databases.mysql import MSBigInteger as BigInteger
+
+        self.assertTrue(isinstance(one_row_complex.c.boolean.type, types.Boolean))
+        self.assertTrue(isinstance(one_row_complex.c.tinyint.type, types.Integer))
+        self.assertTrue(isinstance(one_row_complex.c.smallint.type, types.Integer))
+        self.assertTrue(isinstance(one_row_complex.c.int.type, types.Integer))
+        self.assertTrue(isinstance(one_row_complex.c.bigint.type, BigInteger))
+        self.assertTrue(isinstance(one_row_complex.c.float.type, types.Float))
+        self.assertTrue(isinstance(one_row_complex.c.double.type, types.Float))
+        self.assertTrue(isinstance(one_row_complex.c.string.type, String))
+        self.assertTrue(isinstance(one_row_complex.c.timestamp.type, types.TIMESTAMP))
+        self.assertTrue(isinstance(one_row_complex.c.binary.type, types.NullType))
+        self.assertTrue(isinstance(one_row_complex.c.array.type, types.NullType))
+        self.assertTrue(isinstance(one_row_complex.c.map.type, types.NullType))
+        self.assertTrue(isinstance(one_row_complex.c.struct.type, types.NullType))
+        self.assertTrue(isinstance(one_row_complex.c.union.type, types.NullType))
+        self.assertTrue(isinstance(one_row_complex.c.decimal.type, types.NullType))
+
     @with_engine_connection
     def test_type_map(self, engine, connection):
         """sqlalchemy should use the dbapi_type_map to infer types from raw queries"""
