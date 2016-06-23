@@ -3,15 +3,16 @@ from __future__ import unicode_literals
 from builtins import str
 from pyhive.tests.sqlalchemy_test_case import SqlAlchemyTestCase
 from pyhive.tests.sqlalchemy_test_case import with_engine_connection
+from sqlalchemy import types
 from sqlalchemy.engine import create_engine
 from sqlalchemy.schema import Column
 from sqlalchemy.schema import MetaData
 from sqlalchemy.schema import Table
-from sqlalchemy import types
 
 import contextlib
 import unittest
 
+import sys
 
 class TestSqlAlchemyPresto(unittest.TestCase, SqlAlchemyTestCase):
     def create_engine(self):
@@ -49,7 +50,37 @@ class TestSqlAlchemyPresto(unittest.TestCase, SqlAlchemyTestCase):
             # '{0:1}',
             '0.1',
         ])
+
+        sys.stderr.write('{!r}\n'.format(one_row_complex.c.boolean.type))
+        sys.stderr.write('{!r}\n'.format(one_row_complex.c.tinyint.type))
+        sys.stderr.write('{!r}\n'.format(one_row_complex.c.smallint.type))
+        sys.stderr.write('{!r}\n'.format(one_row_complex.c.int.type))
+        sys.stderr.write('{!r}\n'.format(one_row_complex.c.bigint.type))
+        sys.stderr.write('{!r}\n'.format(one_row_complex.c.float.type))
+        sys.stderr.write('{!r}\n'.format(one_row_complex.c.double.type))
+        sys.stderr.write('{!r}\n'.format(one_row_complex.c.string.type))
+        sys.stderr.write('{!r}\n'.format(one_row_complex.c.timestamp.type))
+        sys.stderr.write('{!r}\n'.format(one_row_complex.c.binary.type))
+        sys.stderr.write('{!r}\n'.format(one_row_complex.c.array.type))
+        sys.stderr.write('{!r}\n'.format(one_row_complex.c.map.type))
+        sys.stderr.write('{!r}\n'.format(one_row_complex.c.struct.type))
+        sys.stderr.write('{!r}\n'.format(one_row_complex.c.decimal.type))
+
+
         self.assertTrue(isinstance(one_row_complex.c.boolean.type, types.Boolean))
+        self.assertTrue(isinstance(one_row_complex.c.tinyint.type, types.Boolean))
+        self.assertTrue(isinstance(one_row_complex.c.smallint.type, types.Boolean))
+        self.assertTrue(isinstance(one_row_complex.c.int.type, types.Boolean))
+        self.assertTrue(isinstance(one_row_complex.c.bigint.type, types.Boolean))
+        self.assertTrue(isinstance(one_row_complex.c.float.type, types.Boolean))
+        self.assertTrue(isinstance(one_row_complex.c.double.type, types.Boolean))
+        self.assertTrue(isinstance(one_row_complex.c.string.type, types.Boolean))
+        self.assertTrue(isinstance(one_row_complex.c.timestamp.type, types.Boolean))
+        self.assertTrue(isinstance(one_row_complex.c.binary.type, types.Boolean))
+        self.assertTrue(isinstance(one_row_complex.c.array.type, types.Boolean))
+        self.assertTrue(isinstance(one_row_complex.c.map.type, types.Boolean))
+        self.assertTrue(isinstance(one_row_complex.c.struct.type, types.Boolean))
+        self.assertTrue(isinstance(one_row_complex.c.decimal.type, types.Boolean))
 
     def test_url_default(self):
         engine = create_engine('presto://localhost:8080/hive')
