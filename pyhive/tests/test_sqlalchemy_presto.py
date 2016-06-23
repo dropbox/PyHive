@@ -7,8 +7,7 @@ from sqlalchemy.engine import create_engine
 from sqlalchemy.schema import Column
 from sqlalchemy.schema import MetaData
 from sqlalchemy.schema import Table
-from sqlalchemy.types import Boolean
-from sqlalchemy.types import String
+from sqlalchemy import types
 
 import contextlib
 import unittest
@@ -50,7 +49,7 @@ class TestSqlAlchemyPresto(unittest.TestCase, SqlAlchemyTestCase):
             # '{0:1}',
             '0.1',
         ])
-        self.assertEqual(one_row_complex.c.boolean.type, Boolean())
+        self.assertTrue(isinstance(one_row_complex.c.boolean.type, types.Boolean))
 
     def test_url_default(self):
         engine = create_engine('presto://localhost:8080/hive')
