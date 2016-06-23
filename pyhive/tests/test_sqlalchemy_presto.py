@@ -7,7 +7,9 @@ from sqlalchemy.engine import create_engine
 from sqlalchemy.schema import Column
 from sqlalchemy.schema import MetaData
 from sqlalchemy.schema import Table
+from sqlalchemy.types import Boolean
 from sqlalchemy.types import String
+
 import contextlib
 import unittest
 
@@ -48,7 +50,7 @@ class TestSqlAlchemyPresto(unittest.TestCase, SqlAlchemyTestCase):
             # '{0:1}',
             '0.1',
         ])
-        self.assertEqual(one_row_complex.c.boolean.type, 'copy')
+        self.assertEqual(one_row_complex.c.boolean.type, Boolean)
 
     def test_url_default(self):
         engine = create_engine('presto://localhost:8080/hive')
