@@ -13,7 +13,6 @@ from sqlalchemy.types import String
 import contextlib
 import unittest
 
-import sys
 
 class TestSqlAlchemyPresto(unittest.TestCase, SqlAlchemyTestCase):
     def create_engine(self):
