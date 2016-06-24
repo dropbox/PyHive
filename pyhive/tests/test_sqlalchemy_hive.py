@@ -7,6 +7,7 @@ from pyhive.sqlalchemy_hive import HiveDecimal
 from pyhive.sqlalchemy_hive import HiveTimestamp
 from pyhive.tests.sqlalchemy_test_case import SqlAlchemyTestCase
 from pyhive.tests.sqlalchemy_test_case import with_engine_connection
+from sqlalchemy import types
 from sqlalchemy.engine import create_engine
 from sqlalchemy.schema import Column
 from sqlalchemy.schema import MetaData
@@ -52,6 +53,27 @@ class TestSqlAlchemyHive(unittest.TestCase, SqlAlchemyTestCase):
         rows = one_row_complex.select().execute().fetchall()
         self.assertEqual(len(rows), 1)
         self.assertEqual(list(rows[0]), _ONE_ROW_COMPLEX_CONTENTS)
+
+        try:
+            from sqlalchemy.types import BigInteger
+        except ImportError:
+            from sqlalchemy.databases.mysql import MSBigInteger as BigInteger
+
+        self.assertTrue(isinstance(one_row_complex.c.boolean.type, types.Boolean))
+        self.assertTrue(isinstance(one_row_complex.c.tinyint.type, types.Integer))
+        self.assertTrue(isinstance(one_row_complex.c.smallint.type, types.Integer))
+        self.assertTrue(isinstance(one_row_complex.c.int.type, types.Integer))
+        self.assertTrue(isinstance(one_row_complex.c.bigint.type, BigInteger))
+        self.assertTrue(isinstance(one_row_complex.c.float.type, types.Float))
+        self.assertTrue(isinstance(one_row_complex.c.double.type, types.Float))
+        self.assertTrue(isinstance(one_row_complex.c.string.type, types.String))
+        self.assertTrue(isinstance(one_row_complex.c.timestamp.type, HiveTimestamp))
+        self.assertTrue(isinstance(one_row_complex.c.binary.type, types.String))
+        self.assertTrue(isinstance(one_row_complex.c.array.type, types.String))
+        self.assertTrue(isinstance(one_row_complex.c.map.type, types.String))
+        self.assertTrue(isinstance(one_row_complex.c.struct.type, types.String))
+        self.assertTrue(isinstance(one_row_complex.c.union.type, types.String))
+        self.assertTrue(isinstance(one_row_complex.c.decimal.type, HiveDecimal))
 
     @with_engine_connection
     def test_type_map(self, engine, connection):
