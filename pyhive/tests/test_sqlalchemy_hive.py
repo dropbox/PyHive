@@ -59,8 +59,6 @@ class TestSqlAlchemyHive(unittest.TestCase, SqlAlchemyTestCase):
         except ImportError:
             from sqlalchemy.databases.mysql import MSBigInteger as BigInteger
 
-        import sys
-        sys.stderr.write('{!r}'.format(one_row_complex.c.timestamp.type))
         self.assertTrue(isinstance(one_row_complex.c.boolean.type, types.Boolean))
         self.assertTrue(isinstance(one_row_complex.c.tinyint.type, types.Integer))
         self.assertTrue(isinstance(one_row_complex.c.smallint.type, types.Integer))
@@ -69,14 +67,13 @@ class TestSqlAlchemyHive(unittest.TestCase, SqlAlchemyTestCase):
         self.assertTrue(isinstance(one_row_complex.c.float.type, types.Float))
         self.assertTrue(isinstance(one_row_complex.c.double.type, types.Float))
         self.assertTrue(isinstance(one_row_complex.c.string.type, types.String))
-        self.assertTrue(isinstance(one_row_complex.c.timestamp.type, types.TIMESTAMP))
+        self.assertTrue(isinstance(one_row_complex.c.timestamp.type, types.TIMESTAMP) or isinstance(one_row_complex.c.timestamp.type, HiveTimestamp))
         self.assertTrue(isinstance(one_row_complex.c.binary.type, types.NullType))
         self.assertTrue(isinstance(one_row_complex.c.array.type, types.NullType))
         self.assertTrue(isinstance(one_row_complex.c.map.type, types.NullType))
         self.assertTrue(isinstance(one_row_complex.c.struct.type, types.NullType))
         self.assertTrue(isinstance(one_row_complex.c.union.type, types.NullType))
         self.assertTrue(isinstance(one_row_complex.c.decimal.type, types.NullType))
-        self.assertTrue(False)
 
     @with_engine_connection
     def test_type_map(self, engine, connection):
