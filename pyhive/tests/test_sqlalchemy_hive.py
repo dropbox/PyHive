@@ -59,13 +59,6 @@ class TestSqlAlchemyHive(unittest.TestCase, SqlAlchemyTestCase):
         except ImportError:
             from sqlalchemy.databases.mysql import MSBigInteger as BigInteger
 
-        import sys
-        sys.stderr.write('{!r}\n'.format(one_row_complex.c.binary.type))
-        sys.stderr.write('{!r}\n'.format(one_row_complex.c.array.type))
-        sys.stderr.write('{!r}\n'.format(one_row_complex.c.map.type))
-        sys.stderr.write('{!r}\n'.format(one_row_complex.c.union.type))
-        sys.stderr.write('{!r}\n'.format(one_row_complex.c.decimal.type))
-
         self.assertTrue(isinstance(one_row_complex.c.boolean.type, types.Boolean))
         self.assertTrue(isinstance(one_row_complex.c.tinyint.type, types.Integer))
         self.assertTrue(isinstance(one_row_complex.c.smallint.type, types.Integer))
@@ -79,15 +72,15 @@ class TestSqlAlchemyHive(unittest.TestCase, SqlAlchemyTestCase):
         self.assertTrue(isinstance(one_row_complex.c.binary.type, types.NullType) or
                         isinstance(one_row_complex.c.binary.type, types.String))
         self.assertTrue(isinstance(one_row_complex.c.array.type, types.NullType) or
-                        isinstance(one_row_complex.c.binary.type, types.String))
+                        isinstance(one_row_complex.c.array.type, types.String))
         self.assertTrue(isinstance(one_row_complex.c.map.type, types.NullType) or
-                        isinstance(one_row_complex.c.binary.type, types.String))
+                        isinstance(one_row_complex.c.map.type, types.String))
         self.assertTrue(isinstance(one_row_complex.c.struct.type, types.NullType) or
-                        isinstance(one_row_complex.c.binary.type, types.String))
+                        isinstance(one_row_complex.c.struct.type, types.String))
         self.assertTrue(isinstance(one_row_complex.c.union.type, types.NullType) or
-                        isinstance(one_row_complex.c.binary.type, types.String))
+                        isinstance(one_row_complex.c.union.type, types.String))
         self.assertTrue(isinstance(one_row_complex.c.decimal.type, types.NullType) or
-                        isinstance(one_row_complex.c.binary.type, HiveDecimal))
+                        isinstance(one_row_complex.c.decimal.type, HiveDecimal))
 
     @with_engine_connection
     def test_type_map(self, engine, connection):
