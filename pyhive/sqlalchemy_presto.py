@@ -35,6 +35,7 @@ except ImportError:
     from sqlalchemy.databases.mysql import MSBigInteger as BigInteger
 _type_map = {
     'bigint': BigInteger,
+    'integer': types.Integer,
     'boolean': types.Boolean,
     'double': types.Float,
     'varchar': types.String,
