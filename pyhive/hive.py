@@ -67,7 +67,7 @@ class Connection(object):
     """Wraps a Thrift session"""
 
     def __init__(self, host, port=10000, username=None, password=None, database='default', auth='NONE',
-                 configuration=None):
+                 kerberos_service_name, configuration=None):
         """Connect to HiveServer2
 
         :param auth: The value of hive.server2.authentication used by HiveServer2
