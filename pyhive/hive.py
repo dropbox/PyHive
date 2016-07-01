@@ -66,11 +66,14 @@ def connect(*args, **kwargs):
 class Connection(object):
     """Wraps a Thrift session"""
 
-    def __init__(self, host, kerberos_service_name, port=10000, username=None, password=None, database='default', auth='NONE',
+    def __init__(self, host, kerberos_service_name=None, port=10000, username=None, password=None, database='default', auth='NONE',
                  configuration=None):
         """Connect to HiveServer2
 
         :param auth: The value of hive.server2.authentication used by HiveServer2
+        The way to support LDAP and GSSAPI is originated from cloudera/Impyla:
+        https://github.com/cloudera/impyla/blob/255b07ed973d47a3395214ed92d35ec0615ebf62
+        /impala/_thrift_api.py#L152-L160
         """
         socket = thrift.transport.TSocket.TSocket(host, port)
         username = username or getpass.getuser()
@@ -79,7 +82,10 @@ class Connection(object):
         if auth == 'NOSASL':
             # NOSASL corresponds to hive.server2.authentication=NOSASL in hive-site.xml
             self._transport = thrift.transport.TTransport.TBufferedTransport(socket)
-        elif auth in ['LDAP', 'PLAIN', 'GSSAPI']:
+        elif auth.upper() in ['LDAP', 'PLAIN', 'GSSAPI', 'NONE']:
+            if auth.upper() == 'NONE':
+                #Follow the older version's convention
+                auth = 'PLAIN'
             if password is None:
                 if auth == 'LDAP':
                     password = ''
@@ -98,7 +104,7 @@ class Connection(object):
             self._transport = thrift_sasl.TSaslClientTransport(sasl_factory, auth, socket)
         else:
             raise NotImplementedError(
-                "Only NONE & NOSASL authentication are supported, got {}".format(auth))
+                "Only NONE(PLAIN),NOSASL,LDAP,GSSAPI authentication are supported, got {}".format(auth))
 
         protocol = thrift.protocol.TBinaryProtocol.TBinaryProtocol(self._transport)
         self._client = TCLIService.Client(protocol)
