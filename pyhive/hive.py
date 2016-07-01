@@ -79,17 +79,6 @@ class Connection(object):
         if auth == 'NOSASL':
             # NOSASL corresponds to hive.server2.authentication=NOSASL in hive-site.xml
             self._transport = thrift.transport.TTransport.TBufferedTransport(socket)
-        # elif auth == 'NONE':
-        #     def sasl_factory():
-        #         sasl_client = sasl.Client()
-        #         sasl_client.setAttr(b'username', username.encode('latin-1'))
-        #         # Password doesn't matter in NONE mode, just needs to be nonempty.
-        #         sasl_client.setAttr(b'password', b'x')
-        #         sasl_client.init()
-        #         return sasl_client
-
-        #     # PLAIN corresponds to hive.server2.authentication=NONE in hive-site.xml
-        #     self._transport = thrift_sasl.TSaslClientTransport(sasl_factory, b'PLAIN', socket)
         elif auth in ['LDAP', 'PLAIN', 'GSSAPI']:
             if password is None:
                 if auth == 'LDAP':
