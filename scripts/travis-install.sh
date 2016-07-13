@@ -32,9 +32,4 @@ curl https://repo1.maven.org/maven2/com/facebook/presto/presto-server/$PRESTO/pr
 cp -r $(dirname $0)/travis-conf/presto presto-server-$PRESTO/etc
 sed -i s/%CDH%/$CDH/g presto-server-$PRESTO/etc/catalog/hive.properties
 
-if [ "$PRESTO" == "0.97" ]
-then
-    sed -i '/query.max-memory/d' presto-server-$PRESTO/etc/config.properties
-fi
-
 /usr/bin/python2.7 presto-server-$PRESTO/bin/launcher.py start
