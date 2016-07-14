@@ -66,8 +66,8 @@ def connect(*args, **kwargs):
 class Connection(object):
     """Wraps a Thrift session"""
 
-    def __init__(self, host, kerberos_service_name=None, port=10000, username=None, password=None, database='default', auth='NONE',
-                 configuration=None):
+    def __init__(self, host, port=10000, username=None, database='default', auth='NONE',
+                 configuration=None, kerberos_service_name=None, password=None):
         """Connect to HiveServer2
 
         :param auth: The value of hive.server2.authentication used by HiveServer2
@@ -91,14 +91,14 @@ class Connection(object):
                     password = ''
                 else:
                     # PLAIN always requires a password for HS2.
-                    password = 'x'
+                    password = b'x'
             def sasl_factory():
                 sasl_client = sasl.Client()
-                sasl_client.setAttr('host', host)
-                sasl_client.setAttr('service', kerberos_service_name)
+                sasl_client.setAttr(b'host', host)
+                sasl_client.setAttr(b'service', kerberos_service_name)
                 if auth.upper() in ['PLAIN', 'LDAP']:
-                    sasl_client.setAttr('username', user)
-                    sasl_client.setAttr('password', password)
+                    sasl_client.setAttr(b'username', username.encode('latin-1'))
+                    sasl_client.setAttr(b'password', password)
                 sasl_client.init()
                 return sasl_client
             self._transport = thrift_sasl.TSaslClientTransport(sasl_factory, auth, socket)
