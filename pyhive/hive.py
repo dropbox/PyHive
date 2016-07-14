@@ -84,7 +84,7 @@ class Connection(object):
             self._transport = thrift.transport.TTransport.TBufferedTransport(socket)
         elif auth.upper() in ['LDAP', 'PLAIN', 'GSSAPI', 'NONE']:
             if auth.upper() == 'NONE':
-                #Follow the older version's convention
+                # Follow the older version's convention
                 auth = 'PLAIN'
             if password is None:
                 if auth == 'LDAP':
@@ -92,6 +92,7 @@ class Connection(object):
                 else:
                     # PLAIN always requires a password for HS2.
                     password = b'x'
+
             def sasl_factory():
                 sasl_client = sasl.Client()
                 sasl_client.setAttr(b'host', host)
@@ -104,7 +105,8 @@ class Connection(object):
             self._transport = thrift_sasl.TSaslClientTransport(sasl_factory, auth, socket)
         else:
             raise NotImplementedError(
-                "Only NONE(PLAIN),NOSASL,LDAP,GSSAPI authentication are supported, got {}".format(auth))
+                "Only NONE(PLAIN),NOSASL,LDAP,GSSAPI"
+                "authentication are supported, got {}".format(auth))
 
         protocol = thrift.protocol.TBinaryProtocol.TBinaryProtocol(self._transport)
         self._client = TCLIService.Client(protocol)
