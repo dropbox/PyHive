@@ -66,8 +66,8 @@ def connect(*args, **kwargs):
 class Connection(object):
     """Wraps a Thrift session"""
 
-    def __init__(self, host, kerberos_service_name=None, port=10000, username=None, password=None, database='default', auth='NONE',
-                 configuration=None):
+    def __init__(self, host, port=10000, username=None, database='default', auth='NONE',
+                 configuration=None, kerberos_service_name=None, password=None):
         """Connect to HiveServer2
 
         :param auth: The value of hive.server2.authentication used by HiveServer2
@@ -78,33 +78,39 @@ class Connection(object):
         socket = thrift.transport.TSocket.TSocket(host, port)
         username = username or getpass.getuser()
         configuration = configuration or {}
-
+        self.database = database
         if auth == 'NOSASL':
             # NOSASL corresponds to hive.server2.authentication=NOSASL in hive-site.xml
             self._transport = thrift.transport.TTransport.TBufferedTransport(socket)
-        elif auth.upper() in ['LDAP', 'PLAIN', 'GSSAPI', 'NONE']:
+        elif auth.upper() in ['LDAP', 'KERBEROS', 'NONE']:
             if auth.upper() == 'NONE':
-                #Follow the older version's convention
+                # Follow the older version's convention
                 auth = 'PLAIN'
+            if auth.upper() == 'KERBEROS' or kerberos_service_name:
+                # KERBEROS mode in hive.server2.authentication is
+                # GSSAPI in sasl library
+                auth = 'GSSAPI'
             if password is None:
                 if auth == 'LDAP':
                     password = ''
                 else:
                     # PLAIN always requires a password for HS2.
-                    password = 'x'
+                    password = b'x'
+
             def sasl_factory():
                 sasl_client = sasl.Client()
-                sasl_client.setAttr('host', host)
-                sasl_client.setAttr('service', kerberos_service_name)
+                sasl_client.setAttr(b'host', host)
+                sasl_client.setAttr(b'service', kerberos_service_name)
                 if auth.upper() in ['PLAIN', 'LDAP']:
-                    sasl_client.setAttr('username', user)
-                    sasl_client.setAttr('password', password)
+                    sasl_client.setAttr(b'username', username.encode('latin-1'))
+                    sasl_client.setAttr(b'password', password)
                 sasl_client.init()
                 return sasl_client
             self._transport = thrift_sasl.TSaslClientTransport(sasl_factory, auth, socket)
         else:
             raise NotImplementedError(
-                "Only NONE(PLAIN),NOSASL,LDAP,GSSAPI authentication are supported, got {}".format(auth))
+                "Only NONE(PLAIN),NOSASL,LDAP,GSSAPI"
+                "authentication are supported, got {}".format(auth))
 
         protocol = thrift.protocol.TBinaryProtocol.TBinaryProtocol(self._transport)
         self._client = TCLIService.Client(protocol)
