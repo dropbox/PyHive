@@ -92,10 +92,10 @@ class Connection(object):
                 auth = 'GSSAPI'
             if password is None:
                 if auth == 'LDAP':
-                password = ''
-            else:
-                # PLAIN always requires a password for HS2.
-                password = b'x'
+                    password = ''
+                else:
+                    # PLAIN always requires a password for HS2.
+                    password = b'x'
 
             def sasl_factory():
                 sasl_client = sasl.Client()
