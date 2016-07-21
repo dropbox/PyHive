@@ -169,7 +169,7 @@ class Cursor(common.DBAPICursor):
             'http', '{}:{}'.format(self._host, self._port), '/v1/statement', None, None, None))
         _logger.info('%s', sql)
         _logger.debug("Headers: %s", headers)
-        if isinstance(sql, 'unicode'):
+        if isinstance(sql, unicode):
             sql = sql.encode('utf-8')
         response = requests.post(url, data=sql, headers=headers)
         self._process_response(response)
