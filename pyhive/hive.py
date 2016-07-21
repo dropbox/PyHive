@@ -109,7 +109,7 @@ class Connection(object):
             self._transport = thrift_sasl.TSaslClientTransport(sasl_factory, auth, socket)
         else:
             raise NotImplementedError(
-                "Only NONE(PLAIN),NOSASL,LDAP,GSSAPI"
+                "Only NONE,NOSASL,LDAP,KERBEROS"
                 "authentication are supported, got {}".format(auth))
 
         protocol = thrift.protocol.TBinaryProtocol.TBinaryProtocol(self._transport)
