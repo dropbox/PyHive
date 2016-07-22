@@ -149,7 +149,7 @@ class TestHiveAuth(unittest.TestCase):
         import subprocess
         subprocess.call(['sudo', 'cp', '/home/travis/build/axeisghost/PyHive/scripts'
                            '/travis-conf/hive/hive-site-ldap.xml', '/etc/hive/conf/hive-site.xml'])
-        subprocess.call('sudo', 'service', 'hive-server2', 'restart')
+        subprocess.call(['sudo', 'service', 'hive-server2', 'restart'])
         connection = hive.connect(host=_HOST, username='admin', auth='LDAP',
                                   configuration={'mapred.job.tracker': 'local'},
                                   password='test')
@@ -161,4 +161,4 @@ class TestHiveAuth(unittest.TestCase):
         self.assertIsNone(cursor.fetchone())
         subprocess.call(['sudo', 'cp', '/home/travis/build/axeisghost/PyHive/scripts'
                            '/travis-conf/hive/hive-site.xml', '/etc/hive/conf/hive-site.xml'])
-        subprocess.call('sudo', 'service', 'hive-server2', 'restart')
+        subprocess.call(['sudo', 'service', 'hive-server2', 'restart'])
