@@ -148,7 +148,7 @@ class TestHiveAuth(unittest.TestCase):
     def test_ldap_connection(self):
         import shutil
         import subprocess
-        shutils.copyfile('/home/travis/build/axeisghost/PyHive/scripts'
+        shutil.copyfile('/home/travis/build/axeisghost/PyHive/scripts'
                          '/travis-conf/hive/hive-site-ldap.xml', '/etc/hive/conf/hive-site.xml')
         subprocess.call('sudo', 'service', 'hive-server2', 'restart')
         connection = hive.connect(host=_HOST, username='admin', auth='LDAP',
@@ -160,6 +160,6 @@ class TestHiveAuth(unittest.TestCase):
         self.assertEqual(cursor.fetchone(), (1,))
         self.assertEqual(cursor.rownumber, 1)
         self.assertIsNone(cursor.fetchone())
-        shutils.copyfile('/home/travis/build/axeisghost/PyHive/scripts'
+        shutil.copyfile('/home/travis/build/axeisghost/PyHive/scripts'
                          '/travis-conf/hive/hive-site.xml', '/etc/hive/conf/hive-site.xml')
         subprocess.call('sudo', 'service', 'hive-server2', 'restart')
