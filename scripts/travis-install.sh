@@ -12,7 +12,7 @@ sudo apt-get update
 #
 
 sudo apt-get install -y --force-yes hive
-sudo cp $(dirname $0)/travis-conf/hive/* /etc/hive/conf
+sudo cp $(dirname $0)/travis-conf/hive/hive-site.xml /etc/hive/conf/hive-site.xml
 sudo -u hive mkdir /tmp/hive && sudo chmod 777 /tmp/hive
 sudo apt-get install -y --force-yes hive-metastore hive-server2
 
