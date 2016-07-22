@@ -146,7 +146,7 @@ class TestHiveAuth(unittest.TestCase):
 
     def test_ldap_connection(self):
         import subprocess
-        subprocess.call(['./home/travis/build/dropbox/PyHive/scripts/set_hive_auth_ldap.sh'])
+        subprocess.call(['/home/travis/build/dropbox/PyHive/scripts/set_hive_auth_ldap.sh'], shell=True)
         connection = hive.connect(host=_HOST, configuration={'mapred.job.tracker': 'local'}, username='admin', password='test')
         cursor = connection.cursor()
         cursor.execute('SELECT * FROM one_row')
@@ -154,5 +154,5 @@ class TestHiveAuth(unittest.TestCase):
         self.assertEqual(cursor.fetchone(), (1,))
         self.assertEqual(cursor.rownumber, 1)
         self.assertIsNone(cursor.fetchone())
-        subprocess.call(['./home/travis/build/dropbox/PyHive/scripts/revert_hive_auth.sh'])
+        subprocess.call(['/home/travis/build/dropbox/PyHive/scripts/revert_hive_auth.sh'], shell=True)
 
