@@ -140,19 +140,23 @@ class TestHive(unittest.TestCase, DBAPITestCase):
         self.assertIsNone(cursor.description)
         self.assertRaises(hive.ProgrammingError, cursor.fetchone)
 
+
 @unittest.skipIf(sys.version_info.major == 3, 'Hive not yet supported on Python 3')
 class TestHiveAuth(unittest.TestCase):
     __test__ = True
 
     def test_ldap_connection(self):
         import subprocess
-        subprocess.call(['/home/travis/build/dropbox/PyHive/scripts/set_hive_auth_ldap.sh'], shell=True)
-        connection = hive.connect(host=_HOST, configuration={'mapred.job.tracker': 'local'}, username='admin', password='test')
+        subprocess.call(['/home/travis/build/dropbox/PyHive/scripts/set_hive_auth_ldap.sh'],
+                        shell=True)
+        connection = hive.connect(host=_HOST, username='admin', auth='LDAP'
+                                  configuration={'mapred.job.tracker': 'local'},
+                                  password='test')
         cursor = connection.cursor()
         cursor.execute('SELECT * FROM one_row')
         self.assertEqual(cursor.rownumber, 0)
         self.assertEqual(cursor.fetchone(), (1,))
         self.assertEqual(cursor.rownumber, 1)
         self.assertIsNone(cursor.fetchone())
-        subprocess.call(['/home/travis/build/dropbox/PyHive/scripts/revert_hive_auth.sh'], shell=True)
-
+        subprocess.call(['/home/travis/build/dropbox/PyHive/scripts/revert_hive_auth.sh'],
+                        shell=True)
