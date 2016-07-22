@@ -149,7 +149,7 @@ class TestHiveAuth(unittest.TestCase):
         import subprocess
         subprocess.call(['/home/travis/build/dropbox/PyHive/scripts/set_hive_auth_ldap.sh'],
                         shell=True)
-        connection = hive.connect(host=_HOST, username='admin', auth='LDAP'
+        connection = hive.connect(host=_HOST, username='admin', auth='LDAP',
                                   configuration={'mapred.job.tracker': 'local'},
                                   password='test')
         cursor = connection.cursor()
