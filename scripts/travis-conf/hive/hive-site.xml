@@ -3,7 +3,7 @@
 <configuration>
   <property>
     <name>hive.metastore.uris</name>
-    <value>thrift://localhost:9083</value>
+    <value>thrift://localhost:10000</value>
   </property>
   <property>
     <name>javax.jdo.option.ConnectionURL</name>
