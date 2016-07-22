@@ -147,8 +147,7 @@ class TestHiveAuth(unittest.TestCase):
 
     def test_ldap_connection(self):
         import subprocess
-        subprocess.call(['../scripts/set_hive_auth_ldap.sh'],
-                        shell=True)
+        subprocess.call(['../scripts/set_hive_auth_ldap.sh'])
         connection = hive.connect(host=_HOST, username='admin', auth='LDAP',
                                   configuration={'mapred.job.tracker': 'local'},
                                   password='test')
@@ -158,5 +157,4 @@ class TestHiveAuth(unittest.TestCase):
         self.assertEqual(cursor.fetchone(), (1,))
         self.assertEqual(cursor.rownumber, 1)
         self.assertIsNone(cursor.fetchone())
-        subprocess.call(['../scripts/revert_hive_auth.sh'],
-                        shell=True)
+        subprocess.call(['../scripts/revert_hive_auth.sh'])
