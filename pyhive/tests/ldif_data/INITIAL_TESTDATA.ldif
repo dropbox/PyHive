@@ -8,5 +8,6 @@ sn: testentry
 mail: test.entry@example.com
 mail: te@example.com
 ou:: UGFsbcO2
+userPassword: testpw
 givenName: i am
 description: A test entry for pyhive

@@ -30,6 +30,10 @@
     <value>dc=example,dc=com</value>
   </property>
   <property>
+    <name>hive.server2.authentication.ldap.guidKey</name>
+    <value>cn</value>
+  </property>
+  <property>
     <name>hive.resultset.use.unique.column.names</name>
     <value>false</value>
   </property>
