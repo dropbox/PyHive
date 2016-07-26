@@ -147,20 +147,22 @@ class TestHiveAuth(unittest.TestCase):
 
     def test_ldap_connection(self):
         import subprocess
-        subprocess.call(['sudo', 'cp', '/PyHive/scripts/travis-conf/hive/hive-site-ldap.xml',
+        import os
+        rootdir = os.environ['TRAVIS_BUILD_DIR']
+        subprocess.call(['sudo', 'cp', rootdir + '/scripts/travis-conf/hive/hive-site-ldap.xml',
                          '/etc/hive/conf/hive-site.xml'])
         subprocess.call(['sudo', 'service', 'hive-server2', 'restart'])
-        print("++++++++++++++++++++++++++++++++++++++++++++++++++++++")
-        connection = hive.connect(host=_HOST, username='admin', auth='NONE',
+        subprocess.call(['sleep','10'])
+        connection = hive.connect(host=_HOST, username='existing', auth='LDAP',
                                   configuration={'mapred.job.tracker': 'local'},
-                                  password='test')
+                                  password='testpw')
         cursor = connection.cursor()
         cursor.execute('SELECT * FROM one_row')
         self.assertEqual(cursor.rownumber, 0)
         self.assertEqual(cursor.fetchone(), (1,))
         self.assertEqual(cursor.rownumber, 1)
         self.assertIsNone(cursor.fetchone())
-        subprocess.call(['sudo', 'cp', '/PyHive/scripts/travis-conf/hive/hive-site.xml',
+        subprocess.call(['sudo', 'cp', rootdir + '/scripts/travis-conf/hive/hive-site.xml',
                          '/etc/hive/conf/hive-site.xml'])
         subprocess.call(['sudo', 'service', 'hive-server2', 'restart'])
-        print("------------------------------------------------------")
+        subprocess.call(['sleep','10'])
