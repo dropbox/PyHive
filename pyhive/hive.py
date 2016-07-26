@@ -78,14 +78,10 @@ class Connection(object):
         socket = thrift.transport.TSocket.TSocket(host, port)
         username = username or getpass.getuser()
         configuration = configuration or {}
-        self.database = database
         if auth == 'NOSASL':
             # NOSASL corresponds to hive.server2.authentication=NOSASL in hive-site.xml
             self._transport = thrift.transport.TTransport.TBufferedTransport(socket)
         elif auth.upper() in ['LDAP', 'KERBEROS', 'NONE']:
-            if auth.upper() == 'NONE':
-                # Follow the older version's convention
-                auth = 'PLAIN'
             if auth.upper() == 'KERBEROS' or kerberos_service_name:
                 # KERBEROS mode in hive.server2.authentication is
                 # GSSAPI in sasl library
@@ -96,7 +92,9 @@ class Connection(object):
                 else:
                     # PLAIN always requires a password for HS2.
                     password = b'x'
-
+            if auth.upper() in ['LDAP', 'NONE']:
+                # Follow the older version's convention
+                auth = 'PLAIN'
             def sasl_factory():
                 sasl_client = sasl.Client()
                 sasl_client.setAttr(b'host', host)
