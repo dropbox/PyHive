@@ -15,11 +15,6 @@ matrix:
     - python: 2.7
       env: CDH=cdh5 PRESTO=0.147 SQLALCHEMY=0.5.8
   # exclude: python 3 against old libries
-addons:
-  apt:
-    packages:
-      - ldap-utils
-      - slapd
 before_install:
   - ./scripts/travis-install.sh
   - pip install codecov
@@ -28,11 +23,5 @@ install:
   - pip install sqlalchemy==$SQLALCHEMY
   - pip install -r dev_requirements.txt
 # sleep so Presto has time to start up. Otherwise we might get 'No nodes available to run query'
-before_script:
-  - mkdir /tmp/slapd
-  - slapd -f scripts/ldap_config/slapd.conf -h ldap://localhost:3389 &
-  - sleep 10
-  - ldapadd -h localhost:3389 -D cn=admin,dc=example,dc=com -w test -f pyhive/tests/ldif_data/base.ldif
-  - ldapadd -h localhost:3389 -D cn=admin,dc=example,dc=com -w test -f pyhive/tests/ldif_data/INITIAL_TESTDATA.ldif
 script: sleep 10 && py.test -v
 after_success: codecov
