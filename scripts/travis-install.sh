@@ -12,10 +12,10 @@ sudo apt-get update
 #
 sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes install ldap-utils slapd
 sudo mkdir /tmp/slapd
-sudo slapd -f scripts/ldap_config/slapd.conf -h ldap://localhost:3389 &
+sudo slapd -f $(dirname $0)/ldap_config/slapd.conf -h ldap://localhost:3389 &
 sleep 10
-sudo ldapadd -h localhost:3389 -D cn=admin,dc=example,dc=com -w test -f ../pyhive/tests/ldif_data/base.ldif
-sudo ldapadd -h localhost:3389 -D cn=admin,dc=example,dc=com -w test -f ../pyhive/tests/ldif_data/INITIAL_TESTDATA.ldif
+sudo ldapadd -h localhost:3389 -D cn=admin,dc=example,dc=com -w test -f $(dirname $0)/../pyhive/tests/ldif_data/base.ldif
+sudo ldapadd -h localhost:3389 -D cn=admin,dc=example,dc=com -w test -f $(dirname $0)/../pyhive/tests/ldif_data/INITIAL_TESTDATA.ldif
 
 #
 # Hive
