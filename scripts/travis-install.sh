@@ -8,11 +8,21 @@ sudo sed -i 's mirror.infra.cloudera.com/archive archive.cloudera.com g' \
 sudo apt-get update
 
 #
+# LDAP
+#
+sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes install ldap-utils slapd
+sudo mkdir /tmp/slapd
+sudo slapd -f $(dirname $0)/ldap_config/slapd.conf -h ldap://localhost:3389 &
+sleep 10
+sudo ldapadd -h localhost:3389 -D cn=admin,dc=example,dc=com -w test -f $(dirname $0)/../pyhive/tests/ldif_data/base.ldif
+sudo ldapadd -h localhost:3389 -D cn=admin,dc=example,dc=com -w test -f $(dirname $0)/../pyhive/tests/ldif_data/INITIAL_TESTDATA.ldif
+
+#
 # Hive
 #
 
 sudo apt-get install -y --force-yes hive
-sudo cp $(dirname $0)/travis-conf/hive/* /etc/hive/conf
+sudo cp $(dirname $0)/travis-conf/hive/hive-site.xml /etc/hive/conf/hive-site.xml
 sudo -u hive mkdir /tmp/hive && sudo chmod 777 /tmp/hive
 sudo apt-get install -y --force-yes hive-metastore hive-server2
 
