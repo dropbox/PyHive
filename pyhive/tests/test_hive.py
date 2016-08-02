@@ -28,10 +28,8 @@ class TestHive(unittest.TestCase, DBAPITestCase):
     def connect(self):
         return hive.connect(host=_HOST, configuration={'mapred.job.tracker': 'local'})
 
-    def connectWithKeyWordArgs(self, host, port=10000, username=None, database='default', auth='NONE',
-                 configuration=None, kerberos_service_name=None, password=None):
-        return hive.connect(host, port=10000, username=None, database='default', auth='NONE',
-                 configuration=None, kerberos_service_name=None, password=None)
+    def connectWithKeyWordArgs(self, *args, **kwargs):
+        return hive.connect(*args, **kwargs)
 
     @with_cursor
     def test_description(self, cursor):
