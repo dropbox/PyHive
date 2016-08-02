@@ -157,7 +157,8 @@ class TestHive(unittest.TestCase, DBAPITestCase):
             time.sleep(10)
             with contextlib.closing(self.connectWithKeyWordArgs(
                 host=_HOST, username='existing', auth='LDAP',
-                configuration={'mapred.job.tracker': 'local'}, password='testpw')) as connection:
+                configuration={'mapred.job.tracker': 'local'}, password='testpw')
+                ) as connection:
                 with contextlib.closing(connection.cursor()) as cursor:
                     cursor.execute('SELECT * FROM one_row')
                     self.assertEqual(cursor.rownumber, 0)
