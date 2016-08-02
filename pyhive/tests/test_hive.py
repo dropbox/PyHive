@@ -28,6 +28,11 @@ class TestHive(unittest.TestCase, DBAPITestCase):
     def connect(self):
         return hive.connect(host=_HOST, configuration={'mapred.job.tracker': 'local'})
 
+    def connectWithKeyWordArgs(self, host, port=10000, username=None, database='default', auth='NONE',
+                 configuration=None, kerberos_service_name=None, password=None):
+        return hive.connect(host, port=10000, username=None, database='default', auth='NONE',
+                 configuration=None, kerberos_service_name=None, password=None)
+
     @with_cursor
     def test_description(self, cursor):
         cursor.execute('SELECT * FROM one_row')
@@ -146,14 +151,12 @@ class TestHive(unittest.TestCase, DBAPITestCase):
     def test_ldap_connection(self):
         rootdir = os.environ['TRAVIS_BUILD_DIR']
         try:
-            subprocess.check_call(
-                ['sudo', 'cp', os.path.join(rootdir, 'scripts',
+            subprocess.check_call(['sudo', 'cp', os.path.join(rootdir, 'scripts',
                 'travis-conf', 'hive', 'hive-site-ldap.xml'),
-                os.path.join('/', 'etc', 'hive', 'conf', 'hive-site.xml')]
-            )
+                os.path.join('/', 'etc', 'hive', 'conf', 'hive-site.xml')])
             subprocess.check_call(['sudo', 'service', 'hive-server2', 'restart'])
             time.sleep(10)
-            with contextlib.closing(self.connect(host=_HOST, username='existing', auth='LDAP',
+            with contextlib.closing(self.connectWithKeyWordArgs(host=_HOST, username='existing', auth='LDAP',
                                     configuration={'mapred.job.tracker': 'local'},
                                     password='testpw')) as connection:
                 with contextlib.closing(connection.cursor()) as cursor:
@@ -163,10 +166,8 @@ class TestHive(unittest.TestCase, DBAPITestCase):
                     self.assertEqual(cursor.rownumber, 1)
                     self.assertIsNone(cursor.fetchone())
         finally:
-            subprocess.check_call(
-                ['sudo', 'cp', os.path.join(rootdir, 'scripts',
+            subprocess.check_call(['sudo', 'cp', os.path.join(rootdir, 'scripts',
                 'travis-conf', 'hive', 'hive-site.xml'),
-                os.path.join('/', 'etc', 'hive', 'conf', 'hive-site.xml')]
-            )
+                os.path.join('/', 'etc', 'hive', 'conf', 'hive-site.xml')])
             subprocess.check_call(['sudo', 'service', 'hive-server2', 'restart'])
             time.sleep(10)
