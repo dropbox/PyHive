@@ -5,6 +5,7 @@ pytest==2.9.2
 pytest-cov==2.3.0
 pytest-flake8==0.5
 pytest-random==0.2
+pytest-timeout==1.0.0
 
 # actual dependencies: let things break if a package changes
 requests>=1.0.0
