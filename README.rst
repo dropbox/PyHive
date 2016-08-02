@@ -91,6 +91,11 @@ Changelog
 =========
 See https://github.com/dropbox/PyHive/releases.
 
+Contributing
+============
+- Please fill out the Dropbox Contributor License Agreement at https://opensource.dropbox.com/cla/ and note this in your pull request.
+- Changes must come with tests, with the exception of trivial things like fixing comments. See .travis.yml for the test environment setup.
+
 Testing
 =======
 .. image:: https://travis-ci.org/dropbox/PyHive.svg

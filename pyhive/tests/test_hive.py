@@ -14,6 +14,9 @@ import contextlib
 import mock
 import unittest
 import sys
+import subprocess
+import os
+import time
 
 _HOST = 'localhost'
 
@@ -24,6 +27,9 @@ class TestHive(unittest.TestCase, DBAPITestCase):
 
     def connect(self):
         return hive.connect(host=_HOST, configuration={'mapred.job.tracker': 'local'})
+
+    def connectWithKeyWordArgs(self, *args, **kwargs):
+        return hive.connect(*args, **kwargs)
 
     @with_cursor
     def test_description(self, cursor):
@@ -140,29 +146,26 @@ class TestHive(unittest.TestCase, DBAPITestCase):
         self.assertIsNone(cursor.description)
         self.assertRaises(hive.ProgrammingError, cursor.fetchone)
 
-
-@unittest.skipIf(sys.version_info.major == 3, 'Hive not yet supported on Python 3')
-class TestHiveAuth(unittest.TestCase):
-    __test__ = True
-
     def test_ldap_connection(self):
-        import subprocess
-        import os
         rootdir = os.environ['TRAVIS_BUILD_DIR']
-        subprocess.call(['sudo', 'cp', rootdir + '/scripts/travis-conf/hive/hive-site-ldap.xml',
-                         '/etc/hive/conf/hive-site.xml'])
-        subprocess.call(['sudo', 'service', 'hive-server2', 'restart'])
-        subprocess.call(['sleep','10'])
-        connection = hive.connect(host=_HOST, username='existing', auth='LDAP',
-                                  configuration={'mapred.job.tracker': 'local'},
-                                  password='testpw')
-        cursor = connection.cursor()
-        cursor.execute('SELECT * FROM one_row')
-        self.assertEqual(cursor.rownumber, 0)
-        self.assertEqual(cursor.fetchone(), (1,))
-        self.assertEqual(cursor.rownumber, 1)
-        self.assertIsNone(cursor.fetchone())
-        subprocess.call(['sudo', 'cp', rootdir + '/scripts/travis-conf/hive/hive-site.xml',
-                         '/etc/hive/conf/hive-site.xml'])
-        subprocess.call(['sudo', 'service', 'hive-server2', 'restart'])
-        subprocess.call(['sleep','10'])
+        orig_ldap = os.path.join(rootdir, 'scripts', 'travis-conf', 'hive', 'hive-site-ldap.xml')
+        orig_none = os.path.join(rootdir, 'scripts', 'travis-conf', 'hive', 'hive-site.xml')
+        des = os.path.join('/', 'etc', 'hive', 'conf', 'hive-site.xml')
+        try:
+            subprocess.check_call(['sudo', 'cp', orig_ldap, des])
+            subprocess.check_call(['sudo', 'service', 'hive-server2', 'restart'])
+            time.sleep(10)
+            with contextlib.closing(self.connectWithKeyWordArgs(
+                host=_HOST, username='existing', auth='LDAP',
+                configuration={'mapred.job.tracker': 'local'}, password='testpw')
+            ) as connection:
+                with contextlib.closing(connection.cursor()) as cursor:
+                    cursor.execute('SELECT * FROM one_row')
+                    self.assertEqual(cursor.rownumber, 0)
+                    self.assertEqual(cursor.fetchone(), (1,))
+                    self.assertEqual(cursor.rownumber, 1)
+                    self.assertIsNone(cursor.fetchone())
+        finally:
+            subprocess.check_call(['sudo', 'cp', orig_none, des])
+            subprocess.check_call(['sudo', 'service', 'hive-server2', 'restart'])
+            time.sleep(10)

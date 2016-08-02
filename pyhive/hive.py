@@ -95,6 +95,7 @@ class Connection(object):
             if auth.upper() in ['LDAP', 'NONE']:
                 # Follow the older version's convention
                 auth = 'PLAIN'
+
             def sasl_factory():
                 sasl_client = sasl.Client()
                 sasl_client.setAttr(b'host', host)
