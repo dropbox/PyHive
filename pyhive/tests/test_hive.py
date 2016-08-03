@@ -28,9 +28,6 @@ class TestHive(unittest.TestCase, DBAPITestCase):
     def connect(self):
         return hive.connect(host=_HOST, configuration={'mapred.job.tracker': 'local'})
 
-    def connectWithKeyWordArgs(self, *args, **kwargs):
-        return hive.connect(*args, **kwargs)
-
     @with_cursor
     def test_description(self, cursor):
         cursor.execute('SELECT * FROM one_row')
@@ -155,7 +152,7 @@ class TestHive(unittest.TestCase, DBAPITestCase):
             subprocess.check_call(['sudo', 'cp', orig_ldap, des])
             subprocess.check_call(['sudo', 'service', 'hive-server2', 'restart'])
             time.sleep(10)
-            with contextlib.closing(self.connectWithKeyWordArgs(
+            with contextlib.closing(hive.connect(
                 host=_HOST, username='existing', auth='LDAP',
                 configuration={'mapred.job.tracker': 'local'}, password='testpw')
             ) as connection:
