@@ -88,7 +88,7 @@ class Connection(object):
                 auth = 'GSSAPI'
             if password is None:
                 if auth == 'LDAP':
-                    password = ''
+                    raise NoPasswordError("LDAP authtication mechanism requires password")
                 else:
                     # PLAIN always requires a password for HS2.
                     password = b'x'
