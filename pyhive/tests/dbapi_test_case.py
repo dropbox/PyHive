@@ -21,7 +21,6 @@ def with_cursor_type(cur_type=None):
 
         @functools.wraps(fn)
         def wrapped_fn(self, *args, **kwargs):
-            print cur_type
             with contextlib.closing(self.connect()) as connection:
                 with contextlib.closing(connection.cursor(cursor_type=cur_type)) as cursor:
                     fn(self, cursor, *args, **kwargs)

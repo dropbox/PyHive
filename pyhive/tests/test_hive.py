@@ -137,7 +137,6 @@ class TestHive(unittest.TestCase, DBAPITestCase):
 
     @with_cursor
     def test_no_result_set(self, cursor):
-        print 'huoii/'
         cursor.execute('USE default')
         self.assertIsNone(cursor.description)
         self.assertRaises(hive.ProgrammingError, cursor.fetchone)
