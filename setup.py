@@ -13,7 +13,7 @@ class PyTest(TestCommand):
         self.test_suite = True
 
     def run_tests(self):
-        #import here, cause outside the eggs aren't loaded
+        # import here, cause outside the eggs aren't loaded
         import pytest
         errno = pytest.main(self.test_args)
         sys.exit(errno)
@@ -30,16 +30,19 @@ setup(
     author="Jing Wang",
     author_email="jing@dropbox.com",
     license="Apache License, Version 2.0",
-    packages=['pyhive'],
+    packages=['pyhive', 'TCLIService'],
     classifiers=[
         "Intended Audience :: Developers",
         "License :: OSI Approved :: Apache Software License",
         "Operating System :: OS Independent",
         "Topic :: Database :: Front-Ends",
     ],
+    install_requires=[
+        'future',
+    ],
     extras_require={
         "Presto": ['requests>=1.0.0'],
-        "Hive": ['sasl>=0.1.3', 'thrift>=0.8.0'],
+        "Hive": ['sasl>=0.1.3', 'thrift>=0.8.0', 'thrift_sasl>=0.1.0'],
         "SQLAlchemy": ['sqlalchemy>=0.5.0'],
     },
     tests_require=[

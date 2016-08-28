@@ -7,15 +7,20 @@ Many docstrings in this file are based on the PEP, which is in the public domain
 
 from __future__ import absolute_import
 from __future__ import unicode_literals
+from builtins import object
 from pyhive import common
 from pyhive.common import DBAPITypeObject
 # Make all exceptions visible in this module per DB-API
-from pyhive.exc import *
+from pyhive.exc import *  # noqa
 import base64
 import getpass
 import logging
 import requests
-import urlparse
+
+try:  # Python 3
+    import urllib.parse as urlparse
+except ImportError:  # Python 2
+    import urlparse
 
 
 # PEP 249 module globals
@@ -72,7 +77,7 @@ class Cursor(common.DBAPICursor):
     """
 
     def __init__(self, host, port='8080', username=None, catalog='hive', schema='default',
-                 poll_interval=1, source='pyhive'):
+                 poll_interval=1, source='pyhive', session_props=None):
         """
         :param host: hostname to connect to, e.g. ``presto.example.com``
         :param port: int -- port, defaults to 8080
@@ -93,6 +98,7 @@ class Cursor(common.DBAPICursor):
         self._arraysize = 1
         self._poll_interval = poll_interval
         self._source = source
+        self._session_props = session_props if session_props is not None else {}
 
         self._reset_state()
 
@@ -120,9 +126,9 @@ class Cursor(common.DBAPICursor):
         section below.
         """
         # Sleep until we're done or we got the columns
-        self._fetch_while(lambda:
-            self._columns is None
-            and self._state not in (self._STATE_NONE, self._STATE_FINISHED)
+        self._fetch_while(
+            lambda: self._columns is None and
+            self._state not in (self._STATE_NONE, self._STATE_FINISHED)
         )
         if self._columns is None:
             return None
@@ -143,6 +149,12 @@ class Cursor(common.DBAPICursor):
             'X-Presto-Source': self._source,
             'X-Presto-User': self._username,
         }
+
+        if self._session_props:
+            headers['X-Presto-Session'] = ','.join(
+                '{}={}'.format(propname, propval)
+                for propname, propval in self._session_props.items()
+            )
 
         # Prepare statement
         if parameters is None:
@@ -203,11 +215,17 @@ class Cursor(common.DBAPICursor):
         assert self._state == self._STATE_RUNNING, "Should be running if processing response"
         self._nextUri = response_json.get('nextUri')
         self._columns = response_json.get('columns')
+        if 'X-Presto-Clear-Session' in response.headers:
+            propname = response.headers['X-Presto-Clear-Session']
+            self._session_props.pop(propname, None)
+        if 'X-Presto-Set-Session' in response.headers:
+            propname, propval = response.headers['X-Presto-Set-Session'].split('=', 1)
+            self._session_props[propname] = propval
         if 'data' in response_json:
             assert self._columns
             new_data = response_json['data']
             self._decode_binary(new_data)
-            self._data += new_data
+            self._data += map(tuple, new_data)
         if 'nextUri' not in response_json:
             self._state = self._STATE_FINISHED
         if 'error' in response_json:

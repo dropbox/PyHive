@@ -13,7 +13,7 @@ from TCLIService import ttypes
 from pyhive import common
 from pyhive.common import DBAPITypeObject
 # Make all exceptions visible in this module per DB-API
-from pyhive.exc import *
+from pyhive.exc import *  # noqa
 import contextlib
 import getpass
 import logging
@@ -21,6 +21,7 @@ import sasl
 import sys
 import thrift.protocol.TBinaryProtocol
 import thrift.transport.TSocket
+import thrift.transport.TTransport
 import thrift_sasl
 
 # PEP 249 module globals
@@ -41,7 +42,8 @@ class HiveParamEscaper(common.ParamEscaper):
         # string formatting here.
         if isinstance(item, str):
             item = item.decode('utf-8')
-        return "'{}'".format(item
+        return "'{}'".format(
+            item
             .replace('\\', '\\\\')
             .replace("'", "\\'")
             .replace('\r', '\\r')
@@ -64,35 +66,51 @@ def connect(*args, **kwargs):
 class Connection(object):
     """Wraps a Thrift session"""
 
-    def __init__(self, host, port=10000, username=None, database='default', configuration=None):
+    def __init__(self, host, port=10000, username=None, database='default', auth='NONE',
+                 configuration=None):
+        """Connect to HiveServer2
+
+        :param auth: The value of hive.server2.authentication used by HiveServer2
+        """
         socket = thrift.transport.TSocket.TSocket(host, port)
         username = username or getpass.getuser()
         configuration = configuration or {}
 
-        def sasl_factory():
-            sasl_client = sasl.Client()
-            sasl_client.setAttr(b'username', username.encode('latin-1'))
-            # Password doesn't matter in PLAIN mode, just needs to be nonempty.
-            sasl_client.setAttr(b'password', b'x')
-            sasl_client.init()
-            return sasl_client
+        if auth == 'NOSASL':
+            # NOSASL corresponds to hive.server2.authentication=NOSASL in hive-site.xml
+            self._transport = thrift.transport.TTransport.TBufferedTransport(socket)
+        elif auth == 'NONE':
+            def sasl_factory():
+                sasl_client = sasl.Client()
+                sasl_client.setAttr(b'username', username.encode('latin-1'))
+                # Password doesn't matter in NONE mode, just needs to be nonempty.
+                sasl_client.setAttr(b'password', b'x')
+                sasl_client.init()
+                return sasl_client
 
-        # PLAIN corresponds to hive.server2.authentication=NONE in hive-site.xml
-        self._transport = thrift_sasl.TSaslClientTransport(sasl_factory, b'PLAIN', socket)
+            # PLAIN corresponds to hive.server2.authentication=NONE in hive-site.xml
+            self._transport = thrift_sasl.TSaslClientTransport(sasl_factory, b'PLAIN', socket)
+        else:
+            raise NotImplementedError(
+                "Only NONE & NOSASL authentication are supported, got {}".format(auth))
+
         protocol = thrift.protocol.TBinaryProtocol.TBinaryProtocol(self._transport)
         self._client = TCLIService.Client(protocol)
+        # oldest version that still contains features we care about
+        # "V6 uses binary type for binary payload (was string) and uses columnar result set"
+        protocol_version = ttypes.TProtocolVersion.HIVE_CLI_SERVICE_PROTOCOL_V6
 
         try:
             self._transport.open()
             open_session_req = ttypes.TOpenSessionReq(
-                client_protocol=ttypes.TProtocolVersion.HIVE_CLI_SERVICE_PROTOCOL_V1,
+                client_protocol=protocol_version,
                 configuration=configuration,
             )
             response = self._client.OpenSession(open_session_req)
             _check_status(response)
-            assert(response.sessionHandle is not None), "Expected a session from OpenSession"
+            assert response.sessionHandle is not None, "Expected a session from OpenSession"
             self._sessionHandle = response.sessionHandle
-            assert(response.serverProtocolVersion == ttypes.TProtocolVersion.HIVE_CLI_SERVICE_PROTOCOL_V1), \
+            assert response.serverProtocolVersion == protocol_version, \
                 "Unable to handle protocol version {}".format(response.serverProtocolVersion)
             with contextlib.closing(self.cursor()) as cursor:
                 cursor.execute('USE `{}`'.format(database))
@@ -111,9 +129,9 @@ class Connection(object):
         """Hive does not support transactions, so this does nothing."""
         pass
 
-    def cursor(self):
+    def cursor(self, *args, **kwargs):
         """Return a new :py:class:`Cursor` object using the connection."""
-        return Cursor(self)
+        return Cursor(self, *args, **kwargs)
 
     @property
     def client(self):
@@ -135,9 +153,10 @@ class Cursor(common.DBAPICursor):
     visible by other cursors or connections.
     """
 
-    def __init__(self, connection):
+    def __init__(self, connection, arraysize=1000):
         self._operationHandle = None
         super(Cursor, self).__init__()
+        self.arraysize = arraysize
         self._connection = connection
 
     def _reset_state(self):
@@ -198,7 +217,7 @@ class Cursor(common.DBAPICursor):
         """Close the operation handle"""
         self._reset_state()
 
-    def execute(self, operation, parameters=None):
+    def execute(self, operation, parameters=None, async=False):
         """Prepare and execute a database operation (query or command).
 
         Return values are not defined.
@@ -214,11 +233,19 @@ class Cursor(common.DBAPICursor):
         self._state = self._STATE_RUNNING
         _logger.info('%s', sql)
 
-        req = ttypes.TExecuteStatementReq(self._connection.sessionHandle, sql.encode('utf-8'))
+        req = ttypes.TExecuteStatementReq(self._connection.sessionHandle,
+                                          sql.encode('utf-8'), runAsync=async)
         _logger.debug(req)
         response = self._connection.client.ExecuteStatement(req)
         _check_status(response)
         self._operationHandle = response.operationHandle
+
+    def cancel(self):
+        req = ttypes.TCancelOperationReq(
+            operationHandle=self._operationHandle,
+        )
+        response = self._connection.client.CancelOperation(req)
+        _check_status(response)
 
     def _fetch_more(self):
         """Send another TFetchResultsReq and update state"""
@@ -229,16 +256,68 @@ class Cursor(common.DBAPICursor):
         req = ttypes.TFetchResultsReq(
             operationHandle=self._operationHandle,
             orientation=ttypes.TFetchOrientation.FETCH_NEXT,
-            maxRows=1000,
+            maxRows=self.arraysize,
         )
         response = self._connection.client.FetchResults(req)
         _check_status(response)
+        assert not response.results.rows, 'expected data in columnar format'
+        columns = map(_unwrap_column, response.results.columns)
+        new_data = zip(*columns)
+        self._data += new_data
         # response.hasMoreRows seems to always be False, so we instead check the number of rows
-        #if not response.hasMoreRows:
-        if not response.results.rows:
+        # https://github.com/apache/hive/blob/release-1.2.1/service/src/java/org/apache/hive/service/cli/thrift/ThriftCLIService.java#L678
+        # if not response.hasMoreRows:
+        if not new_data:
             self._state = self._STATE_FINISHED
-        for row in response.results.rows:
-            self._data.append([_unwrap_col_val(val) for val in row.colVals])
+
+    def poll(self):
+        """Poll for and return the raw status data provided by the Hive Thrift REST API.
+        :returns: ``ttypes.TGetOperationStatusResp``
+        :raises: ``ProgrammingError`` when no query has been started
+        .. note::
+            This is not a part of DB-API.
+        """
+        if self._state == self._STATE_NONE:
+            raise ProgrammingError("No query yet")
+
+        req = ttypes.TGetOperationStatusReq(
+            operationHandle=self._operationHandle
+        )
+        response = self._connection.client.GetOperationStatus(req)
+        _check_status(response)
+
+        return response
+
+    def fetch_logs(self):
+        """Retrieve the logs produced by the execution of the query.
+        Can be called multiple times to fetch the logs produced after the previous call.
+        :returns: list<str>
+        :raises: ``ProgrammingError`` when no query has been started
+        .. note::
+            This is not a part of DB-API.
+        """
+        if self._state == self._STATE_NONE:
+            raise ProgrammingError("No query yet")
+
+        logs = []
+        while True:
+            req = ttypes.TFetchResultsReq(
+                operationHandle=self._operationHandle,
+                orientation=ttypes.TFetchOrientation.FETCH_NEXT,
+                maxRows=self.arraysize,
+                fetchType=1  # 0: results, 1: logs
+            )
+            response = self._connection.client.FetchResults(req)
+            _check_status(response)
+            assert not response.results.rows, 'expected data in columnar format'
+            assert len(response.results.columns) == 1, response.results.columns
+            new_logs = _unwrap_column(response.results.columns[0])
+            logs += new_logs
+
+            if not new_logs:
+                break
+
+        return logs
 
 
 #
@@ -256,17 +335,24 @@ for type_id in constants.PRIMITIVE_TYPES:
 #
 
 
-def _unwrap_col_val(val):
-    """Return the raw value from a TColumnValue instance."""
-    for _, _, attr, _, _ in filter(None, ttypes.TColumnValue.thrift_spec):
-        val_obj = getattr(val, attr)
-        if val_obj:
-            val = val_obj.value
-            if isinstance(val, str):
-                return val.decode('utf-8')
+def _unwrap_column(col):
+    """Return a list of raw values from a TColumn instance."""
+    for attr, wrapper in col.__dict__.iteritems():
+        if wrapper is not None:
+            values = wrapper.values
+            nulls = wrapper.nulls  # bit set describing what's null
+            assert isinstance(nulls, str)
+            if attr == 'stringVal':
+                result = [val.decode('utf-8') for val in values]
             else:
-                return val
-    raise DataError("Got empty column value {}".format(val))  # pragma: no cover
+                result = values
+            for i, char in enumerate(nulls):
+                byte = ord(char)
+                for b in xrange(8):
+                    if byte & (1 << b):
+                        result[i * 8 + b] = None
+            return result
+    raise DataError("Got empty column value {}".format(col))  # pragma: no cover
 
 
 def _check_status(response):

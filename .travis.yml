@@ -1,0 +1,27 @@
+sudo: required
+language: python
+matrix:
+  include:
+    # newest dependencies + a few python versions
+    - python: 3.5
+      env: CDH=cdh5 PRESTO=0.147 SQLALCHEMY=1.0.12
+    - python: 3.4
+      env: CDH=cdh5 PRESTO=0.147 SQLALCHEMY=1.0.12
+    - python: 3.3
+      env: CDH=cdh5 PRESTO=0.147 SQLALCHEMY=1.0.12
+    - python: 2.7
+      env: CDH=cdh5 PRESTO=0.147 SQLALCHEMY=1.0.12
+    # stale stuff we're still using / supporting
+    - python: 2.7
+      env: CDH=cdh5 PRESTO=0.147 SQLALCHEMY=0.5.8
+  # exclude: python 3 against old libries
+before_install:
+  - ./scripts/travis-install.sh
+  - pip install codecov
+install:
+  - pip install -e .
+  - pip install sqlalchemy==$SQLALCHEMY
+  - pip install -r dev_requirements.txt
+# sleep so Presto has time to start up. Otherwise we might get 'No nodes available to run query'
+script: sleep 10 && py.test -v
+after_success: codecov

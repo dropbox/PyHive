@@ -1,10 +1,13 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+from builtins import str
+from distutils.version import StrictVersion
 from pyhive.sqlalchemy_hive import HiveDate
 from pyhive.sqlalchemy_hive import HiveDecimal
 from pyhive.sqlalchemy_hive import HiveTimestamp
-from pyhive.tests.sqlachemy_test_case import SqlAlchemyTestCase
-from pyhive.tests.sqlachemy_test_case import with_engine_connection
+from pyhive.tests.sqlalchemy_test_case import SqlAlchemyTestCase
+from pyhive.tests.sqlalchemy_test_case import with_engine_connection
+from sqlalchemy import types
 from sqlalchemy.engine import create_engine
 from sqlalchemy.schema import Column
 from sqlalchemy.schema import MetaData
@@ -12,7 +15,9 @@ from sqlalchemy.schema import Table
 import contextlib
 import datetime
 import decimal
+import os
 import sqlalchemy.types
+import sys
 import unittest
 
 _ONE_ROW_COMPLEX_CONTENTS = [
@@ -34,6 +39,7 @@ _ONE_ROW_COMPLEX_CONTENTS = [
 ]
 
 
+@unittest.skipIf(sys.version_info.major == 3, 'Hive not yet supported on Python 3')
 class TestSqlAlchemyHive(unittest.TestCase, SqlAlchemyTestCase):
     def create_engine(self):
         return create_engine('hive://localhost:10000/default')
@@ -47,6 +53,28 @@ class TestSqlAlchemyHive(unittest.TestCase, SqlAlchemyTestCase):
         rows = one_row_complex.select().execute().fetchall()
         self.assertEqual(len(rows), 1)
         self.assertEqual(list(rows[0]), _ONE_ROW_COMPLEX_CONTENTS)
+
+        try:
+            from sqlalchemy.types import BigInteger
+        except ImportError:
+            from sqlalchemy.databases.mysql import MSBigInteger as BigInteger
+
+        # TODO some of these types could be filled in better
+        self.assertIsInstance(one_row_complex.c.boolean.type, types.Boolean)
+        self.assertIsInstance(one_row_complex.c.tinyint.type, types.Integer)
+        self.assertIsInstance(one_row_complex.c.smallint.type, types.Integer)
+        self.assertIsInstance(one_row_complex.c.int.type, types.Integer)
+        self.assertIsInstance(one_row_complex.c.bigint.type, BigInteger)
+        self.assertIsInstance(one_row_complex.c.float.type, types.Float)
+        self.assertIsInstance(one_row_complex.c.double.type, types.Float)
+        self.assertIsInstance(one_row_complex.c.string.type, types.String)
+        self.assertIsInstance(one_row_complex.c.timestamp.type, HiveTimestamp)
+        self.assertIsInstance(one_row_complex.c.binary.type, types.String)
+        self.assertIsInstance(one_row_complex.c.array.type, types.String)
+        self.assertIsInstance(one_row_complex.c.map.type, types.String)
+        self.assertIsInstance(one_row_complex.c.struct.type, types.String)
+        self.assertIsInstance(one_row_complex.c.union.type, types.String)
+        self.assertIsInstance(one_row_complex.c.decimal.type, HiveDecimal)
 
     @with_engine_connection
     def test_type_map(self, engine, connection):
@@ -82,6 +110,8 @@ class TestSqlAlchemyHive(unittest.TestCase, SqlAlchemyTestCase):
         finally:
             engine.dispose()
 
+    @unittest.skipIf(StrictVersion(sqlalchemy.__version__) < StrictVersion('0.7.0'),
+                     "features not available yet")
     @with_engine_connection
     def test_lots_of_types(self, engine, connection):
         # Presto doesn't have raw CREATE TABLE support, so we ony test hive
@@ -105,6 +135,7 @@ class TestSqlAlchemyHive(unittest.TestCase, SqlAlchemyTestCase):
         table.create()
         connection.execute('SET mapred.job.tracker=local')
         connection.execute('USE pyhive_test_database')
+        big_number = 10 ** 10 - 1
         connection.execute("""
         INSERT OVERWRITE TABLE test_table
         SELECT
@@ -114,15 +145,17 @@ class TestSqlAlchemyHive(unittest.TestCase, SqlAlchemyTestCase):
             "a", 1, 1,
             0.1, 0.1, 0, 0, 0, "a",
             false, "a", "a",
-            0, 0.1, 123 + 2000
+            0, %d, 123 + 2000
         FROM default.one_row
-        """)
+        """, big_number)
         row = connection.execute(table.select()).fetchone()
         self.assertEqual(row.hive_date, datetime.date(1970, 1, 1))
-        self.assertEqual(row.hive_decimal, decimal.Decimal('0.1'),)
+        self.assertEqual(row.hive_decimal, decimal.Decimal(big_number))
         self.assertEqual(row.hive_timestamp, datetime.datetime(1970, 1, 1, 0, 0, 2, 123))
         table.drop()
 
+    @unittest.skipIf(StrictVersion(sqlalchemy.__version__) < StrictVersion('0.8.0'),
+                     "from_select not available yet")
     @with_engine_connection
     def test_insert_select(self, engine, connection):
         one_row = Table('one_row', MetaData(bind=engine), autoload=True)
@@ -139,6 +172,7 @@ class TestSqlAlchemyHive(unittest.TestCase, SqlAlchemyTestCase):
         expected = [(1,)]
         self.assertEqual(result, expected)
 
+    @unittest.skipIf(os.environ.get('SQLALCHEMY') == '0.5.8', "not supported on old sqlalchemy")
     @with_engine_connection
     def test_insert_values(self, engine, connection):
         table = Table('insert_test', MetaData(bind=engine),

@@ -13,10 +13,12 @@ from pyhive.tests.dbapi_test_case import with_cursor
 import contextlib
 import mock
 import unittest
+import sys
 
 _HOST = 'localhost'
 
 
+@unittest.skipIf(sys.version_info.major == 3, 'Hive not yet supported on Python 3')
 class TestHive(unittest.TestCase, DBAPITestCase):
     __test__ = True
 
@@ -26,14 +28,13 @@ class TestHive(unittest.TestCase, DBAPITestCase):
     @with_cursor
     def test_description(self, cursor):
         cursor.execute('SELECT * FROM one_row')
+
         desc = [('number_of_rows', 'INT_TYPE', None, None, None, None, True)]
-        self.assertEqual(cursor.description, desc)
         self.assertEqual(cursor.description, desc)
 
     @with_cursor
     def test_complex(self, cursor):
         cursor.execute('SELECT * FROM one_row_complex')
-        # TODO Presto drops the union and decimal fields
         self.assertEqual(cursor.description, [
             ('boolean', 'BOOLEAN_TYPE', None, None, None, None, True),
             ('tinyint', 'TINYINT_TYPE', None, None, None, None, True),
@@ -45,13 +46,14 @@ class TestHive(unittest.TestCase, DBAPITestCase):
             ('string', 'STRING_TYPE', None, None, None, None, True),
             ('timestamp', 'TIMESTAMP_TYPE', None, None, None, None, True),
             ('binary', 'BINARY_TYPE', None, None, None, None, True),
-            ('array', 'STRING_TYPE', None, None, None, None, True),
-            ('map', 'STRING_TYPE', None, None, None, None, True),
-            ('struct', 'STRING_TYPE', None, None, None, None, True),
-            ('union', 'STRING_TYPE', None, None, None, None, True),
+            ('array', 'ARRAY_TYPE', None, None, None, None, True),
+            ('map', 'MAP_TYPE', None, None, None, None, True),
+            ('struct', 'STRUCT_TYPE', None, None, None, None, True),
+            ('union', 'UNION_TYPE', None, None, None, None, True),
             ('decimal', 'DECIMAL_TYPE', None, None, None, None, True),
         ])
-        self.assertEqual(cursor.fetchall(), [[
+        rows = cursor.fetchall()
+        expected = [(
             True,
             127,
             32767,
@@ -61,13 +63,43 @@ class TestHive(unittest.TestCase, DBAPITestCase):
             0.25,
             'a string',
             '1970-01-01 00:00:00.0',
-            '123',
+            b'123',
             '[1,2]',
             '{1:2,3:4}',
             '{"a":1,"b":2}',
             '{0:1}',
             '0.1',
-        ]])
+        )]
+        self.assertEqual(rows, expected)
+        # catch unicode/str
+        self.assertEqual(list(map(type, rows[0])), list(map(type, expected[0])))
+
+    @with_cursor
+    def test_async(self, cursor):
+        cursor.execute('SELECT * FROM one_row', async=True)
+        unfinished_states = (
+            ttypes.TOperationState.INITIALIZED_STATE,
+            ttypes.TOperationState.RUNNING_STATE,
+        )
+        while cursor.poll().operationState in unfinished_states:
+            cursor.fetch_logs()
+        assert cursor.poll().operationState == ttypes.TOperationState.FINISHED_STATE
+
+        self.assertEqual(len(cursor.fetchall()), 1)
+
+    @with_cursor
+    def test_cancel(self, cursor):
+        # Need to do a JOIN to force a MR job. Without it, Hive optimizes the query to a fetch
+        # operator and prematurely declares the query done.
+        cursor.execute(
+            "SELECT reflect('java.lang.Thread', 'sleep', 1000L * 1000L * 1000L) "
+            "FROM one_row a JOIN one_row b",
+            async=True
+        )
+        self.assertEqual(cursor.poll().operationState, ttypes.TOperationState.RUNNING_STATE)
+        cursor.cancel()
+        self.assertEqual(cursor.poll().operationState, ttypes.TOperationState.CANCELED_STATE)
+        assert any('Stage' in line for line in cursor.fetch_logs())
 
     def test_noops(self):
         """The DB-API specification requires that certain actions exist, even though they might not
@@ -92,14 +124,15 @@ class TestHive(unittest.TestCase, DBAPITestCase):
         self.run_escape_case(bad_str)
 
     def test_newlines(self):
-        """Verify that newlines are passed through in a way that doesn't fail parsing"""
-        # Hive thrift translates newlines into multiple rows. WTF.
+        """Verify that newlines are passed through correctly"""
         cursor = self.connect().cursor()
+        orig = ' \r\n \r \n '
         cursor.execute(
             'SELECT %s FROM one_row',
-            (' \r\n \r \n ',)
+            (orig,)
         )
-        self.assertEqual(cursor.fetchall(), [[' '], [' '], [' '], [' ']])
+        result = cursor.fetchall()
+        self.assertEqual(result, [(orig,)])
 
     @with_cursor
     def test_no_result_set(self, cursor):
