@@ -10,6 +10,7 @@ from TCLIService import ttypes
 from pyhive import hive
 from pyhive.tests.dbapi_test_case import DBAPITestCase
 from pyhive.tests.dbapi_test_case import with_cursor
+from pyhive.tests.dbapi_test_case import with_cursor_type
 import contextlib
 import mock
 import unittest
@@ -29,28 +30,28 @@ class TestHive(unittest.TestCase, DBAPITestCase):
     def test_description(self, cursor):
         cursor.execute('SELECT * FROM one_row')
 
-        desc = [('number_of_rows', 'INT_TYPE', None, None, None, None, True)]
+        desc = [('one_row.number_of_rows', 'INT_TYPE', None, None, None, None, True)]
         self.assertEqual(cursor.description, desc)
 
     @with_cursor
     def test_complex(self, cursor):
         cursor.execute('SELECT * FROM one_row_complex')
         self.assertEqual(cursor.description, [
-            ('boolean', 'BOOLEAN_TYPE', None, None, None, None, True),
-            ('tinyint', 'TINYINT_TYPE', None, None, None, None, True),
-            ('smallint', 'SMALLINT_TYPE', None, None, None, None, True),
-            ('int', 'INT_TYPE', None, None, None, None, True),
-            ('bigint', 'BIGINT_TYPE', None, None, None, None, True),
-            ('float', 'FLOAT_TYPE', None, None, None, None, True),
-            ('double', 'DOUBLE_TYPE', None, None, None, None, True),
-            ('string', 'STRING_TYPE', None, None, None, None, True),
-            ('timestamp', 'TIMESTAMP_TYPE', None, None, None, None, True),
-            ('binary', 'BINARY_TYPE', None, None, None, None, True),
-            ('array', 'ARRAY_TYPE', None, None, None, None, True),
-            ('map', 'MAP_TYPE', None, None, None, None, True),
-            ('struct', 'STRUCT_TYPE', None, None, None, None, True),
-            ('union', 'UNION_TYPE', None, None, None, None, True),
-            ('decimal', 'DECIMAL_TYPE', None, None, None, None, True),
+            ('one_row_complex.boolean', 'BOOLEAN_TYPE', None, None, None, None, True),
+            ('one_row_complex.tinyint', 'TINYINT_TYPE', None, None, None, None, True),
+            ('one_row_complex.smallint', 'SMALLINT_TYPE', None, None, None, None, True),
+            ('one_row_complex.int', 'INT_TYPE', None, None, None, None, True),
+            ('one_row_complex.bigint', 'BIGINT_TYPE', None, None, None, None, True),
+            ('one_row_complex.float', 'FLOAT_TYPE', None, None, None, None, True),
+            ('one_row_complex.double', 'DOUBLE_TYPE', None, None, None, None, True),
+            ('one_row_complex.string', 'STRING_TYPE', None, None, None, None, True),
+            ('one_row_complex.timestamp', 'TIMESTAMP_TYPE', None, None, None, None, True),
+            ('one_row_complex.binary', 'BINARY_TYPE', None, None, None, None, True),
+            ('one_row_complex.array', 'ARRAY_TYPE', None, None, None, None, True),
+            ('one_row_complex.map', 'MAP_TYPE', None, None, None, None, True),
+            ('one_row_complex.struct', 'STRUCT_TYPE', None, None, None, None, True),
+            ('one_row_complex.union', 'UNION_TYPE', None, None, None, None, True),
+            ('one_row_complex.decimal', 'DECIMAL_TYPE', None, None, None, None, True),
         ])
         rows = cursor.fetchall()
         expected = [(
@@ -136,6 +137,14 @@ class TestHive(unittest.TestCase, DBAPITestCase):
 
     @with_cursor
     def test_no_result_set(self, cursor):
+        print 'huoii/'
         cursor.execute('USE default')
         self.assertIsNone(cursor.description)
         self.assertRaises(hive.ProgrammingError, cursor.fetchone)
+
+    @with_cursor_type('dict')
+    def test_dictionary_cursor(self, cursor):
+        cursor.execute('SELECT * FROM one_row')
+
+        desc = [('one_row.number_of_rows', 'INT_TYPE', None, None, None, None, True)]
+        self.assertEqual(cursor.description, desc)

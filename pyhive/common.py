@@ -24,10 +24,13 @@ class DBAPICursor(with_metaclass(abc.ABCMeta, object)):
     _STATE_RUNNING = 1
     _STATE_FINISHED = 2
 
-    def __init__(self, poll_interval=1):
+    _DICT_CURSOR = 'dict'
+
+    def __init__(self, poll_interval=1, cursor_type=None):
         self._poll_interval = poll_interval
         self._reset_state()
         self.lastrowid = None
+        self._cursor_type = cursor_type
 
     def _reset_state(self):
         """Reset state about the previous query in preparation for running another query"""
@@ -107,7 +110,7 @@ class DBAPICursor(with_metaclass(abc.ABCMeta, object)):
             return None
         else:
             self._rownumber += 1
-            return self._data.popleft()
+            return self.decorate_result(self._data.popleft())
 
     def fetchmany(self, size=None):
         """Fetch the next set of rows of a query result, returning a sequence of sequences (e.g. a
@@ -147,6 +150,14 @@ class DBAPICursor(with_metaclass(abc.ABCMeta, object)):
             else:
                 result.append(one)
         return result
+
+    def dictionarize(self, data, col_names):
+        return {k: v for k, v in zip(col_names, data)}
+
+    def decorate_result(self, data):
+        if self._cursor_type == self._DICT_CURSOR:
+            return self.dictionarize(data, map(lambda a:a[0], self.description))
+        return data
 
     @property
     def arraysize(self):

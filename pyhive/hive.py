@@ -10,8 +10,7 @@ from __future__ import unicode_literals
 from TCLIService import TCLIService
 from TCLIService import constants
 from TCLIService import ttypes
-from pyhive import common
-from pyhive.common import DBAPITypeObject
+from common import DBAPITypeObject
 # Make all exceptions visible in this module per DB-API
 from pyhive.exc import *  # noqa
 import contextlib
@@ -153,11 +152,12 @@ class Cursor(common.DBAPICursor):
     visible by other cursors or connections.
     """
 
-    def __init__(self, connection, arraysize=1000):
+    def __init__(self, connection, cursor_type=None, arraysize=1000):
         self._operationHandle = None
         super(Cursor, self).__init__()
         self.arraysize = arraysize
         self._connection = connection
+        self._cursor_type = cursor_type
 
     def _reset_state(self):
         """Reset state about the previous query in preparation for running another query"""
