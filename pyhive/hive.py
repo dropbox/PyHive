@@ -10,7 +10,9 @@ from __future__ import unicode_literals
 from TCLIService import TCLIService
 from TCLIService import constants
 from TCLIService import ttypes
-from common import DBAPITypeObject
+from pyhive import common
+from pyhive.common import DBAPITypeObject
+
 # Make all exceptions visible in this module per DB-API
 from pyhive.exc import *  # noqa
 import contextlib

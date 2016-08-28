@@ -156,7 +156,7 @@ class DBAPICursor(with_metaclass(abc.ABCMeta, object)):
 
     def decorate_result(self, data):
         if self._cursor_type == self._DICT_CURSOR:
-            return self.dictionarize(data, map(lambda a:a[0], self.description))
+            return self.dictionarize(data, map(lambda a: a[0], self.description))
         return data
 
     @property

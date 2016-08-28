@@ -145,6 +145,5 @@ class TestHive(unittest.TestCase, DBAPITestCase):
     @with_cursor_type('dict')
     def test_dictionary_cursor(self, cursor):
         cursor.execute('SELECT * FROM one_row')
-
-        desc = [('one_row.number_of_rows', 'INT_TYPE', None, None, None, None, True)]
-        self.assertEqual(cursor.description, desc)
+        expected = {u'one_row.number_of_rows': 1}
+        self.assertEqual(cursor.fetchone(), expected)
