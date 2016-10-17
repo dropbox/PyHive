@@ -23,6 +23,7 @@ class DBAPICursor(with_metaclass(abc.ABCMeta, object)):
     _STATE_NONE = 0
     _STATE_RUNNING = 1
     _STATE_FINISHED = 2
+    _STATE_CANCELLED = 3
 
     def __init__(self, poll_interval=1):
         self._poll_interval = poll_interval
