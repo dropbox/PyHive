@@ -3,7 +3,6 @@
 These rely on having a Presto+Hadoop cluster set up.
 They also require a tables created by make_test_tables.sh.
 """
-
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
@@ -17,13 +16,14 @@ import mock
 import unittest
 
 _HOST = 'localhost'
+_PORT = '8080'
 
 
 class TestPresto(unittest.TestCase, DBAPITestCase):
     __test__ = True
 
     def connect(self):
-        return presto.connect(host=_HOST, source=self.id())
+        return presto.connect(host=_HOST, port=_PORT, source=self.id())
 
     @with_cursor
     def test_description(self, cursor):
@@ -77,6 +77,17 @@ class TestPresto(unittest.TestCase, DBAPITestCase):
         self.assertEqual(rows, expected)
         # catch unicode/str
         self.assertEqual(list(map(type, rows[0])), list(map(type, expected[0])))
+
+    @with_cursor
+    def test_cancel(self, cursor):
+        cursor.execute(
+            "SELECT a.a * rand(), b.a*rand()"
+            "FROM many_rows a "
+            "CROSS JOIN many_rows b "
+        )
+        self.assertIn(cursor.poll()['stats']['state'], ('PLANNING', 'RUNNING'))
+        cursor.cancel()
+        self.assertRaises(exc.DatabaseError, cursor.poll)
 
     def test_noops(self):
         """The DB-API specification requires that certain actions exist, even though they might not

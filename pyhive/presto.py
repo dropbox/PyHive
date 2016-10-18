@@ -172,6 +172,16 @@ class Cursor(common.DBAPICursor):
         response = requests.post(url, data=sql.encode('utf-8'), headers=headers)
         self._process_response(response)
 
+    def cancel(self):
+        if self._state == self._STATE_NONE:
+            raise ProgrammingError("No query yet")
+        if self._nextUri is None:
+            assert self._state == self._STATE_FINISHED, "Should be finished if nextUri is None"
+            return None
+        response = requests.delete(self._nextUri)
+        self._process_response(response)
+        return response.status_code
+
     def poll(self):
         """Poll for and return the raw status data provided by the Presto REST API.
 
@@ -207,12 +217,18 @@ class Cursor(common.DBAPICursor):
         URI and any data from the response
         """
         # TODO handle HTTP 503
-        if response.status_code != requests.codes.ok:
+        if response.status_code not in (requests.codes.ok, requests.codes.no_content):
             fmt = "Unexpected status code {}\n{}"
             raise OperationalError(fmt.format(response.status_code, response.content))
+
+        if response.status_code == requests.codes.no_content:
+            self._state = self._STATE_CANCELLED
+            return
+
         response_json = response.json()
         _logger.debug("Got response %s", response_json)
-        assert self._state == self._STATE_RUNNING, "Should be running if processing response"
+        assert self._state in (self._STATE_RUNNING, self._STATE_CANCELLED), \
+            "Should be running or cancelled if processing response"
         self._nextUri = response_json.get('nextUri')
         self._columns = response_json.get('columns')
         if 'X-Presto-Clear-Session' in response.headers:
