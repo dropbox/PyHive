@@ -19,6 +19,28 @@ DB-API
     print cursor.fetchone()
     print cursor.fetchall()
 
+DB-API (asynchronous)
+---------------------
+.. code-block:: python
+
+    from pyhive import hive
+    from TCLIService.ttypes import TOperationState
+    cursor = hive.connect('localhost').cursor()
+    cursor.execute('SELECT * FROM my_awesome_data LIMIT 10', async=True)
+
+    status = cursor.poll().operationState
+    while status in (TOperationState.INITIALIZED_STATE, TOperationState.RUNNING_STATE):
+        logs = cursor.fetch_logs()
+        for message in logs:
+            print message
+
+        # If needed, an asynchronous query can be cancelled at any time with:
+        # cursor.cancel()
+
+        status = cursor.poll().operationState
+
+    print cursor.fetchall()
+
 SQLAlchemy
 ----------
 First install this package to register it with SQLAlchemy (see ``setup.py``).
@@ -35,14 +57,14 @@ First install this package to register it with SQLAlchemy (see ``setup.py``).
 Note: query generation functionality is not exhaustive or fully tested, but there should be no
 problem with raw SQL.
 
-Passing Hive configuration
---------------------------
-(Does not apply to Presto)
+Passing session configuration
+-----------------------------
 
 .. code-block:: python
 
     # DB-API
     hive.connect('localhost', configuration={'hive.exec.reducers.max': '123'})
+    presto.connect('localhost', session_props={'query_max_run_time': '1234m'})
     # SQLAlchemy
     create_engine(
         'hive://user@host:10000/database',
@@ -64,6 +86,15 @@ Install using
 - For Hive: `HiveServer2 <https://cwiki.apache.org/confluence/display/Hive/Setting+up+HiveServer2>`_ daemon
 
 There's also a `third party Conda package <https://binstar.org/blaze/pyhive>`_.
+
+Changelog
+=========
+See https://github.com/dropbox/PyHive/releases.
+
+Contributing
+============
+- Please fill out the Dropbox Contributor License Agreement at https://opensource.dropbox.com/cla/ and note this in your pull request.
+- Changes must come with tests, with the exception of trivial things like fixing comments. See .travis.yml for the test environment setup.
 
 Testing
 =======

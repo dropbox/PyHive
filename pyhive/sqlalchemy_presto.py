@@ -23,6 +23,7 @@ try:
 except ImportError:
     from sqlalchemy.sql.compiler import DefaultCompiler as SQLCompiler
 
+
 class PrestoIdentifierPreparer(compiler.IdentifierPreparer):
     # Just quote everything to make things simpler / easier to upgrade
     reserved_words = UniversalSet()
@@ -34,9 +35,12 @@ except ImportError:
     from sqlalchemy.databases.mysql import MSBigInteger as BigInteger
 _type_map = {
     'bigint': BigInteger,
+    'integer': types.Integer,
     'boolean': types.Boolean,
     'double': types.Float,
     'varchar': types.String,
+    'timestamp': types.TIMESTAMP,
+    'date': types.DATE,
 }
 
 
@@ -90,16 +94,20 @@ class PrestoDialect(default.DefaultDialect):
             full_table = self.identifier_preparer.quote_identifier(schema) + '.' + full_table
         try:
             return connection.execute('SHOW COLUMNS FROM {}'.format(full_table))
-        except presto.DatabaseError as e:
+        except (presto.DatabaseError, exc.DatabaseError) as e:
             # Normally SQLAlchemy should wrap this exception in sqlalchemy.exc.DatabaseError, which
             # it successfully does in the Hive version. The difference with Presto is that this
             # error is raised when fetching the cursor's description rather than the initial execute
             # call. SQLAlchemy doesn't handle this. Thus, we catch the unwrapped
             # presto.DatabaseError here.
             # Does the table exist?
-            msg = e.message.get('message') if isinstance(e.message, dict) else None
-            regex = r"^Table\ \'.*{}\'\ does\ not\ exist$".format(re.escape(table_name))
-            if msg and re.match(regex, msg):
+            msg = (
+                e.args[0].get('message') if e.args and isinstance(e.args[0], dict)
+                else e.args[0] if e.args and isinstance(e.args[0], str)
+                else None
+            )
+            regex = r"Table\ \'.*{}\'\ does\ not\ exist".format(re.escape(table_name))
+            if msg and re.search(regex, msg):
                 raise exc.NoSuchTableError(table_name)
             else:
                 raise
@@ -123,7 +131,8 @@ class PrestoDialect(default.DefaultDialect):
             result.append({
                 'name': row.Column,
                 'type': coltype,
-                'nullable': row.Null,
+                # newer Presto no longer includes this column
+                'nullable': getattr(row, 'Null', True),
                 'default': None,
             })
         return result
@@ -140,7 +149,9 @@ class PrestoDialect(default.DefaultDialect):
         rows = self._get_table_columns(connection, table_name, schema)
         col_names = []
         for row in rows:
-            if row['Partition Key']:
+            part_key = 'Partition Key'
+            # Newer Presto moved this information from a column to the comment
+            if (part_key in row and row[part_key]) or row['Comment'].startswith(part_key):
                 col_names.append(row['Column'])
         if col_names:
             return [{'name': 'partition', 'column_names': col_names, 'unique': False}]

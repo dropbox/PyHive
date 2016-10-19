@@ -1,12 +1,15 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from pyhive.tests.sqlachemy_test_case import SqlAlchemyTestCase
-from pyhive.tests.sqlachemy_test_case import with_engine_connection
+from builtins import str
+from pyhive.tests.sqlalchemy_test_case import SqlAlchemyTestCase
+from pyhive.tests.sqlalchemy_test_case import with_engine_connection
+from sqlalchemy import types
 from sqlalchemy.engine import create_engine
 from sqlalchemy.schema import Column
 from sqlalchemy.schema import MetaData
 from sqlalchemy.schema import Table
 from sqlalchemy.types import String
+
 import contextlib
 import unittest
 
@@ -25,8 +28,8 @@ class TestSqlAlchemyPresto(unittest.TestCase, SqlAlchemyTestCase):
     def test_reflect_select(self, engine, connection):
         """reflecttable should be able to fill in a table from the name"""
         one_row_complex = Table('one_row_complex', MetaData(bind=engine), autoload=True)
-        # Presto ignores the union and decimal columns
-        self.assertEqual(len(one_row_complex.c), 15 - 2)
+        # Presto ignores the union column
+        self.assertEqual(len(one_row_complex.c), 15 - 1)
         self.assertIsInstance(one_row_complex.c.string, Column)
         rows = one_row_complex.select().execute().fetchall()
         self.assertEqual(len(rows), 1)
@@ -40,13 +43,34 @@ class TestSqlAlchemyPresto(unittest.TestCase, SqlAlchemyTestCase):
             0.25,
             'a string',
             '1970-01-01 00:00:00.000',
-            '123',
+            b'123',
             [1, 2],
             {"1": 2, "3": 4},  # Presto converts all keys to strings so that they're valid JSON
             [1, 2],  # struct is returned as a list of elements
-            #'{0:1}',
-            #0.1,
+            # '{0:1}',
+            '0.1',
         ])
+
+        try:
+            from sqlalchemy.types import BigInteger
+        except ImportError:
+            from sqlalchemy.databases.mysql import MSBigInteger as BigInteger
+
+        # TODO some of these types could be filled in better
+        self.assertIsInstance(one_row_complex.c.boolean.type, types.Boolean)
+        self.assertIsInstance(one_row_complex.c.tinyint.type, types.Integer)
+        self.assertIsInstance(one_row_complex.c.smallint.type, types.Integer)
+        self.assertIsInstance(one_row_complex.c.int.type, types.Integer)
+        self.assertIsInstance(one_row_complex.c.bigint.type, BigInteger)
+        self.assertIsInstance(one_row_complex.c.float.type, types.Float)
+        self.assertIsInstance(one_row_complex.c.double.type, types.Float)
+        self.assertIsInstance(one_row_complex.c.string.type, String)
+        self.assertIsInstance(one_row_complex.c.timestamp.type, types.TIMESTAMP)
+        self.assertIsInstance(one_row_complex.c.binary.type, types.NullType)
+        self.assertIsInstance(one_row_complex.c.array.type, types.NullType)
+        self.assertIsInstance(one_row_complex.c.map.type, types.NullType)
+        self.assertIsInstance(one_row_complex.c.struct.type, types.NullType)
+        self.assertIsInstance(one_row_complex.c.decimal.type, types.NullType)
 
     def test_url_default(self):
         engine = create_engine('presto://localhost:8080/hive')

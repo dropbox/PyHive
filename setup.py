@@ -13,7 +13,7 @@ class PyTest(TestCommand):
         self.test_suite = True
 
     def run_tests(self):
-        #import here, cause outside the eggs aren't loaded
+        # import here, cause outside the eggs aren't loaded
         import pytest
         errno = pytest.main(self.test_args)
         sys.exit(errno)
@@ -36,6 +36,9 @@ setup(
         "License :: OSI Approved :: Apache Software License",
         "Operating System :: OS Independent",
         "Topic :: Database :: Front-Ends",
+    ],
+    install_requires=[
+        'future',
     ],
     extras_require={
         "Presto": ['requests>=1.0.0'],

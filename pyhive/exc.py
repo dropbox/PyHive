@@ -10,7 +10,7 @@ __all__ = [
 ]
 
 
-class Error(StandardError):
+class Error(Exception):
     """Exception that is the base class of all other error exceptions.
 
     You can use this to catch all errors with one single except statement.
@@ -18,7 +18,7 @@ class Error(StandardError):
     pass
 
 
-class Warning(StandardError):
+class Warning(Exception):
     """Exception raised for important warnings like data truncations while inserting, etc."""
     pass
 

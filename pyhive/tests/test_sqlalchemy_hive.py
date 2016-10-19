@@ -1,11 +1,13 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+from builtins import str
 from distutils.version import StrictVersion
 from pyhive.sqlalchemy_hive import HiveDate
 from pyhive.sqlalchemy_hive import HiveDecimal
 from pyhive.sqlalchemy_hive import HiveTimestamp
-from pyhive.tests.sqlachemy_test_case import SqlAlchemyTestCase
-from pyhive.tests.sqlachemy_test_case import with_engine_connection
+from pyhive.tests.sqlalchemy_test_case import SqlAlchemyTestCase
+from pyhive.tests.sqlalchemy_test_case import with_engine_connection
+from sqlalchemy import types
 from sqlalchemy.engine import create_engine
 from sqlalchemy.schema import Column
 from sqlalchemy.schema import MetaData
@@ -15,6 +17,7 @@ import datetime
 import decimal
 import os
 import sqlalchemy.types
+import sys
 import unittest
 
 _ONE_ROW_COMPLEX_CONTENTS = [
@@ -36,6 +39,7 @@ _ONE_ROW_COMPLEX_CONTENTS = [
 ]
 
 
+@unittest.skipIf(sys.version_info.major == 3, 'Hive not yet supported on Python 3')
 class TestSqlAlchemyHive(unittest.TestCase, SqlAlchemyTestCase):
     def create_engine(self):
         return create_engine('hive://localhost:10000/default')
@@ -49,6 +53,28 @@ class TestSqlAlchemyHive(unittest.TestCase, SqlAlchemyTestCase):
         rows = one_row_complex.select().execute().fetchall()
         self.assertEqual(len(rows), 1)
         self.assertEqual(list(rows[0]), _ONE_ROW_COMPLEX_CONTENTS)
+
+        try:
+            from sqlalchemy.types import BigInteger
+        except ImportError:
+            from sqlalchemy.databases.mysql import MSBigInteger as BigInteger
+
+        # TODO some of these types could be filled in better
+        self.assertIsInstance(one_row_complex.c.boolean.type, types.Boolean)
+        self.assertIsInstance(one_row_complex.c.tinyint.type, types.Integer)
+        self.assertIsInstance(one_row_complex.c.smallint.type, types.Integer)
+        self.assertIsInstance(one_row_complex.c.int.type, types.Integer)
+        self.assertIsInstance(one_row_complex.c.bigint.type, BigInteger)
+        self.assertIsInstance(one_row_complex.c.float.type, types.Float)
+        self.assertIsInstance(one_row_complex.c.double.type, types.Float)
+        self.assertIsInstance(one_row_complex.c.string.type, types.String)
+        self.assertIsInstance(one_row_complex.c.timestamp.type, HiveTimestamp)
+        self.assertIsInstance(one_row_complex.c.binary.type, types.String)
+        self.assertIsInstance(one_row_complex.c.array.type, types.String)
+        self.assertIsInstance(one_row_complex.c.map.type, types.String)
+        self.assertIsInstance(one_row_complex.c.struct.type, types.String)
+        self.assertIsInstance(one_row_complex.c.union.type, types.String)
+        self.assertIsInstance(one_row_complex.c.decimal.type, HiveDecimal)
 
     @with_engine_connection
     def test_type_map(self, engine, connection):
@@ -146,7 +172,7 @@ class TestSqlAlchemyHive(unittest.TestCase, SqlAlchemyTestCase):
         expected = [(1,)]
         self.assertEqual(result, expected)
 
-    @unittest.skipIf(os.environ.get('CDH') == 'cdh4', "not supported on hive 0.10")
+    @unittest.skipIf(os.environ.get('SQLALCHEMY') == '0.5.8', "not supported on old sqlalchemy")
     @with_engine_connection
     def test_insert_values(self, engine, connection):
         table = Table('insert_test', MetaData(bind=engine),
@@ -159,8 +185,3 @@ class TestSqlAlchemyHive(unittest.TestCase, SqlAlchemyTestCase):
         result = table.select().execute().fetchall()
         expected = [(1,), (2,)]
         self.assertEqual(result, expected)
-
-    @unittest.skipIf(os.environ.get('CDH') == 'cdh4',
-                     "Hive 0.10 doesn't distinguish partition columns in DESCRIBE")
-    def test_reflect_partitions(self):
-        super(TestSqlAlchemyHive, self).test_reflect_partitions()
