@@ -160,6 +160,21 @@ class Cursor(common.DBAPICursor):
         response = requests.post(url, data=sql.encode('utf-8'), headers=headers)
         self._process_response(response)
 
+    def cancel(self):
+        if self._state == self._STATE_NONE:
+            raise ProgrammingError("No query yet")
+        if self._nextUri is None:
+            assert self._state == self._STATE_FINISHED, "Should be finished if nextUri is None"
+            return None
+
+        response = requests.delete(self._nextUri)
+        if response.status_code != requests.codes.no_content:
+            fmt = "Unexpected status code after cancel {}\n{}"
+            raise OperationalError(fmt.format(response.status_code, response.content))
+
+        self._state = self._STATE_FINISHED
+        return None
+
     def poll(self):
         """Poll for and return the raw status data provided by the Presto REST API.
 
@@ -198,6 +213,7 @@ class Cursor(common.DBAPICursor):
         if response.status_code != requests.codes.ok:
             fmt = "Unexpected status code {}\n{}"
             raise OperationalError(fmt.format(response.status_code, response.content))
+
         response_json = response.json()
         _logger.debug("Got response %s", response_json)
         assert self._state == self._STATE_RUNNING, "Should be running if processing response"
