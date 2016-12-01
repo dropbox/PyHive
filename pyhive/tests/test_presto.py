@@ -26,6 +26,10 @@ class TestPresto(unittest.TestCase, DBAPITestCase):
     def connect(self):
         return presto.connect(host=_HOST, port=_PORT, source=self.id())
 
+    def test_bad_protocol(self):
+        self.assertRaisesRegexp(ValueError, 'Protocol must be',
+                                lambda: presto.connect('localhost', protocol='nonsense').cursor())
+
     @with_cursor
     def test_description(self, cursor):
         cursor.execute('SELECT 1 AS foobar FROM one_row')

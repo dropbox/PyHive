@@ -77,7 +77,7 @@ class Cursor(common.DBAPICursor):
     """
 
     def __init__(self, host, port='8080', username=None, catalog='hive', schema='default',
-                 poll_interval=1, source='pyhive', session_props=None):
+                 poll_interval=1, source='pyhive', session_props=None, protocol='http'):
         """
         :param host: hostname to connect to, e.g. ``presto.example.com``
         :param port: int -- port, defaults to 8080
@@ -87,6 +87,8 @@ class Cursor(common.DBAPICursor):
         :param poll_interval: int -- how often to ask the Presto REST interface for a progress
             update, defaults to a second
         :param source: string -- arbitrary identifier (shows up in the Presto monitoring page)
+        :param protocol: string -- network protocol, valid options are ``http`` and ``https``.
+            defaults to ``http``
         """
         super(Cursor, self).__init__(poll_interval)
         # Config
@@ -99,6 +101,9 @@ class Cursor(common.DBAPICursor):
         self._poll_interval = poll_interval
         self._source = source
         self._session_props = session_props if session_props is not None else {}
+        if protocol not in ('http', 'https'):
+            raise ValueError("Protocol must be http/https, was {!r}".format(protocol))
+        self._protocol = protocol
 
         self._reset_state()
 
@@ -166,7 +171,8 @@ class Cursor(common.DBAPICursor):
 
         self._state = self._STATE_RUNNING
         url = urlparse.urlunparse((
-            'http', '{}:{}'.format(self._host, self._port), '/v1/statement', None, None, None))
+            self._protocol,
+            '{}:{}'.format(self._host, self._port), '/v1/statement', None, None, None))
         _logger.info('%s', sql)
         _logger.debug("Headers: %s", headers)
         response = requests.post(url, data=sql.encode('utf-8'), headers=headers)
