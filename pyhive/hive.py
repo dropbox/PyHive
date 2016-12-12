@@ -24,9 +24,9 @@ import thrift.transport.TSocket
 import thrift.transport.TTransport
 import thrift_sasl
 try:
-  from thrift.protocol import fastbinary
+    from thrift.protocol import fastbinary
 except:
-  fastbinary = None
+    fastbinary = None
 
 
 # PEP 249 module globals
