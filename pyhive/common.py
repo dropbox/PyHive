@@ -237,6 +237,13 @@ class ParamEscaper(object):
         # (i.e. only special character is single quote)
         return "'{}'".format(item.replace("'", "''"))
 
+    def escape_sequence(self, item):
+        l = []
+        for el in item:
+            v = self.escape_item(el)
+            l.append(v)
+        return "(" + ",".join(l) + ")"
+
     def escape_item(self, item):
         if item is None:
             return 'NULL'
@@ -244,6 +251,8 @@ class ParamEscaper(object):
             return self.escape_number(item)
         elif isinstance(item, basestring):
             return self.escape_string(item)
+        elif isinstance(item, (list, tuple, set, frozenset)):
+            return self.escape_sequence(item)
         else:
             raise exc.ProgrammingError("Unsupported object {}".format(item))
 
