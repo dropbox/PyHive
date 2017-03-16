@@ -156,6 +156,9 @@ class Cursor(common.DBAPICursor):
                 for propname, propval in self._session_props.items()
             )
 
+        if not isinstance(operation, unicode):
+            operation = unicode(operation, 'utf-8')
+
         # Prepare statement
         if parameters is None:
             sql = operation
