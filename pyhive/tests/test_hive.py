@@ -9,7 +9,6 @@ from __future__ import unicode_literals
 
 import contextlib
 import subprocess
-import sys
 import time
 import unittest
 
@@ -25,7 +24,6 @@ from pyhive.tests.dbapi_test_case import with_cursor
 _HOST = 'localhost'
 
 
-@unittest.skipIf(sys.version_info.major == 3, 'Hive not yet supported on Python 3')
 class TestHive(unittest.TestCase, DBAPITestCase):
     __test__ = True
 
