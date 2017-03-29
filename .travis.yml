@@ -2,12 +2,13 @@ sudo: required
 language: python
 matrix:
   include:
+    # https://docs.python.org/devguide/#status-of-python-branches
     # newest dependencies + a few python versions
+    - python: 3.6
+      env: CDH=cdh5 PRESTO=0.147 SQLALCHEMY=1.0.12
     - python: 3.5
       env: CDH=cdh5 PRESTO=0.147 SQLALCHEMY=1.0.12
     - python: 3.4
-      env: CDH=cdh5 PRESTO=0.147 SQLALCHEMY=1.0.12
-    - python: 3.3
       env: CDH=cdh5 PRESTO=0.147 SQLALCHEMY=1.0.12
     - python: 2.7
       env: CDH=cdh5 PRESTO=0.147 SQLALCHEMY=1.0.12
