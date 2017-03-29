@@ -97,9 +97,9 @@ class TestHive(unittest.TestCase, DBAPITestCase):
             async=True
         )
         self.assertEqual(cursor.poll().operationState, ttypes.TOperationState.RUNNING_STATE)
+        assert any('Stage' in line for line in cursor.fetch_logs())
         cursor.cancel()
         self.assertEqual(cursor.poll().operationState, ttypes.TOperationState.CANCELED_STATE)
-        assert any('Stage' in line for line in cursor.fetch_logs())
 
     def test_noops(self):
         """The DB-API specification requires that certain actions exist, even though they might not
