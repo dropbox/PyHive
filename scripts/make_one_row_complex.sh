@@ -28,13 +28,13 @@ INSERT OVERWRITE TABLE one_row_complex SELECT
     9223372036854775807,
     0.5,
     0.25,
-    '"'"'a string'"'"',
+    "a string",
     0,
-    '"'"'123'"'"',
+    "123",
     array(1, 2),
     map(1, 2, 3, 4),
-    named_struct('"'"'a'"'"', 1, '"'"'b'"'"', 2),
-    create_union(0, 1, '"'"'test_string'"'"'),
+    named_struct("a", 1, "b", 2),
+    create_union(0, 1, "test_string"),
     0.1
 FROM one_row;
 '
