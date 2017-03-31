@@ -66,7 +66,7 @@ def connect(*args, **kwargs):
 class Connection(object):
     """Wraps a Thrift session"""
 
-    def __init__(self, host, port=10000, username=None, database='default', auth='NONE',
+    def __init__(self, host, kerberos_service_name, port=10000, username=None, password=None, database='default', auth='NONE',
                  configuration=None):
         """Connect to HiveServer2
 
@@ -79,17 +79,23 @@ class Connection(object):
         if auth == 'NOSASL':
             # NOSASL corresponds to hive.server2.authentication=NOSASL in hive-site.xml
             self._transport = thrift.transport.TTransport.TBufferedTransport(socket)
-        elif auth == 'NONE':
+        elif auth in ['LDAP', 'PLAIN', 'GSSAPI']:
+            if password is None:
+                if auth == 'LDAP':
+                    password = ''
+                else:
+                    # PLAIN always requires a password for HS2.
+                    password = 'x'
             def sasl_factory():
                 sasl_client = sasl.Client()
-                sasl_client.setAttr(b'username', username.encode('latin-1'))
-                # Password doesn't matter in NONE mode, just needs to be nonempty.
-                sasl_client.setAttr(b'password', b'x')
+                sasl_client.setAttr('host', host)
+                sasl_client.setAttr('service', kerberos_service_name)
+                if auth.upper() in ['PLAIN', 'LDAP']:
+                    sasl_client.setAttr('username', user)
+                    sasl_client.setAttr('password', password)
                 sasl_client.init()
                 return sasl_client
-
-            # PLAIN corresponds to hive.server2.authentication=NONE in hive-site.xml
-            self._transport = thrift_sasl.TSaslClientTransport(sasl_factory, b'PLAIN', socket)
+            self._transport = thrift_sasl.TSaslClientTransport(sasl_factory, auth, socket)
         else:
             raise NotImplementedError(
                 "Only NONE & NOSASL authentication are supported, got {}".format(auth))
