@@ -10,6 +10,7 @@ from TCLIService import ttypes
 from pyhive import hive
 from pyhive.tests.dbapi_test_case import DBAPITestCase
 from pyhive.tests.dbapi_test_case import with_cursor
+from pyhive.tests.dbapi_test_case import with_cursor_type
 import contextlib
 import mock
 import unittest
@@ -139,3 +140,9 @@ class TestHive(unittest.TestCase, DBAPITestCase):
         cursor.execute('USE default')
         self.assertIsNone(cursor.description)
         self.assertRaises(hive.ProgrammingError, cursor.fetchone)
+
+    @with_cursor_type('dict')
+    def test_dictionary_cursor(self, cursor):
+        cursor.execute('SELECT * FROM one_row')
+        expected = {u'number_of_rows': 1}
+        self.assertEqual(cursor.fetchone(), expected)

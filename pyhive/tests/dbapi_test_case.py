@@ -12,6 +12,23 @@ import contextlib
 import functools
 
 
+def with_cursor_type(cur_type=None):
+    def with_cursor(fn):
+        """Pass a cursor with cursor_type to the given function and handle cleanup.
+
+        The cursor is taken from ``self.connect()``.
+        """
+
+        @functools.wraps(fn)
+        def wrapped_fn(self, *args, **kwargs):
+            with contextlib.closing(self.connect()) as connection:
+                with contextlib.closing(connection.cursor(cursor_type=cur_type)) as cursor:
+                    fn(self, cursor, *args, **kwargs)
+
+        return wrapped_fn
+    return with_cursor
+
+
 def with_cursor(fn):
     """Pass a cursor to the given function and handle cleanup.
 
