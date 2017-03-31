@@ -2,9 +2,6 @@
 
 sudo wget "http://archive.cloudera.com/$CDH/ubuntu/precise/amd64/cdh/cloudera.list" \
     -O /etc/apt/sources.list.d/cloudera.list
-# work around broken list
-sudo sed -i 's mirror.infra.cloudera.com/archive archive.cloudera.com g' \
-    /etc/apt/sources.list.d/cloudera.list
 sudo apt-get update
 
 #
