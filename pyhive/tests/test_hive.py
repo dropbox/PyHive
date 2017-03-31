@@ -14,6 +14,9 @@ import contextlib
 import mock
 import unittest
 import sys
+import subprocess
+import os
+import time
 
 _HOST = 'localhost'
 
@@ -139,3 +142,27 @@ class TestHive(unittest.TestCase, DBAPITestCase):
         cursor.execute('USE default')
         self.assertIsNone(cursor.description)
         self.assertRaises(hive.ProgrammingError, cursor.fetchone)
+
+    def test_ldap_connection(self):
+        rootdir = os.environ['TRAVIS_BUILD_DIR']
+        orig_ldap = os.path.join(rootdir, 'scripts', 'travis-conf', 'hive', 'hive-site-ldap.xml')
+        orig_none = os.path.join(rootdir, 'scripts', 'travis-conf', 'hive', 'hive-site.xml')
+        des = os.path.join('/', 'etc', 'hive', 'conf', 'hive-site.xml')
+        try:
+            subprocess.check_call(['sudo', 'cp', orig_ldap, des])
+            subprocess.check_call(['sudo', 'service', 'hive-server2', 'restart'])
+            time.sleep(10)
+            with contextlib.closing(hive.connect(
+                host=_HOST, username='existing', auth='LDAP',
+                configuration={'mapred.job.tracker': 'local'}, password='testpw')
+            ) as connection:
+                with contextlib.closing(connection.cursor()) as cursor:
+                    cursor.execute('SELECT * FROM one_row')
+                    self.assertEqual(cursor.rownumber, 0)
+                    self.assertEqual(cursor.fetchone(), (1,))
+                    self.assertEqual(cursor.rownumber, 1)
+                    self.assertIsNone(cursor.fetchone())
+        finally:
+            subprocess.check_call(['sudo', 'cp', orig_none, des])
+            subprocess.check_call(['sudo', 'service', 'hive-server2', 'restart'])
+            time.sleep(10)
