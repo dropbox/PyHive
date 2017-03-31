@@ -67,7 +67,7 @@ class Connection(object):
     """Wraps a Thrift session"""
 
     def __init__(self, host, port=10000, username=None, database='default', auth='NONE',
-                 configuration=None):
+                 password=b'x', configuration=None):
         """Connect to HiveServer2
 
         :param auth: The value of hive.server2.authentication used by HiveServer2
@@ -83,8 +83,7 @@ class Connection(object):
             def sasl_factory():
                 sasl_client = sasl.Client()
                 sasl_client.setAttr(b'username', username.encode('latin-1'))
-                # Password doesn't matter in NONE mode, just needs to be nonempty.
-                sasl_client.setAttr(b'password', b'x')
+                sasl_client.setAttr(b'password', password)
                 sasl_client.init()
                 return sasl_client
 
