@@ -6,14 +6,21 @@ They also require a tables created by make_test_tables.sh.
 
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+import contextlib
+import subprocess
+import sys
+import time
+import unittest
+
+import mock
+import os
 from TCLIService import ttypes
 from pyhive import hive
+from thrift.transport.TTransport import TTransportException
+
 from pyhive.tests.dbapi_test_case import DBAPITestCase
 from pyhive.tests.dbapi_test_case import with_cursor
-import contextlib
-import mock
-import unittest
-import sys
 
 _HOST = 'localhost'
 
@@ -139,3 +146,44 @@ class TestHive(unittest.TestCase, DBAPITestCase):
         cursor.execute('USE default')
         self.assertIsNone(cursor.description)
         self.assertRaises(hive.ProgrammingError, cursor.fetchone)
+
+    def test_ldap_connection(self):
+        rootdir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+        orig_ldap = os.path.join(rootdir, 'scripts', 'travis-conf', 'hive', 'hive-site-ldap.xml')
+        orig_none = os.path.join(rootdir, 'scripts', 'travis-conf', 'hive', 'hive-site.xml')
+        des = os.path.join('/', 'etc', 'hive', 'conf', 'hive-site.xml')
+        try:
+            subprocess.check_call(['sudo', 'cp', orig_ldap, des])
+            subprocess.check_call(['sudo', 'service', 'hive-server2', 'restart'])
+            time.sleep(10)
+            with contextlib.closing(hive.connect(
+                host=_HOST, username='existing', auth='LDAP', password='testpw')
+            ) as connection:
+                with contextlib.closing(connection.cursor()) as cursor:
+                    cursor.execute('SELECT * FROM one_row')
+                    self.assertEqual(cursor.fetchall(), [(1,)])
+
+            self.assertRaisesRegexp(
+                TTransportException, 'Error validating the login',
+                lambda: hive.connect(
+                    host=_HOST, username='existing', auth='LDAP', password='wrong')
+            )
+
+        finally:
+            subprocess.check_call(['sudo', 'cp', orig_none, des])
+            subprocess.check_call(['sudo', 'service', 'hive-server2', 'restart'])
+            time.sleep(10)
+
+    def test_invalid_ldap_config(self):
+        """password should be set if and only if using LDAP"""
+        self.assertRaisesRegexp(ValueError, 'password.*LDAP',
+                                lambda: hive.connect(_HOST, password=''))
+        self.assertRaisesRegexp(ValueError, 'password.*LDAP',
+                                lambda: hive.connect(_HOST, auth='LDAP'))
+
+    def test_invalid_kerberos_config(self):
+        """kerberos_service_name should be set if and only if using KERBEROS"""
+        self.assertRaisesRegexp(ValueError, 'kerberos_service_name.*KERBEROS',
+                                lambda: hive.connect(_HOST, kerberos_service_name=''))
+        self.assertRaisesRegexp(ValueError, 'kerberos_service_name.*KERBEROS',
+                                lambda: hive.connect(_HOST, auth='KERBEROS'))
