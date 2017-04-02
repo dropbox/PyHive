@@ -223,7 +223,7 @@ class ParamEscaper(object):
             raise exc.ProgrammingError("Unsupported param format: {}".format(parameters))
 
     def escape_number(self, item):
-        return item
+        return str(item)
 
     def escape_string(self, item):
         # Need to decode UTF-8 because of old sqlalchemy.
@@ -238,11 +238,8 @@ class ParamEscaper(object):
         return "'{}'".format(item.replace("'", "''"))
 
     def escape_sequence(self, item):
-        l = []
-        for el in item:
-            v = self.escape_item(el)
-            l.append(v)
-        return "(" + ",".join(l) + ")"
+        l = map(self.escape_item, item)
+        return '(' + ','.join(l) + ')'
 
     def escape_item(self, item):
         if item is None:
@@ -251,7 +248,7 @@ class ParamEscaper(object):
             return self.escape_number(item)
         elif isinstance(item, basestring):
             return self.escape_string(item)
-        elif isinstance(item, (list, tuple, set, frozenset)):
+        elif isinstance(item, collections.Iterable):
             return self.escape_sequence(item)
         else:
             raise exc.ProgrammingError("Unsupported object {}".format(item))

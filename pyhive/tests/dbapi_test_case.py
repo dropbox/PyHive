@@ -170,3 +170,11 @@ class DBAPITestCase(with_metaclass(abc.ABCMeta, object)):
         self.assertEqual(cursor.fetchall(), [(None,)] * 10000)
         cursor.execute('SELECT IF(a % 11 = 0, null, a) FROM many_rows')
         self.assertEqual(cursor.fetchall(), [(None if a % 11 == 0 else a,) for a in range(10000)])
+
+    @with_cursor
+    def test_sql_where_in(self, cursor):
+        cursor.execute('SELECT * FROM many_rows where a in %s', ([1, 2, 3],))
+        self.assertEqual(len(cursor.fetchall()), 3)
+        cursor.execute('SELECT * FROM many_rows where b in %s limit 10',
+                       (['blah'],))
+        self.assertEqual(len(cursor.fetchall()), 10)
