@@ -9,6 +9,7 @@ from builtins import bytes
 from builtins import int
 from builtins import object
 from builtins import range
+from builtins import str
 from past.builtins import basestring
 from pyhive import exc
 import abc
@@ -223,7 +224,7 @@ class ParamEscaper(object):
             raise exc.ProgrammingError("Unsupported param format: {}".format(parameters))
 
     def escape_number(self, item):
-        return str(item)
+        return item
 
     def escape_string(self, item):
         # Need to decode UTF-8 because of old sqlalchemy.
@@ -238,7 +239,7 @@ class ParamEscaper(object):
         return "'{}'".format(item.replace("'", "''"))
 
     def escape_sequence(self, item):
-        l = map(self.escape_item, item)
+        l = map(str, map(self.escape_item, item))
         return '(' + ','.join(l) + ')'
 
     def escape_item(self, item):
