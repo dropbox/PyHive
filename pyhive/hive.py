@@ -22,6 +22,7 @@ import sys
 import thrift.protocol.TBinaryProtocol
 import thrift.transport.TSocket
 import thrift.transport.TTransport
+import thrift.transport.TSSLSocket
 import thrift_sasl
 
 # PEP 249 module globals
@@ -67,7 +68,7 @@ class Connection(object):
     """Wraps a Thrift session"""
 
     def __init__(self, host, port=10000, username=None, database='default', auth='NONE',
-                 configuration=None, kerberos_service_name=None, password=None):
+                 configuration=None, kerberos_service_name=None, password=None, use_ssl=False):
         """Connect to HiveServer2
 
         :param auth: The value of hive.server2.authentication used by HiveServer2
@@ -79,7 +80,12 @@ class Connection(object):
         https://github.com/cloudera/impyla/blob/255b07ed973d47a3395214ed92d35ec0615ebf62
         /impala/_thrift_api.py#L152-L160
         """
-        socket = thrift.transport.TSocket.TSocket(host, port)
+
+        if use_ssl is False:
+            socket = thrift.transport.TSocket.TSocket(host, port)
+        else:
+            socket = thrift.transport.TSSLSocket.TSSLSocket(host, port)
+
         username = username or getpass.getuser()
         configuration = configuration or {}
 
