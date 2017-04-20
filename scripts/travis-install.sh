@@ -1,7 +1,10 @@
 #!/bin/bash -eux
 
-sudo wget "http://archive.cloudera.com/$CDH/ubuntu/precise/amd64/cdh/cloudera.list" \
-    -O /etc/apt/sources.list.d/cloudera.list
+# FIXME cdh 5.11 broken for some reason
+echo 'deb [arch=amd64] https://archive.cloudera.com/cdh5/ubuntu/precise/amd64/cdh precise-cdh5.10.1 contrib
+deb-src https://archive.cloudera.com/cdh5/ubuntu/precise/amd64/cdh precise-cdh5.10.1 contrib' | sudo tee /etc/apt/sources.list.d/cloudera.list
+# sudo wget "http://archive.cloudera.com/$CDH/ubuntu/precise/amd64/cdh/cloudera.list" \
+#     -O /etc/apt/sources.list.d/cloudera.list
 sudo apt-get update
 
 #
