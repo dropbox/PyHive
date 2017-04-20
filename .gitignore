@@ -13,3 +13,4 @@ cover/
 .settings
 .cache/
 *.iml
+/scripts/.thrift_gen
