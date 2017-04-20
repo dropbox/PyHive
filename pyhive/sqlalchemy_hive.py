@@ -220,7 +220,7 @@ class HiveDialect(default.DefaultDialect):
             # Does the table exist?
             regex_fmt = r'TExecuteStatementResp.*SemanticException.*Table not found {}'
             regex = regex_fmt.format(re.escape(full_table))
-            if re.search(regex, e.message):
+            if re.search(regex, e.args[0]):
                 raise exc.NoSuchTableError(full_table)
             else:
                 raise

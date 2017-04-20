@@ -14,7 +14,9 @@ from pyhive import common
 from pyhive.common import DBAPITypeObject
 # Make all exceptions visible in this module per DB-API
 from pyhive.exc import *  # noqa
+from builtins import range
 import contextlib
+from future.utils import iteritems
 import getpass
 import logging
 import sasl
@@ -40,7 +42,7 @@ class HiveParamEscaper(common.ParamEscaper):
         # Newer SQLAlchemy checks dialect.supports_unicode_binds before encoding Unicode strings
         # as byte strings. The old version always encodes Unicode as byte strings, which breaks
         # string formatting here.
-        if isinstance(item, str):
+        if isinstance(item, bytes):
             item = item.decode('utf-8')
         return "'{}'".format(
             item
@@ -99,16 +101,16 @@ class Connection(object):
                 sasl_auth = 'PLAIN'
                 if password is None:
                     # Password doesn't matter in NONE mode, just needs to be nonempty.
-                    password = b'x'
+                    password = 'x'
 
             def sasl_factory():
                 sasl_client = sasl.Client()
-                sasl_client.setAttr(b'host', host)
+                sasl_client.setAttr('host', host)
                 if sasl_auth == 'GSSAPI':
-                    sasl_client.setAttr(b'service', kerberos_service_name)
+                    sasl_client.setAttr('service', kerberos_service_name)
                 elif sasl_auth == 'PLAIN':
-                    sasl_client.setAttr(b'username', username.encode('latin-1'))
-                    sasl_client.setAttr(b'password', password)
+                    sasl_client.setAttr('username', username)
+                    sasl_client.setAttr('password', password)
                 else:
                     raise AssertionError
                 sasl_client.init()
@@ -233,7 +235,8 @@ class Cursor(common.DBAPICursor):
                     type_id = primary_type_entry.primitiveEntry.type
                     type_code = ttypes.TTypeId._VALUES_TO_NAMES[type_id]
                 self._description.append((
-                    col.columnName.decode('utf-8'), type_code.decode('utf-8'),
+                    col.columnName.decode('utf-8') if sys.version_info[0] == 2 else col.columnName,
+                    type_code.decode('utf-8') if sys.version_info[0] == 2 else type_code,
                     None, None, None, None, True
                 ))
         return self._description
@@ -259,7 +262,7 @@ class Cursor(common.DBAPICursor):
         _logger.info('%s', sql)
 
         req = ttypes.TExecuteStatementReq(self._connection.sessionHandle,
-                                          sql.encode('utf-8'), runAsync=async)
+                                          sql, runAsync=async)
         _logger.debug(req)
         response = self._connection.client.ExecuteStatement(req)
         _check_status(response)
@@ -287,7 +290,7 @@ class Cursor(common.DBAPICursor):
         _check_status(response)
         assert not response.results.rows, 'expected data in columnar format'
         columns = map(_unwrap_column, response.results.columns)
-        new_data = zip(*columns)
+        new_data = list(zip(*columns))
         self._data += new_data
         # response.hasMoreRows seems to always be False, so we instead check the number of rows
         # https://github.com/apache/hive/blob/release-1.2.1/service/src/java/org/apache/hive/service/cli/thrift/ThriftCLIService.java#L678
@@ -324,23 +327,29 @@ class Cursor(common.DBAPICursor):
         if self._state == self._STATE_NONE:
             raise ProgrammingError("No query yet")
 
-        logs = []
-        while True:
-            req = ttypes.TFetchResultsReq(
-                operationHandle=self._operationHandle,
-                orientation=ttypes.TFetchOrientation.FETCH_NEXT,
-                maxRows=self.arraysize,
-                fetchType=1  # 0: results, 1: logs
-            )
-            response = self._connection.client.FetchResults(req)
-            _check_status(response)
-            assert not response.results.rows, 'expected data in columnar format'
-            assert len(response.results.columns) == 1, response.results.columns
-            new_logs = _unwrap_column(response.results.columns[0])
-            logs += new_logs
+        try:  # Older Hive instances require logs to be retrieved using GetLog
+            req = ttypes.TGetLogReq(operationHandle=self._operationHandle)
+            logs = self._connection.client.GetLog(req).log.splitlines()
+        except ttypes.TApplicationException as e:  # Otherwise, retrieve logs using newer method
+            if e.type != ttypes.TApplicationException.UNKNOWN_METHOD:
+                raise
+            logs = []
+            while True:
+                req = ttypes.TFetchResultsReq(
+                    operationHandle=self._operationHandle,
+                    orientation=ttypes.TFetchOrientation.FETCH_NEXT,
+                    maxRows=self.arraysize,
+                    fetchType=1  # 0: results, 1: logs
+                )
+                response = self._connection.client.FetchResults(req)
+                _check_status(response)
+                assert not response.results.rows, 'expected data in columnar format'
+                assert len(response.results.columns) == 1, response.results.columns
+                new_logs = _unwrap_column(response.results.columns[0])
+                logs += new_logs
 
-            if not new_logs:
-                break
+                if not new_logs:
+                    break
 
         return logs
 
@@ -362,18 +371,14 @@ for type_id in constants.PRIMITIVE_TYPES:
 
 def _unwrap_column(col):
     """Return a list of raw values from a TColumn instance."""
-    for attr, wrapper in col.__dict__.iteritems():
+    for attr, wrapper in iteritems(col.__dict__):
         if wrapper is not None:
-            values = wrapper.values
+            result = wrapper.values
             nulls = wrapper.nulls  # bit set describing what's null
-            assert isinstance(nulls, str)
-            if attr == 'stringVal':
-                result = [val.decode('utf-8') for val in values]
-            else:
-                result = values
+            assert isinstance(nulls, bytes)
             for i, char in enumerate(nulls):
-                byte = ord(char)
-                for b in xrange(8):
+                byte = ord(char) if sys.version_info[0] == 2 else char
+                for b in range(8):
                     if byte & (1 << b):
                         result[i * 8 + b] = None
             return result
