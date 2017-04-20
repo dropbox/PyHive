@@ -21,14 +21,16 @@ class PyTest(TestCommand):
 with open('README.rst') as readme:
     long_description = readme.read()
 
+
 setup(
     name="PyHive",
     version=pyhive.__version__,
+    download_url='https://github.com/avantcredit/pyhive/tarball/v' + pyhive.__version__,
     description="Python interface to Hive",
     long_description=long_description,
-    url='https://github.com/dropbox/PyHive',
-    author="Jing Wang",
-    author_email="jing@dropbox.com",
+    url='https://github.com/avantcredit/PyHive',
+    author="Don Albrecht",
+    author_email="don.albrecht@avant.com",
     license="Apache License, Version 2.0",
     packages=['pyhive', 'TCLIService'],
     classifiers=[
