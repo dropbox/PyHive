@@ -3,26 +3,23 @@ language: python
 matrix:
   include:
     # https://docs.python.org/devguide/#status-of-python-branches
-    # newest dependencies + a few python versions
+    # One build pulls latest versions dynamically
     - python: 3.6
-      env: CDH=cdh5 PRESTO=0.147 SQLALCHEMY=1.0.12
+      env: CDH=cdh5 CDH_VERSION=5 PRESTO=RELEASE SQLALCHEMY=sqlalchemy
+    # Others use pinned versions.
     - python: 3.5
-      env: CDH=cdh5 PRESTO=0.147 SQLALCHEMY=1.0.12
+      env: CDH=cdh5 CDH_VERSION=5.10.1 PRESTO=0.147 SQLALCHEMY=sqlalchemy==1.0.12
     - python: 3.4
-      env: CDH=cdh5 PRESTO=0.147 SQLALCHEMY=1.0.12
+      env: CDH=cdh5 CDH_VERSION=5.10.1 PRESTO=0.147 SQLALCHEMY=sqlalchemy==1.0.12
     - python: 2.7
-      env: CDH=cdh5 PRESTO=0.147 SQLALCHEMY=1.0.12
+      env: CDH=cdh5 CDH_VERSION=5.10.1 PRESTO=0.147 SQLALCHEMY=sqlalchemy==1.0.12
     # stale stuff we're still using / supporting
     - python: 2.7
-      env: CDH=cdh5 PRESTO=0.147 SQLALCHEMY=0.5.8
+      env: CDH=cdh5 CDH_VERSION=5.10.1 PRESTO=0.147 SQLALCHEMY=sqlalchemy==0.5.8
   # exclude: python 3 against old libries
-before_install:
+install:
   - ./scripts/travis-install.sh
   - pip install codecov
-install:
-  - pip install -e .
-  - pip install sqlalchemy==$SQLALCHEMY
-  - pip install -r dev_requirements.txt
 # sleep so Presto has time to start up. Otherwise we might get 'No nodes available to run query'
 script: sleep 10 && py.test -v
 after_success: codecov

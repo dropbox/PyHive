@@ -14,6 +14,7 @@ from sqlalchemy.sql import compiler
 from sqlalchemy import exc
 from sqlalchemy import types
 from sqlalchemy import util
+# TODO shouldn't use mysql type
 from sqlalchemy.databases import mysql
 from sqlalchemy.engine import default
 import decimal

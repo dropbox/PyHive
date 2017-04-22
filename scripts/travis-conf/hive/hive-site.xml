@@ -13,10 +13,6 @@
     <name>fs.defaultFS</name>
     <value>file:///</value>
   </property>
-  <property>
-    <name>hive.metastore.warehouse.dir</name>
-    <value>/tmp/hive/warehouse</value>
-  </property>
   <!--
   TODO tests rely having result set column names unprefixed
   This could be improved by having an option to strip out prefixes when it would not result in

@@ -8,6 +8,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import contextlib
+import os
 
 from pyhive import exc
 from pyhive import presto
@@ -44,13 +45,22 @@ class TestPresto(unittest.TestCase, DBAPITestCase):
         for row in cursor.description:
             description.append((row[0], row[1].replace('<', '(').replace('>', ')')) + row[2:])
         # TODO Presto drops the union field
+        if os.environ.get('PRESTO') == '0.147':
+            tinyint_type = 'integer'
+            smallint_type = 'integer'
+            float_type = 'double'
+        else:
+            # some later version made these map to more specific types
+            tinyint_type = 'tinyint'
+            smallint_type = 'smallint'
+            float_type = 'real'
         self.assertEqual(description, [
             ('boolean', 'boolean', None, None, None, None, True),
-            ('tinyint', 'integer', None, None, None, None, True),
-            ('smallint', 'integer', None, None, None, None, True),
+            ('tinyint', tinyint_type, None, None, None, None, True),
+            ('smallint', smallint_type, None, None, None, None, True),
             ('int', 'integer', None, None, None, None, True),
             ('bigint', 'bigint', None, None, None, None, True),
-            ('float', 'double', None, None, None, None, True),
+            ('float', float_type, None, None, None, None, True),
             ('double', 'double', None, None, None, None, True),
             ('string', 'varchar', None, None, None, None, True),
             ('timestamp', 'timestamp', None, None, None, None, True),
@@ -90,7 +100,7 @@ class TestPresto(unittest.TestCase, DBAPITestCase):
             "FROM many_rows a "
             "CROSS JOIN many_rows b "
         )
-        self.assertIn(cursor.poll()['stats']['state'], ('PLANNING', 'RUNNING'))
+        self.assertIn(cursor.poll()['stats']['state'], ('STARTING', 'PLANNING', 'RUNNING'))
         cursor.cancel()
         self.assertIsNone(cursor.poll())
 

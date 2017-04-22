@@ -15,7 +15,6 @@ from sqlalchemy.schema import Table
 import contextlib
 import datetime
 import decimal
-import os
 import sqlalchemy.types
 import unittest
 
@@ -170,7 +169,7 @@ class TestSqlAlchemyHive(unittest.TestCase, SqlAlchemyTestCase):
         expected = [(1,)]
         self.assertEqual(result, expected)
 
-    @unittest.skipIf(os.environ.get('SQLALCHEMY') == '0.5.8', "not supported on old sqlalchemy")
+    @unittest.skipIf(sqlalchemy.__version__ == '0.5.8', "not supported on old sqlalchemy")
     @with_engine_connection
     def test_insert_values(self, engine, connection):
         table = Table('insert_test', MetaData(bind=engine),

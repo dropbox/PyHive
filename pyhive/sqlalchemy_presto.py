@@ -13,6 +13,8 @@ from pyhive.common import UniversalSet
 from sqlalchemy import exc
 from sqlalchemy import types
 from sqlalchemy import util
+# TODO shouldn't use mysql type
+from sqlalchemy.databases import mysql
 from sqlalchemy.engine import default
 from sqlalchemy.sql import compiler
 import re
@@ -34,9 +36,12 @@ try:
 except ImportError:
     from sqlalchemy.databases.mysql import MSBigInteger as BigInteger
 _type_map = {
-    'bigint': BigInteger,
-    'integer': types.Integer,
     'boolean': types.Boolean,
+    'tinyint': mysql.MSTinyInteger,
+    'smallint': types.SmallInteger,
+    'integer': types.Integer,
+    'bigint': BigInteger,
+    'real': types.Float,
     'double': types.Float,
     'varchar': types.String,
     'timestamp': types.TIMESTAMP,
@@ -150,8 +155,16 @@ class PrestoDialect(default.DefaultDialect):
         col_names = []
         for row in rows:
             part_key = 'Partition Key'
-            # Newer Presto moved this information from a column to the comment
-            if (part_key in row and row[part_key]) or row['Comment'].startswith(part_key):
+            # Presto puts this information in one of 3 places depending on version
+            # - a boolean column named "Partition Key"
+            # - a string in the "Comment" column
+            # - a string in the "Extra" column
+            is_partition_key = (
+                (part_key in row and row[part_key])
+                or row['Comment'].startswith(part_key)
+                or ('Extra' in row and 'partition key' in row['Extra'])
+            )
+            if is_partition_key:
                 col_names.append(row['Column'])
         if col_names:
             return [{'name': 'partition', 'column_names': col_names, 'unique': False}]
