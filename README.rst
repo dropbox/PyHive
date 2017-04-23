@@ -81,7 +81,7 @@ Install using
 
 `PyHive` works with
 
-- Python 2.7
+- Python 2.7 / Python 3
 - For Presto: Presto install
 - For Hive: `HiveServer2 <https://cwiki.apache.org/confluence/display/Hive/Setting+up+HiveServer2>`_ daemon
 
