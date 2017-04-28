@@ -10,15 +10,6 @@ from __future__ import unicode_literals
 from pyhive.sqlalchemy_hive import HiveDialect, StrictVersion, HiveTypeCompiler
 import sqlalchemy
 
-try:
-    from sqlalchemy import processors
-except ImportError:
-    from pyhive import sqlalchemy_backports as processors
-try:
-    from sqlalchemy.sql.compiler import SQLCompiler
-except ImportError:
-    from sqlalchemy.sql.compiler import DefaultCompiler as SQLCompiler
-
 
 class SparkDialect(HiveDialect):
     name = b'spark'
