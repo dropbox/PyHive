@@ -62,11 +62,13 @@ setup(
         # New versions
         'sqlalchemy.dialects': [
             'hive = pyhive.sqlalchemy_hive:HiveDialect',
+            'spark = pyhive.sqlalchemy_spark:SparkDialect',
             'presto = pyhive.sqlalchemy_presto:PrestoDialect',
         ],
         # Version 0.5
         'sqlalchemy.databases': [
             'hive = pyhive.sqlalchemy_hive:HiveDialect',
+            'spark = pyhive.sqlalchemy_spark:SparkDialect',
             'presto = pyhive.sqlalchemy_presto:PrestoDialect',
         ],
     }
