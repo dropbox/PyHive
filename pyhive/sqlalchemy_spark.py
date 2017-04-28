@@ -7,7 +7,8 @@ which is released under the MIT license.
 
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from pyhive.sqlalchemy_hive import *
+from pyhive.sqlalchemy_hive import HiveDialect, StrictVersion, HiveTypeCompiler
+import sqlalchemy
 
 try:
     from sqlalchemy import processors
