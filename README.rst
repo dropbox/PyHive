@@ -13,7 +13,7 @@ DB-API
 ------
 .. code-block:: python
 
-    from pyhive import presto
+    from pyhive import presto  # or import hive
     cursor = presto.connect('localhost').cursor()
     cursor.execute('SELECT * FROM my_awesome_data LIMIT 10')
     print cursor.fetchone()
@@ -50,7 +50,10 @@ First install this package to register it with SQLAlchemy (see ``setup.py``).
     from sqlalchemy import *
     from sqlalchemy.engine import create_engine
     from sqlalchemy.schema import *
+    # Presto
     engine = create_engine('presto://localhost:8080/hive/default')
+    # Hive
+    engine = create_engine('hive://localhost:10000/default')
     logs = Table('my_awesome_data', MetaData(bind=engine), autoload=True)
     print select([func.count('*')], from_obj=logs).scalar()
 
