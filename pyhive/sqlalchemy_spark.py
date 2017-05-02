@@ -29,11 +29,13 @@ class SparkDialect(HiveDialect):
     def get_table_names(self, connection, schema=None, **kw):
         query_result = self._get_table_metadata(connection, schema)
         # Temporary Views do not really belong to a schema, even though they show up in every schema
-        return [row.tableName for row in query_result if not (row.tableName is not None and row.isTemporary)]
+        return [row.tableName for row in query_result
+                if not (row.tableName is not None and row.isTemporary)]
 
     def is_temporary(self, connection, schema, table_name):
         query_result = self._get_table_metadata(connection, schema)
-        table_temporary_data = [row.isTemporary for row in query_result if row.tableName == table_name]
+        table_temporary_data = [row.isTemporary for row in query_result
+                                if row.tableName == table_name]
         return len(table_temporary_data) > 0 and table_temporary_data[0]
 
     def _get_table_metadata(self, connection, schema):
