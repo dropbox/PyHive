@@ -73,6 +73,11 @@ Passing session configuration
         'hive://user@host:10000/database',
         connect_args={'configuration': {'hive.exec.reducers.max': '123'}},
     )
+    # SQLAlchemy with LDAP
+    create_engine(
+        'hive://user:password@host:10000/database',
+        connect_args={'auth': 'LDAP'},
+    )
 
 Requirements
 ============

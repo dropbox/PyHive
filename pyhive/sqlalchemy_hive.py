@@ -60,7 +60,10 @@ class HiveDecimal(HiveStringTypeBase):
     impl = types.DECIMAL
 
     def process_result_value(self, value, dialect):
-        return decimal.Decimal(value)
+        if value is None:
+            return None
+        else:
+            return decimal.Decimal(value)
 
 
 class HiveIdentifierPreparer(compiler.IdentifierPreparer):
@@ -194,6 +197,7 @@ class HiveDialect(default.DefaultDialect):
             'host': url.host,
             'port': url.port or 10000,
             'username': url.username,
+            'password': url.password,
             'database': url.database or 'default',
         }
         kwargs.update(url.query)
