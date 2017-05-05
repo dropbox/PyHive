@@ -86,7 +86,8 @@ class Connection(object):
         configuration = configuration or {}
 
         if (password is not None) != (auth == 'LDAP'):
-            raise ValueError("password should be set if and only if in LDAP mode")
+            raise ValueError("password should be set if and only if in LDAP mode\n"
+                             "Remove password or add auth='LDAP'")
         if (kerberos_service_name is not None) != (auth == 'KERBEROS'):
             raise ValueError("kerberos_service_name should be set if and only if in KERBEROS mode")
 
