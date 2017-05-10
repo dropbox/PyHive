@@ -221,7 +221,8 @@ class Cursor(common.DBAPICursor):
         for i, col in enumerate(self.description):
             if col[1] == 'varbinary':
                 for row in rows:
-                    row[i] = base64.b64decode(row[i])
+                    if row[i] is not None:
+                        row[i] = base64.b64decode(row[i])
 
     def _process_response(self, response):
         """Given the JSON response from Presto's REST API, update the internal state with the next
