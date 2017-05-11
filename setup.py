@@ -38,7 +38,7 @@ setup(
         "Topic :: Database :: Front-Ends",
     ],
     install_requires=[
-        'future',
+        'future', 'thrift', 'sasl', 'thrift_sasl'
     ],
     extras_require={
         "Presto": ['requests>=1.0.0'],
