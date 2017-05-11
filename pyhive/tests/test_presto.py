@@ -182,5 +182,5 @@ class TestPresto(unittest.TestCase, DBAPITestCase):
         """protocol should be https when passing password"""
         self.assertRaisesRegexp(
             ValueError, 'Protocol.*https.*password', lambda: presto.connect(
-                host=_HOST, username='user', password='secret', protocol='http')
+                host=_HOST, username='user', password='secret', protocol='http').cursor()
         )
