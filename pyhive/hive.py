@@ -25,6 +25,11 @@ import thrift.protocol.TBinaryProtocol
 import thrift.transport.TSocket
 import thrift.transport.TTransport
 import thrift_sasl
+try:
+    from thrift.protocol import fastbinary
+except:
+    fastbinary = None
+
 
 # PEP 249 module globals
 apilevel = '2.0'
@@ -122,7 +127,12 @@ class Connection(object):
                 "Only NONE, NOSASL, LDAP, KERBEROS "
                 "authentication are supported, got {}".format(auth))
 
-        protocol = thrift.protocol.TBinaryProtocol.TBinaryProtocol(self._transport)
+        if fastbinary:
+            # use c wrapper if available
+            protocol = thrift.protocol.TBinaryProtocol.TBinaryProtocolAccelerated(self._transport)
+        else:
+            protocol = thrift.protocol.TBinaryProtocol.TBinaryProtocol(self._transport)
+
         self._client = TCLIService.Client(protocol)
         # oldest version that still contains features we care about
         # "V6 uses binary type for binary payload (was string) and uses columnar result set"
