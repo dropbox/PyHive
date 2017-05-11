@@ -77,14 +77,13 @@ class Cursor(common.DBAPICursor):
     visible by other cursors or connections.
     """
 
-    def __init__(self, host, port='8080', username=None, password=None, catalog='hive',
+    def __init__(self, host, port='8080', username=None, catalog='hive',
                  schema='default', poll_interval=1, source='pyhive', session_props=None,
-                 protocol='http'):
+                 protocol='http', password=None):
         """
         :param host: hostname to connect to, e.g. ``presto.example.com``
         :param port: int -- port, defaults to 8080
         :param username: string -- defaults to system user name
-        :param password: string -- defaults to ``None``, using BasicAuth, forces HTTPS
         :param catalog: string -- defaults to ``hive``
         :param schema: string -- defaults to ``default``
         :param poll_interval: int -- how often to ask the Presto REST interface for a progress
@@ -92,6 +91,7 @@ class Cursor(common.DBAPICursor):
         :param source: string -- arbitrary identifier (shows up in the Presto monitoring page)
         :param protocol: string -- network protocol, valid options are ``http`` and ``https``.
             defaults to ``http``
+        :param password: string -- defaults to ``None``, using BasicAuth, requires ``https``
         """
         super(Cursor, self).__init__(poll_interval)
         # Config
@@ -108,10 +108,12 @@ class Cursor(common.DBAPICursor):
         if protocol not in ('http', 'https'):
             raise ValueError("Protocol must be http/https, was {!r}".format(protocol))
         self._protocol = protocol
-        self._auth = None
-        if password:
+        if password is None:
+            self._auth = None
+        else:
             self._auth = HTTPBasicAuth(username, self._password)
-            self._protocol = 'https'  # require https when authenticating
+            if protocol != 'https':
+                raise ValueError("Protocol must be https when passing a password")
         self._reset_state()
 
     def _reset_state(self):
