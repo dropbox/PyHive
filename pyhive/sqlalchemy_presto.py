@@ -79,6 +79,7 @@ class PrestoDialect(default.DefaultDialect):
             'host': url.host,
             'port': url.port or 8080,
             'username': url.username,
+            'password': url.password
         }
         kwargs.update(url.query)
         if len(db_parts) == 1:

@@ -177,3 +177,10 @@ class TestPresto(unittest.TestCase, DBAPITestCase):
                 assert len(rows) == 1
                 session_prop = rows[0]
                 assert session_prop[1] != '1234m'
+
+    def test_invalid_protocol_config(self):
+        """protocol should be https when passing password"""
+        self.assertRaisesRegexp(
+            ValueError, 'Protocol.*https.*password', lambda: presto.connect(
+                host=_HOST, username='user', password='secret', protocol='http').cursor()
+        )
