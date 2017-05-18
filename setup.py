@@ -52,6 +52,7 @@ setup(
     },
     tests_require=[
         'mock>=1.0.0',
+        'pure-sasl>=0.3.0',
         'pytest',
         'pytest-cov',
         'requests>=1.0.0',
