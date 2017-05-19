@@ -44,6 +44,7 @@ setup(
         "Presto": ['requests>=1.0.0'],
         "Hive": ['sasl>=0.2.1', 'thrift>=0.10.0', 'thrift_sasl>=0.1.0'],
         "SQLAlchemy": ['sqlalchemy>=0.5.0'],
+        "Athena": ['PyAthenaJDBC>=1.0.8']
     },
     tests_require=[
         'mock>=1.0.0',
@@ -63,11 +64,13 @@ setup(
         'sqlalchemy.dialects': [
             'hive = pyhive.sqlalchemy_hive:HiveDialect',
             'presto = pyhive.sqlalchemy_presto:PrestoDialect',
+            'athena = pyhive.sqlalchemy_athena:AthenaDialect',
         ],
         # Version 0.5
         'sqlalchemy.databases': [
             'hive = pyhive.sqlalchemy_hive:HiveDialect',
             'presto = pyhive.sqlalchemy_presto:PrestoDialect',
+            'athena = pyhive.sqlalchemy_athena:AthenaDialect',
         ],
     }
 )
