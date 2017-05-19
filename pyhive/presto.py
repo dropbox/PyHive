@@ -233,6 +233,34 @@ class Cursor(common.DBAPICursor):
                     if row[i] is not None:
                         row[i] = base64.b64decode(row[i])
 
+
+    def _pretty(self, columns, data):
+        r = []
+        for row in data: # the top-level is an iterable of records (i.e. rows)
+            c = []
+            for (column, row) in zip(columns, row):
+                c.append(self._pretty_(column["typeSignature"], row))
+            r.append(c)
+        return r
+
+
+    def _pretty_(self, column, data):
+        type = column["rawType"]
+        try: iter(data) # check if the data is iterable
+        except TypeError:
+            return data # non-iterables can simply be directly shown
+        if type == "row": # records should have their fields associated with types
+            keys = column["literalArguments"]
+            values = [self._pretty_(c, d) for c, d in zip(column["typeArguments"], data)]
+            return dict(zip(keys, values))
+        elif type == "array": # arrays should have their element types associated with each element
+            rep = [column["typeArguments"][0]]*len(data)
+            return [self._pretty_(c, d) for c, d in zip(rep, data)]
+        elif type == "map": # maps should have their value types associated with each value (note that keys are always strings)
+            value_type = column["typeArguments"][1]
+            return {k: self._pretty_(value_type, v) for k, v in data.iteritems()}
+        return data # unknown type, don't process it
+
     def _process_response(self, response):
         """Given the JSON response from Presto's REST API, update the internal state with the next
         URI and any data from the response
@@ -255,7 +283,7 @@ class Cursor(common.DBAPICursor):
             self._session_props[propname] = propval
         if 'data' in response_json:
             assert self._columns
-            new_data = response_json['data']
+            new_data = self._pretty(self._columns, response_json['data'])
             self._decode_binary(new_data)
             self._data += map(tuple, new_data)
         if 'nextUri' not in response_json:
