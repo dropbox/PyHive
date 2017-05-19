@@ -251,6 +251,9 @@ class Cursor(common.DBAPICursor):
 
         Return values are not defined.
         """
+        if not isinstance(operation, unicode):
+            operation = unicode(operation, 'utf-8')
+
         # Prepare statement
         if parameters is None:
             sql = operation
