@@ -68,6 +68,12 @@ class Connection(object):
     def rollback(self):
         raise NotSupportedError("Presto does not have transactions")  # pragma: no cover
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, type, value, traceback):
+        self.close()
+
 
 class Cursor(common.DBAPICursor):
     """These objects represent a database cursor, which is used to manage the context of a fetch
