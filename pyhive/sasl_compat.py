@@ -3,12 +3,13 @@
 from puresasl.client import SASLClient, SASLError
 from contextlib import contextmanager
 
+
 @contextmanager
-def error_catcher(self, Exc = Exception):
+def error_catcher(self, exc=Exception):
     try:
         self.error = None
         yield
-    except Exc as e:
+    except exc as e:
         self.error = e.message
 
 

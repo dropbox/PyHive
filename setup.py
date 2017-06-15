@@ -45,7 +45,7 @@ setup(
     extras_require={
         "Presto": ['requests>=1.0.0'],
         "Hive": [
-            # Installing sasl on Windows is rather painful, so use the pure python implementation on Windows
+            # Installing sasl on Windows is rather painful, so use the pure python
             'pure-sasl>=0.3.0' if WINDOWS else 'sasl>=0.2.1',
             'thrift>=0.10.0', 'thrift_sasl>=0.1.0'],
         "SQLAlchemy": ['sqlalchemy>=0.5.0'],

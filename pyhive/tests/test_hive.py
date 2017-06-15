@@ -192,7 +192,8 @@ class TestHive(unittest.TestCase, DBAPITestCase):
     def test_pure_sasl(self):
         """Test use of pure-sasl"""
         def sasl_factory():
-            return PureSASLClient(host=_HOST, mechanism='PLAIN')
+            return PureSASLClient(host=_HOST, mechanism='PLAIN',
+                                  username='existing', password='testpw')
         socket = thrift.transport.TSocket.TSocket(host=_HOST, port=10000)
         transport = TSaslClientTransport(sasl_factory, 'PLAIN', socket)
         protocol = thrift.protocol.TBinaryProtocol.TBinaryProtocol(transport)
