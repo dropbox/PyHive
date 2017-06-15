@@ -41,6 +41,13 @@ class SqlAlchemyTestCase(with_metaclass(abc.ABCMeta, object)):
         self.assertEqual(len(rows[0]), 1)
 
     @with_engine_connection
+    def test_one_row_complex_null(self, engine, connection):
+        one_row_complex_null = Table('one_row_complex_null', MetaData(bind=engine), autoload=True)
+        rows = one_row_complex_null.select().execute().fetchall()
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(list(rows[0]), [None] * len(rows[0]))
+
+    @with_engine_connection
     def test_reflect_no_such_table(self, engine, connection):
         """reflecttable should throw an exception on an invalid table"""
         self.assertRaises(

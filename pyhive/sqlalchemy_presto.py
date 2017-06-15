@@ -79,6 +79,7 @@ class PrestoDialect(default.DefaultDialect):
             'host': url.host,
             'port': url.port or 8080,
             'username': url.username,
+            'password': url.password
         }
         kwargs.update(url.query)
         if len(db_parts) == 1:
@@ -189,6 +190,7 @@ class PrestoDialect(default.DefaultDialect):
         # requests gives back Unicode strings
         return True
 
+
 if StrictVersion(sqlalchemy.__version__) < StrictVersion('0.7.0'):
     from pyhive import sqlalchemy_backports
 
@@ -196,3 +198,24 @@ if StrictVersion(sqlalchemy.__version__) < StrictVersion('0.7.0'):
         insp = sqlalchemy_backports.Inspector.from_engine(connection)
         return insp.reflecttable(table, include_columns, exclude_columns)
     PrestoDialect.reflecttable = reflecttable
+else:
+    class PrestoTypeCompiler(compiler.GenericTypeCompiler):
+        def visit_CLOB(self, type_, **kw):
+            raise ValueError("Presto does not support the CLOB column type.")
+
+        def visit_NCLOB(self, type_, **kw):
+            raise ValueError("Presto does not support the NCLOB column type.")
+
+        def visit_DATETIME(self, type_, **kw):
+            raise ValueError("Presto does not support the DATETIME column type.")
+
+        def visit_FLOAT(self, type_, **kw):
+            return 'DOUBLE'
+
+        def visit_TEXT(self, type_, **kw):
+            if type_.length:
+                return 'VARCHAR({:d})'.format(type_.length)
+            else:
+                return 'VARCHAR'
+
+    PrestoDialect.type_compiler = PrestoTypeCompiler

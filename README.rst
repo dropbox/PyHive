@@ -69,6 +69,7 @@ Passing session configuration
     hive.connect('localhost', configuration={'hive.exec.reducers.max': '123'})
     presto.connect('localhost', session_props={'query_max_run_time': '1234m'})
     # SQLAlchemy
+    create_engine('presto://user@host:443/hive', connect_args={'protocol': 'https'})
     create_engine(
         'hive://user@host:10000/database',
         connect_args={'configuration': {'hive.exec.reducers.max': '123'}},

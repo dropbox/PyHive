@@ -16,6 +16,7 @@ import base64
 import getpass
 import logging
 import requests
+from requests.auth import HTTPBasicAuth
 
 try:  # Python 3
     import urllib.parse as urlparse
@@ -76,12 +77,13 @@ class Cursor(common.DBAPICursor):
     visible by other cursors or connections.
     """
 
-    def __init__(self, host, port='8080', username=None, catalog='hive', schema='default',
-                 poll_interval=1, source='pyhive', session_props=None, protocol='http'):
+    def __init__(self, host, port='8080', username=None, catalog='hive',
+                 schema='default', poll_interval=1, source='pyhive', session_props=None,
+                 protocol='http', password=None):
         """
         :param host: hostname to connect to, e.g. ``presto.example.com``
         :param port: int -- port, defaults to 8080
-        :param user: string -- defaults to system user name
+        :param username: string -- defaults to system user name
         :param catalog: string -- defaults to ``hive``
         :param schema: string -- defaults to ``default``
         :param poll_interval: int -- how often to ask the Presto REST interface for a progress
@@ -89,12 +91,14 @@ class Cursor(common.DBAPICursor):
         :param source: string -- arbitrary identifier (shows up in the Presto monitoring page)
         :param protocol: string -- network protocol, valid options are ``http`` and ``https``.
             defaults to ``http``
+        :param password: string -- defaults to ``None``, using BasicAuth, requires ``https``
         """
         super(Cursor, self).__init__(poll_interval)
         # Config
         self._host = host
         self._port = port
         self._username = username or getpass.getuser()
+        self._password = password
         self._catalog = catalog
         self._schema = schema
         self._arraysize = 1
@@ -104,7 +108,12 @@ class Cursor(common.DBAPICursor):
         if protocol not in ('http', 'https'):
             raise ValueError("Protocol must be http/https, was {!r}".format(protocol))
         self._protocol = protocol
-
+        if password is None:
+            self._auth = None
+        else:
+            self._auth = HTTPBasicAuth(username, self._password)
+            if protocol != 'https':
+                raise ValueError("Protocol must be https when passing a password")
         self._reset_state()
 
     def _reset_state(self):
@@ -175,7 +184,7 @@ class Cursor(common.DBAPICursor):
             '{}:{}'.format(self._host, self._port), '/v1/statement', None, None, None))
         _logger.info('%s', sql)
         _logger.debug("Headers: %s", headers)
-        response = requests.post(url, data=sql.encode('utf-8'), headers=headers)
+        response = requests.post(url, data=sql.encode('utf-8'), headers=headers, auth=self._auth)
         self._process_response(response)
 
     def cancel(self):
@@ -185,7 +194,7 @@ class Cursor(common.DBAPICursor):
             assert self._state == self._STATE_FINISHED, "Should be finished if nextUri is None"
             return
 
-        response = requests.delete(self._nextUri)
+        response = requests.delete(self._nextUri, auth=self._auth)
         if response.status_code != requests.codes.no_content:
             fmt = "Unexpected status code after cancel {}\n{}"
             raise OperationalError(fmt.format(response.status_code, response.content))
@@ -207,13 +216,13 @@ class Cursor(common.DBAPICursor):
         if self._nextUri is None:
             assert self._state == self._STATE_FINISHED, "Should be finished if nextUri is None"
             return None
-        response = requests.get(self._nextUri)
+        response = requests.get(self._nextUri, auth=self._auth)
         self._process_response(response)
         return response.json()
 
     def _fetch_more(self):
         """Fetch the next URI and update state"""
-        self._process_response(requests.get(self._nextUri))
+        self._process_response(requests.get(self._nextUri, auth=self._auth))
 
     def _decode_binary(self, rows):
         # As of Presto 0.69, binary data is returned as the varbinary type in base64 format
@@ -221,7 +230,8 @@ class Cursor(common.DBAPICursor):
         for i, col in enumerate(self.description):
             if col[1] == 'varbinary':
                 for row in rows:
-                    row[i] = base64.b64decode(row[i])
+                    if row[i] is not None:
+                        row[i] = base64.b64decode(row[i])
 
     def _process_response(self, response):
         """Given the JSON response from Presto's REST API, update the internal state with the next
