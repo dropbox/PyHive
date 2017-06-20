@@ -5,6 +5,8 @@ from setuptools.command.test import test as TestCommand
 import pyhive
 import sys
 
+WINDOWS = sys.platform == 'win32' or sys.platform == 'cygwin'
+
 
 class PyTest(TestCommand):
     def finalize_options(self):
@@ -42,11 +44,15 @@ setup(
     ],
     extras_require={
         "Presto": ['requests>=1.0.0'],
-        "Hive": ['sasl>=0.2.1', 'thrift>=0.10.0', 'thrift_sasl>=0.1.0'],
+        "Hive": [
+            # Installing sasl on Windows is rather painful, so use the pure python
+            'pure-sasl>=0.3.0' if WINDOWS else 'sasl>=0.2.1',
+            'thrift>=0.10.0', 'thrift_sasl>=0.1.0'],
         "SQLAlchemy": ['sqlalchemy>=0.5.0'],
     },
     tests_require=[
         'mock>=1.0.0',
+        'pure-sasl>=0.3.0',
         'pytest',
         'pytest-cov',
         'requests>=1.0.0',

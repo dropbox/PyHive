@@ -19,7 +19,6 @@ import contextlib
 from future.utils import iteritems
 import getpass
 import logging
-import sasl
 import sys
 import thrift.protocol.TBinaryProtocol
 import thrift.transport.TSocket
@@ -104,18 +103,29 @@ class Connection(object):
                     # Password doesn't matter in NONE mode, just needs to be nonempty.
                     password = 'x'
 
-            def sasl_factory():
-                sasl_client = sasl.Client()
-                sasl_client.setAttr('host', host)
-                if sasl_auth == 'GSSAPI':
-                    sasl_client.setAttr('service', kerberos_service_name)
-                elif sasl_auth == 'PLAIN':
-                    sasl_client.setAttr('username', username)
-                    sasl_client.setAttr('password', password)
-                else:
-                    raise AssertionError
-                sasl_client.init()
-                return sasl_client
+            try:
+                import sasl
+
+                def sasl_factory():
+                    sasl_client = sasl.Client()
+                    sasl_client.setAttr('host', host)
+                    if sasl_auth == 'GSSAPI':
+                        sasl_client.setAttr('service', kerberos_service_name)
+                    elif sasl_auth == 'PLAIN':
+                        sasl_client.setAttr('username', username)
+                        sasl_client.setAttr('password', password)
+                    else:
+                        raise AssertionError
+                    sasl_client.init()
+                    return sasl_client
+            except ImportError:
+                from pyhive.sasl_compat import PureSASLClient
+
+                def sasl_factory():
+                    return PureSASLClient(host, username=username, password=password,
+                                          service=kerberos_service_name,
+                                          mechanism=sasl_auth)
+
             self._transport = thrift_sasl.TSaslClientTransport(sasl_factory, sasl_auth, socket)
         else:
             raise NotImplementedError(
