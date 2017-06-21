@@ -20,6 +20,7 @@ from sqlalchemy.engine import default
 import decimal
 import re
 import sqlalchemy
+import datetime
 
 try:
     from sqlalchemy import processors
@@ -47,7 +48,10 @@ class HiveDate(HiveStringTypeBase):
         return processors.str_to_date(value)
 
     def process_bind_param(self, value, dialect):
-        return value.strftime('%Y-%m-%d')
+        if isinstance(value, datetime.date) or isinstance(value, datetime.datetime):
+            return value.strftime('%Y-%m-%d')
+        else:
+            raise TypeError("Hive Date type only accepts Python date or datetime objects as input.")
 
 
 class HiveTimestamp(HiveStringTypeBase):
@@ -56,6 +60,12 @@ class HiveTimestamp(HiveStringTypeBase):
 
     def process_result_value(self, value, dialect):
         return processors.str_to_datetime(value)
+
+    def process_bind_param(self, value, dialect):
+        if isinstance(value, datetime.datetime):
+            return value.strftime('%Y-%m-%d %H:%M:%S.%f')
+        else:
+            raise TypeError("Hive Timestamp type only accepts Python datetime objects as input.")
 
 
 class HiveDecimal(HiveStringTypeBase):
@@ -67,6 +77,12 @@ class HiveDecimal(HiveStringTypeBase):
             return None
         else:
             return decimal.Decimal(value)
+
+    def process_bind_param(self, value, dialect):
+        if isinstance(value, decimal.Decimal):
+            return '{0:f}'.format(value)
+        else:
+            raise TypeError("Hive Decimal type only accepts Python decimal objects as input.")
 
 
 class HiveIdentifierPreparer(compiler.IdentifierPreparer):
@@ -318,12 +334,16 @@ class HiveDialect(default.DefaultDialect):
         # We decode everything as UTF-8
         return True
 
+
 if StrictVersion(sqlalchemy.__version__) < StrictVersion('0.7.0'):
     from pyhive import sqlalchemy_backports
+
 
     def reflecttable(self, connection, table, include_columns=None, exclude_columns=None):
         insp = sqlalchemy_backports.Inspector.from_engine(connection)
         return insp.reflecttable(table, include_columns, exclude_columns)
+
+
     HiveDialect.reflecttable = reflecttable
 else:
     HiveDialect.type_compiler = HiveTypeCompiler
