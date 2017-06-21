@@ -334,16 +334,12 @@ class HiveDialect(default.DefaultDialect):
         # We decode everything as UTF-8
         return True
 
-
 if StrictVersion(sqlalchemy.__version__) < StrictVersion('0.7.0'):
     from pyhive import sqlalchemy_backports
-
 
     def reflecttable(self, connection, table, include_columns=None, exclude_columns=None):
         insp = sqlalchemy_backports.Inspector.from_engine(connection)
         return insp.reflecttable(table, include_columns, exclude_columns)
-
-
     HiveDialect.reflecttable = reflecttable
 else:
     HiveDialect.type_compiler = HiveTypeCompiler
