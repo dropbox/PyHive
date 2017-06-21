@@ -45,6 +45,9 @@ class HiveDate(HiveStringTypeBase):
 
     def process_result_value(self, value, dialect):
         return processors.str_to_date(value)
+	
+	def process_bind_param(self, value, dialect):
+		return value.strftime('%Y-%m-%d')
 
 
 class HiveTimestamp(HiveStringTypeBase):
