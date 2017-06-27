@@ -24,7 +24,9 @@ import sys
 import thrift.protocol.TBinaryProtocol
 import thrift.transport.TSocket
 import thrift.transport.TTransport
+import thrift.transport.THttpClient
 import thrift_sasl
+import base64
 
 # PEP 249 module globals
 apilevel = '2.0'
@@ -69,7 +71,8 @@ class Connection(object):
     """Wraps a Thrift session"""
 
     def __init__(self, host, port=10000, username=None, database='default', auth='NONE',
-                 configuration=None, kerberos_service_name=None, password=None):
+                 configuration=None, kerberos_service_name=None, password=None,
+                 mode="NONE", http_path=None):
         """Connect to HiveServer2
 
         :param auth: The value of hive.server2.authentication used by HiveServer2
@@ -81,15 +84,21 @@ class Connection(object):
         https://github.com/cloudera/impyla/blob/255b07ed973d47a3395214ed92d35ec0615ebf62
         /impala/_thrift_api.py#L152-L160
         """
+        print password
         socket = thrift.transport.TSocket.TSocket(host, port)
         username = username or getpass.getuser()
         configuration = configuration or {}
 
-        if (password is not None) != (auth == 'LDAP'):
-            raise ValueError("Password should be set if and only if in LDAP mode; "
-                             "Remove password or add auth='LDAP'")
+        if (password is not None) != (auth == 'LDAP' or mode == 'HTTP'):
+            raise ValueError("password should be set if and only if in LDAP mode or HTTP mode")
         if (kerberos_service_name is not None) != (auth == 'KERBEROS'):
             raise ValueError("kerberos_service_name should be set if and only if in KERBEROS mode")
+        if (http_path is not None) and (mode != 'HTTP'):
+            raise ValueError("http_path should be set if and only if in HTTP mode")
+        if (mode =='HTTP' and auth != 'NONE'):
+            raise ValueError("http mode only works with None auth mode")
+
+        http_path = http_path or 'cliservice'
 
         if auth == 'NOSASL':
             # NOSASL corresponds to hive.server2.authentication=NOSASL in hive-site.xml
@@ -116,7 +125,16 @@ class Connection(object):
                     raise AssertionError
                 sasl_client.init()
                 return sasl_client
-            self._transport = thrift_sasl.TSaslClientTransport(sasl_factory, sasl_auth, socket)
+		
+            if mode == "HTTP" and auth == "NONE":
+                uri = "http://{}:{}/{}".format(host, port, http_path)
+                self._transport = thrift.transport.THttpClient.THttpClient(uri)
+                ap = "%s:%s" % (username,password)
+                cr = base64.b64encode(ap).strip()
+                self._transport.setCustomHeaders({"Authorization": "Basic "+cr})
+            else:
+                self._transport = thrift_sasl.TSaslClientTransport(sasl_factory, sasl_auth, socket)
+
         else:
             raise NotImplementedError(
                 "Only NONE, NOSASL, LDAP, KERBEROS "
