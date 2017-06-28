@@ -41,7 +41,7 @@ setup(
         'future',
     ],
     extras_require={
-        "Presto": ['requests>=1.0.0'],
+        "Presto": ['requests>=1.0.0','requests_kerberos'],
         "Hive": ['sasl>=0.2.1', 'thrift>=0.10.0', 'thrift_sasl>=0.1.0'],
         "SQLAlchemy": ['sqlalchemy>=0.5.0'],
     },
@@ -53,6 +53,7 @@ setup(
         'sasl>=0.2.1',
         'sqlalchemy>=0.5.0',
         'thrift>=0.8.0',
+        'requests_kerberos'
     ],
     cmdclass={'test': PyTest},
     package_data={
