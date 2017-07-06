@@ -80,7 +80,7 @@ class Cursor(common.DBAPICursor):
 
     def __init__(self, host, port='8080', username=None, catalog='hive',
                  schema='default', poll_interval=1, source='pyhive', session_props=None,
-                 protocol='http', password=None,auth='NONE',verify=True):
+                 protocol='http', password=None, auth='NONE', verify=True):
         """
         :param host: hostname to connect to, e.g. ``presto.example.com``
         :param port: int -- port, defaults to 8080
@@ -110,7 +110,7 @@ class Cursor(common.DBAPICursor):
             raise ValueError("Protocol must be http/https, was {!r}".format(protocol))
         self._protocol = protocol
 
-        #SSL Verification
+        # SSL Verification
         self._verify = verify
 
         if auth == 'NONE' or auth == 'PLAIN':
@@ -125,7 +125,7 @@ class Cursor(common.DBAPICursor):
         elif auth == 'KERBEROS':
             if protocol != 'https':
                 raise ValueError("Protocol must be https when running with kerberos")
-            self._auth=HTTPKerberosAuth(mutual_authentication=OPTIONAL)
+            self._auth = HTTPKerberosAuth(mutual_authentication=OPTIONAL)
         else:
             raise NotImplementedError(
                 "Only NONE/PLAIN, KERBEROS "
@@ -202,7 +202,8 @@ class Cursor(common.DBAPICursor):
         _logger.info('%s', sql)
         _logger.debug("Headers: %s", headers)
 
-        response = requests.post(url, data=sql.encode('utf-8'), verify=self._verify, headers=headers, auth=self._auth)
+        response = requests.post(url, data=sql.encode('utf-8'), verify=self._verify,
+                                 headers=headers, auth=self._auth)
         self._process_response(response)
 
     def cancel(self):
@@ -212,7 +213,7 @@ class Cursor(common.DBAPICursor):
             assert self._state == self._STATE_FINISHED, "Should be finished if nextUri is None"
             return
 
-        response = requests.delete(self._nextUri, verify=self._verify,auth=self._auth)
+        response = requests.delete(self._nextUri, verify=self._verify, auth=self._auth)
         if response.status_code != requests.codes.no_content:
             fmt = "Unexpected status code after cancel {}\n{}"
             raise OperationalError(fmt.format(response.status_code, response.content))
@@ -234,13 +235,13 @@ class Cursor(common.DBAPICursor):
         if self._nextUri is None:
             assert self._state == self._STATE_FINISHED, "Should be finished if nextUri is None"
             return None
-        response = requests.get(self._nextUri,verify=self._verify, auth=self._auth)
+        response = requests.get(self._nextUri, verify=self._verify, auth=self._auth)
         self._process_response(response)
         return response.json()
 
     def _fetch_more(self):
         """Fetch the next URI and update state"""
-        self._process_response(requests.get(self._nextUri,verify=self._verify, auth=self._auth))
+        self._process_response(requests.get(self._nextUri, verify=self._verify, auth=self._auth))
 
     def _decode_binary(self, rows):
         # As of Presto 0.69, binary data is returned as the varbinary type in base64 format
@@ -293,4 +294,3 @@ FIXED_INT_64 = DBAPITypeObject(['bigint'])
 VARIABLE_BINARY = DBAPITypeObject(['varchar'])
 DOUBLE = DBAPITypeObject(['double'])
 BOOLEAN = DBAPITypeObject(['boolean'])
-
