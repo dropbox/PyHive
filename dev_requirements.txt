@@ -10,7 +10,7 @@ pytest-timeout==1.0.0
 # actual dependencies: let things break if a package changes
 requests>=1.0.0
 sasl>=0.2.1
-sqlalchemy>=0.5.8
+sqlalchemy>=0.6.9
 thrift>=0.10.0
 #thrift_sasl>=0.1.0
 git+https://github.com/cloudera/thrift_sasl  # Using master branch in order to get Python 3 SASL patches

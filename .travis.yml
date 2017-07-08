@@ -15,7 +15,7 @@ matrix:
       env: CDH=cdh5 CDH_VERSION=5.10.1 PRESTO=0.147 SQLALCHEMY=sqlalchemy==1.0.12
     # stale stuff we're still using / supporting
     - python: 2.7
-      env: CDH=cdh5 CDH_VERSION=5.10.1 PRESTO=0.147 SQLALCHEMY=sqlalchemy==0.5.8
+      env: CDH=cdh5 CDH_VERSION=5.10.1 PRESTO=0.147 SQLALCHEMY=sqlalchemy==0.6.9
   # exclude: python 3 against old libries
 install:
   - ./scripts/travis-install.sh

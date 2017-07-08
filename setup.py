@@ -43,7 +43,7 @@ setup(
     extras_require={
         'presto': ['requests>=1.0.0'],
         'hive': ['sasl>=0.2.1', 'thrift>=0.10.0', 'thrift_sasl>=0.1.0'],
-        'sqlalchemy': ['sqlalchemy>=0.5.0'],
+        'sqlalchemy': ['sqlalchemy>=0.6.0'],
     },
     tests_require=[
         'mock>=1.0.0',
@@ -51,7 +51,7 @@ setup(
         'pytest-cov',
         'requests>=1.0.0',
         'sasl>=0.2.1',
-        'sqlalchemy>=0.5.0',
+        'sqlalchemy>=0.6.0',
         'thrift>=0.8.0',
     ],
     cmdclass={'test': PyTest},
@@ -59,13 +59,7 @@ setup(
         '': ['*.rst'],
     },
     entry_points={
-        # New versions
         'sqlalchemy.dialects': [
-            'hive = pyhive.sqlalchemy_hive:HiveDialect',
-            'presto = pyhive.sqlalchemy_presto:PrestoDialect',
-        ],
-        # Version 0.5
-        'sqlalchemy.databases': [
             'hive = pyhive.sqlalchemy_hive:HiveDialect',
             'presto = pyhive.sqlalchemy_presto:PrestoDialect',
         ],

@@ -169,7 +169,8 @@ class TestSqlAlchemyHive(unittest.TestCase, SqlAlchemyTestCase):
         expected = [(1,)]
         self.assertEqual(result, expected)
 
-    @unittest.skipIf(sqlalchemy.__version__ == '0.5.8', "not supported on old sqlalchemy")
+    @unittest.skipIf(sqlalchemy.__version__ == '0.6.9',
+                     "Customizing type compiler doesn't work on old SQLAlchemy")
     @with_engine_connection
     def test_insert_values(self, engine, connection):
         table = Table('insert_test', MetaData(bind=engine),

@@ -135,8 +135,6 @@ class SqlAlchemyTestCase(with_metaclass(abc.ABCMeta, object)):
         self.assertTrue(Table('one_row', MetaData(bind=engine)).exists())
         self.assertFalse(Table('this_table_does_not_exist', MetaData(bind=engine)).exists())
 
-    @unittest.skipIf(StrictVersion(sqlalchemy.__version__) < StrictVersion('0.6.0'),
-                     "visitor stuff for changing char_length -> length not available yet")
     @with_engine_connection
     def test_char_length(self, engine, connection):
         one_row_complex = Table('one_row_complex', MetaData(bind=engine), autoload=True)
