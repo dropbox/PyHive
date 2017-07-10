@@ -1,6 +1,6 @@
 #!/bin/bash -eux
 
-HIVE_VERSION='2.1.1'  # Must be a released version
+HIVE_RELEASE='release-2.3.0-rc1' # 'rel/rel/release-2.1.1'
 
 # Create a temporary directory
 scriptdir=`dirname $0`
@@ -16,7 +16,7 @@ mkdir $tmpdir
 cp $scriptdir/thrift-patches/TCLIService.patch $tmpdir
 
 # Download TCLIService.thrift from Hive
-curl https://raw.githubusercontent.com/apache/hive/rel/release-$HIVE_VERSION/service-rpc/if/TCLIService.thrift > $tmpdir/TCLIService.thrift
+curl https://raw.githubusercontent.com/apache/hive/$HIVE_RELEASE/service-rpc/if/TCLIService.thrift > $tmpdir/TCLIService.thrift
 
 # Apply patch
 pushd $tmpdir
