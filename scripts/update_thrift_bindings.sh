@@ -1,6 +1,6 @@
 #!/bin/bash -eux
 
-HIVE_VERSION='2.1.1'  # Must be a released version
+HIVE_VERSION='2.3.0'  # Must be a released version
 
 # Create a temporary directory
 scriptdir=`dirname $0`
