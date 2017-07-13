@@ -323,7 +323,7 @@ class Cursor(common.DBAPICursor):
         if not new_data:
             self._state = self._STATE_FINISHED
 
-    def poll(self):
+    def poll(self, get_progress_update=True):
         """Poll for and return the raw status data provided by the Hive Thrift REST API.
         :returns: ``ttypes.TGetOperationStatusResp``
         :raises: ``ProgrammingError`` when no query has been started
@@ -334,7 +334,8 @@ class Cursor(common.DBAPICursor):
             raise ProgrammingError("No query yet")
 
         req = ttypes.TGetOperationStatusReq(
-            operationHandle=self._operationHandle
+            operationHandle=self._operationHandle,
+            getProgressUpdate=get_progress_update,
         )
         response = self._connection.client.GetOperationStatus(req)
         _check_status(response)
