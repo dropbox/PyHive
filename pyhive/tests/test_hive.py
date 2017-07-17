@@ -14,10 +14,14 @@ import unittest
 
 import mock
 import os
-from TCLIService import ttypes
-from pyhive import hive
+import sasl
+import thrift.transport.TSocket
+import thrift.transport.TTransport
+import thrift_sasl
 from thrift.transport.TTransport import TTransportException
 
+from TCLIService import ttypes
+from pyhive import hive
 from pyhive.tests.dbapi_test_case import DBAPITestCase
 from pyhive.tests.dbapi_test_case import with_cursor
 
@@ -185,3 +189,30 @@ class TestHive(unittest.TestCase, DBAPITestCase):
                                 lambda: hive.connect(_HOST, kerberos_service_name=''))
         self.assertRaisesRegexp(ValueError, 'kerberos_service_name.*KERBEROS',
                                 lambda: hive.connect(_HOST, auth='KERBEROS'))
+
+    def test_invalid_transport(self):
+        """transport and auth are incompatible"""
+        socket = thrift.transport.TSocket.TSocket('localhost', 10000)
+        transport = thrift.transport.TTransport.TBufferedTransport(socket)
+        self.assertRaisesRegexp(
+            ValueError, 'thrift_transport cannot be used with',
+            lambda: hive.connect(_HOST, thrift_transport=transport)
+        )
+
+    def test_custom_transport(self):
+        socket = thrift.transport.TSocket.TSocket('localhost', 10000)
+        sasl_auth = 'PLAIN'
+
+        def sasl_factory():
+            sasl_client = sasl.Client()
+            sasl_client.setAttr('host', 'localhost')
+            sasl_client.setAttr('username', 'test_username')
+            sasl_client.setAttr('password', 'x')
+            sasl_client.init()
+            return sasl_client
+        transport = thrift_sasl.TSaslClientTransport(sasl_factory, sasl_auth, socket)
+        conn = hive.connect(thrift_transport=transport)
+        with contextlib.closing(conn):
+            with contextlib.closing(conn.cursor()) as cursor:
+                cursor.execute('SELECT * FROM one_row')
+                self.assertEqual(cursor.fetchall(), [(1,)])

@@ -9,6 +9,7 @@ from __future__ import unicode_literals
 
 import contextlib
 import os
+import requests
 
 from pyhive import exc
 from pyhive import presto
@@ -157,7 +158,7 @@ class TestPresto(unittest.TestCase, DBAPITestCase):
         session_prop = rows[0]
         assert session_prop[1] != '1234m'
 
-    def test_set_session_in_consructor(self):
+    def test_set_session_in_constructor(self):
         conn = presto.connect(
             host=_HOST, source=self.id(), session_props={'query_max_run_time': '1234m'}
         )
@@ -184,3 +185,38 @@ class TestPresto(unittest.TestCase, DBAPITestCase):
             ValueError, 'Protocol.*https.*password', lambda: presto.connect(
                 host=_HOST, username='user', password='secret', protocol='http').cursor()
         )
+
+    def test_invalid_password_and_kwargs(self):
+        """password and requests_kwargs are incompatible"""
+        self.assertRaisesRegexp(
+            ValueError, 'Cannot use both', lambda: presto.connect(
+                host=_HOST, username='user', password='secret', protocol='https',
+                requests_kwargs={}
+            ).cursor()
+        )
+
+    def test_invalid_kwargs(self):
+        """some kwargs are reserved"""
+        self.assertRaisesRegexp(
+            ValueError, 'Cannot override', lambda: presto.connect(
+                host=_HOST, username='user', requests_kwargs={'url': 'test'}
+            ).cursor()
+        )
+
+    def test_requests_kwargs(self):
+        connection = presto.connect(
+            host=_HOST, port=_PORT, source=self.id(),
+            requests_kwargs={'proxies': {'http': 'localhost:99999'}},
+        )
+        cursor = connection.cursor()
+        self.assertRaises(requests.exceptions.ProxyError,
+                          lambda: cursor.execute('SELECT * FROM one_row'))
+
+    def test_requests_session(self):
+        with requests.Session() as session:
+            connection = presto.connect(
+                host=_HOST, port=_PORT, source=self.id(), requests_session=session
+            )
+            cursor = connection.cursor()
+            cursor.execute('SELECT * FROM one_row')
+            self.assertEqual(cursor.fetchall(), [(1,)])
