@@ -19,12 +19,10 @@ import contextlib
 from future.utils import iteritems
 import getpass
 import logging
-import sasl
 import sys
 import thrift.protocol.TBinaryProtocol
 import thrift.transport.TSocket
 import thrift.transport.TTransport
-import thrift_sasl
 
 # PEP 249 module globals
 apilevel = '2.0'
@@ -119,6 +117,10 @@ class Connection(object):
                 # NOSASL corresponds to hive.server2.authentication=NOSASL in hive-site.xml
                 self._transport = thrift.transport.TTransport.TBufferedTransport(socket)
             elif auth in ('LDAP', 'KERBEROS', 'NONE'):
+                # Defer import so package dependency is optional
+                import sasl
+                import thrift_sasl
+
                 if auth == 'KERBEROS':
                     # KERBEROS mode in hive.server2.authentication is GSSAPI in sasl library
                     sasl_auth = 'GSSAPI'
