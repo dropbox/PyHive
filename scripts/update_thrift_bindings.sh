@@ -7,20 +7,15 @@ scriptdir=`dirname $0`
 tmpdir=$scriptdir/.thrift_gen
 
 # Clean up previous generation attempts, in case it breaks things
-if [ -d $tmpdir ]; then
-  rm -rf $tmpdir
-fi
+rm -rf $tmpdir
 mkdir $tmpdir
 
-# Copy patch that adds legacy GetLog methods
-cp $scriptdir/thrift-patches/TCLIService.patch $tmpdir
-
 # Download TCLIService.thrift from Hive
-curl https://raw.githubusercontent.com/apache/hive/rel/release-$HIVE_VERSION/service-rpc/if/TCLIService.thrift > $tmpdir/TCLIService.thrift
+curl -o $tmpdir/TCLIService.thrift \
+    https://raw.githubusercontent.com/apache/hive/rel/release-$HIVE_VERSION/service-rpc/if/TCLIService.thrift
 
-# Apply patch
-pushd $tmpdir
-patch < TCLIService.patch
-popd
+# Apply patch that adds legacy GetLog methods
+patch -d $tmpdir < $scriptdir/thrift-patches/TCLIService.patch
 
 thrift -r --gen py -out $scriptdir/../ $tmpdir/TCLIService.thrift
+rm $scriptdir/../__init__.py
