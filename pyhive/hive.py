@@ -88,9 +88,10 @@ class Connection(object):
         username = username or getpass.getuser()
         configuration = configuration or {}
 
-        if (password is not None) != (auth == 'LDAP'):
-            raise ValueError("Password should be set if and only if in LDAP mode; "
-                             "Remove password or add auth='LDAP'")
+        #if auth is "NONE", password can be provided
+        #if (password is not None) != (auth == 'LDAP'):
+        #    raise ValueError("Password should be set if and only if in LDAP mode; "
+        #                     "Remove password or add auth='LDAP'")
         if (kerberos_service_name is not None) != (auth == 'KERBEROS'):
             raise ValueError("kerberos_service_name should be set if and only if in KERBEROS mode")
         if thrift_transport is not None:
