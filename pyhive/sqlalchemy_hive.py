@@ -20,6 +20,7 @@ from sqlalchemy.engine import default
 import decimal
 import re
 import sqlalchemy
+import datetime
 
 try:
     from sqlalchemy import processors
@@ -46,6 +47,12 @@ class HiveDate(HiveStringTypeBase):
     def process_result_value(self, value, dialect):
         return processors.str_to_date(value)
 
+    def process_bind_param(self, value, dialect):
+        if isinstance(value, datetime.date) or isinstance(value, datetime.datetime):
+            return value.strftime('%Y-%m-%d')
+        else:
+            raise TypeError("Hive Date type only accepts Python date or datetime objects as input.")
+
 
 class HiveTimestamp(HiveStringTypeBase):
     """Translates timestamp strings to datetime objects"""
@@ -53,6 +60,12 @@ class HiveTimestamp(HiveStringTypeBase):
 
     def process_result_value(self, value, dialect):
         return processors.str_to_datetime(value)
+
+    def process_bind_param(self, value, dialect):
+        if isinstance(value, datetime.datetime):
+            return value.strftime('%Y-%m-%d %H:%M:%S.%f')
+        else:
+            raise TypeError("Hive Timestamp type only accepts Python datetime objects as input.")
 
 
 class HiveDecimal(HiveStringTypeBase):
@@ -64,6 +77,12 @@ class HiveDecimal(HiveStringTypeBase):
             return None
         else:
             return decimal.Decimal(value)
+
+    def process_bind_param(self, value, dialect):
+        if isinstance(value, decimal.Decimal):
+            return '{0:f}'.format(value)
+        else:
+            raise TypeError("Hive Decimal type only accepts Python decimal objects as input.")
 
 
 class HiveIdentifierPreparer(compiler.IdentifierPreparer):
