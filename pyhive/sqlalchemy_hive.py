@@ -260,8 +260,7 @@ class HiveDialect(default.DefaultDialect):
             try:
                 coltype = _type_map[col_type]
             except KeyError:
-                util.warn("Did not recognize type '%s' of column '%s'" % (
-                    col_type, col_name))
+                util.warn("Did not recognize type '%s' of column '%s'" % (col_type, col_name))
                 coltype = types.NullType
             result.append({
                 'name': col_name,

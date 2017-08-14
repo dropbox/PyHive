@@ -66,7 +66,7 @@ class TestSqlAlchemyPresto(unittest.TestCase, SqlAlchemyTestCase):
         self.assertIsInstance(one_row_complex.c.double.type, types.Float)
         self.assertIsInstance(one_row_complex.c.string.type, String)
         self.assertIsInstance(one_row_complex.c.timestamp.type, types.TIMESTAMP)
-        self.assertIsInstance(one_row_complex.c.binary.type, types.NullType)
+        self.assertIsInstance(one_row_complex.c.binary.type, types.VARBINARY)
         self.assertIsInstance(one_row_complex.c.array.type, types.NullType)
         self.assertIsInstance(one_row_complex.c.map.type, types.NullType)
         self.assertIsInstance(one_row_complex.c.struct.type, types.NullType)

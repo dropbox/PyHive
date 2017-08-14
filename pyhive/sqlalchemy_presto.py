@@ -46,6 +46,7 @@ _type_map = {
     'varchar': types.String,
     'timestamp': types.TIMESTAMP,
     'date': types.DATE,
+    'varbinary': types.VARBINARY,
 }
 
 

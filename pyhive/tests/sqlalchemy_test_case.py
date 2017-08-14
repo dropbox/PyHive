@@ -1,19 +1,22 @@
 # coding: utf-8
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from builtins import object
+
+import abc
+import contextlib
+import functools
+import unittest
 from distutils.version import StrictVersion
-from future.utils import with_metaclass
+
+import pytest
 import sqlalchemy
+from builtins import object
+from future.utils import with_metaclass
 from sqlalchemy.exc import NoSuchTableError
 from sqlalchemy.schema import Index
 from sqlalchemy.schema import MetaData
 from sqlalchemy.schema import Table
 from sqlalchemy.sql import expression
-import abc
-import contextlib
-import functools
-import unittest
 
 
 def with_engine_connection(fn):
@@ -75,6 +78,7 @@ class SqlAlchemyTestCase(with_metaclass(abc.ABCMeta, object)):
         self.assertEqual(len(dummy.c), 1)
         self.assertIsNotNone(dummy.c.a)
 
+    @pytest.mark.filterwarnings('default:Omitting:sqlalchemy.exc.SAWarning')
     @with_engine_connection
     def test_reflect_partitions(self, engine, connection):
         """reflecttable should get the partition column as an index"""
