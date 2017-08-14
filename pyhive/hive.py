@@ -51,6 +51,7 @@ class HiveParamEscaper(common.ParamEscaper):
             .replace('\t', '\\t')
         )
 
+
 _escaper = HiveParamEscaper()
 
 

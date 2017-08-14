@@ -315,6 +315,7 @@ class HiveDialect(default.DefaultDialect):
         # We decode everything as UTF-8
         return True
 
+
 if StrictVersion(sqlalchemy.__version__) < StrictVersion('0.7.0'):
     from pyhive import sqlalchemy_backports
 
