@@ -1,5 +1,6 @@
 sudo: required
 language: python
+dist: precise
 matrix:
   include:
     # https://docs.python.org/devguide/#status-of-python-branches
