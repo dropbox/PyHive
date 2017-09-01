@@ -88,11 +88,14 @@ Install using
 - ``pip install pyhive[hive]`` for the Hive interface and
 - ``pip install pyhive[presto]`` for the Presto interface.
 
-`PyHive` works with
+PyHive works with
 
 - Python 2.7 / Python 3
 - For Presto: Presto install
 - For Hive: `HiveServer2 <https://cwiki.apache.org/confluence/display/Hive/Setting+up+HiveServer2>`_ daemon
+- For Python 3 + Hive + SASL, you currently need to install an unreleased version of ``thrift_sasl``
+  (``pip install git+https://github.com/cloudera/thrift_sasl``).
+  At the time of writing, the latest version of ``thrift_sasl`` was 0.2.1.
 
 There's also a `third party Conda package <https://binstar.org/blaze/pyhive>`_.
 
