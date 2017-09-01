@@ -38,28 +38,28 @@ class TestHive(unittest.TestCase, DBAPITestCase):
     def test_description(self, cursor):
         cursor.execute('SELECT * FROM one_row')
 
-        desc = [('number_of_rows', 'INT_TYPE', None, None, None, None, True)]
+        desc = [('one_row.number_of_rows', 'INT_TYPE', None, None, None, None, True)]
         self.assertEqual(cursor.description, desc)
 
     @with_cursor
     def test_complex(self, cursor):
         cursor.execute('SELECT * FROM one_row_complex')
         self.assertEqual(cursor.description, [
-            ('boolean', 'BOOLEAN_TYPE', None, None, None, None, True),
-            ('tinyint', 'TINYINT_TYPE', None, None, None, None, True),
-            ('smallint', 'SMALLINT_TYPE', None, None, None, None, True),
-            ('int', 'INT_TYPE', None, None, None, None, True),
-            ('bigint', 'BIGINT_TYPE', None, None, None, None, True),
-            ('float', 'FLOAT_TYPE', None, None, None, None, True),
-            ('double', 'DOUBLE_TYPE', None, None, None, None, True),
-            ('string', 'STRING_TYPE', None, None, None, None, True),
-            ('timestamp', 'TIMESTAMP_TYPE', None, None, None, None, True),
-            ('binary', 'BINARY_TYPE', None, None, None, None, True),
-            ('array', 'ARRAY_TYPE', None, None, None, None, True),
-            ('map', 'MAP_TYPE', None, None, None, None, True),
-            ('struct', 'STRUCT_TYPE', None, None, None, None, True),
-            ('union', 'UNION_TYPE', None, None, None, None, True),
-            ('decimal', 'DECIMAL_TYPE', None, None, None, None, True),
+            ('one_row_complex.boolean', 'BOOLEAN_TYPE', None, None, None, None, True),
+            ('one_row_complex.tinyint', 'TINYINT_TYPE', None, None, None, None, True),
+            ('one_row_complex.smallint', 'SMALLINT_TYPE', None, None, None, None, True),
+            ('one_row_complex.int', 'INT_TYPE', None, None, None, None, True),
+            ('one_row_complex.bigint', 'BIGINT_TYPE', None, None, None, None, True),
+            ('one_row_complex.float', 'FLOAT_TYPE', None, None, None, None, True),
+            ('one_row_complex.double', 'DOUBLE_TYPE', None, None, None, None, True),
+            ('one_row_complex.string', 'STRING_TYPE', None, None, None, None, True),
+            ('one_row_complex.timestamp', 'TIMESTAMP_TYPE', None, None, None, None, True),
+            ('one_row_complex.binary', 'BINARY_TYPE', None, None, None, None, True),
+            ('one_row_complex.array', 'ARRAY_TYPE', None, None, None, None, True),
+            ('one_row_complex.map', 'MAP_TYPE', None, None, None, None, True),
+            ('one_row_complex.struct', 'STRUCT_TYPE', None, None, None, None, True),
+            ('one_row_complex.union', 'UNION_TYPE', None, None, None, None, True),
+            ('one_row_complex.decimal', 'DECIMAL_TYPE', None, None, None, None, True),
         ])
         rows = cursor.fetchall()
         expected = [(

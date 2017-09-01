@@ -154,9 +154,33 @@ class HiveTypeCompiler(compiler.GenericTypeCompiler):
         return 'TIMESTAMP'
 
 
+class HiveExecutionContext(default.DefaultExecutionContext):
+    """This is pretty much the same as SQLiteExecutionContext to work around the same issue.
+
+    http://docs.sqlalchemy.org/en/latest/dialects/sqlite.html#dotted-column-names
+
+    engine = create_engine('hive://...', execution_options={'hive_raw_colnames': True})
+    """
+
+    @util.memoized_property
+    def _preserve_raw_colnames(self):
+        # Ideally, this would also gate on hive.resultset.use.unique.column.names
+        return self.execution_options.get('hive_raw_colnames', False)
+
+    def _translate_colname(self, colname):
+        # Adjust for dotted column names.
+        # When hive.resultset.use.unique.column.names is true (the default), Hive returns column
+        # names as "tablename.colname" in cursor.description.
+        if not self._preserve_raw_colnames and '.' in colname:
+            return colname.split('.')[-1], colname
+        else:
+            return colname, None
+
+
 class HiveDialect(default.DefaultDialect):
     name = b'hive'
     driver = b'thrift'
+    execution_ctx_cls = HiveExecutionContext
     preparer = HiveIdentifierPreparer
     statement_compiler = HiveCompiler
     supports_views = True
