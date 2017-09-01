@@ -7,28 +7,22 @@ which is released under the MIT license.
 
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from distutils.version import StrictVersion
-from pyhive import hive
-from pyhive.common import UniversalSet
-from sqlalchemy.sql import compiler
+
+import decimal
+
+import re
 from sqlalchemy import exc
+from sqlalchemy import processors
 from sqlalchemy import types
 from sqlalchemy import util
 # TODO shouldn't use mysql type
 from sqlalchemy.databases import mysql
 from sqlalchemy.engine import default
-import decimal
-import re
-import sqlalchemy
+from sqlalchemy.sql import compiler
+from sqlalchemy.sql.compiler import SQLCompiler
 
-try:
-    from sqlalchemy import processors
-except ImportError:
-    from pyhive import sqlalchemy_backports as processors
-try:
-    from sqlalchemy.sql.compiler import SQLCompiler
-except ImportError:
-    from sqlalchemy.sql.compiler import DefaultCompiler as SQLCompiler
+from pyhive import hive
+from pyhive.common import UniversalSet
 
 
 class HiveStringTypeBase(types.TypeDecorator):
@@ -77,16 +71,12 @@ class HiveIdentifierPreparer(compiler.IdentifierPreparer):
         )
 
 
-try:
-    from sqlalchemy.types import BigInteger
-except ImportError:
-    from sqlalchemy.databases.mysql import MSBigInteger as BigInteger
 _type_map = {
     'boolean': types.Boolean,
     'tinyint': mysql.MSTinyInteger,
     'smallint': types.SmallInteger,
     'int': types.Integer,
-    'bigint': BigInteger,
+    'bigint': types.BigInteger,
     'float': types.Float,
     'double': types.Float,
     'string': types.String,
@@ -129,40 +119,39 @@ class HiveCompiler(SQLCompiler):
         return 'length{}'.format(self.function_argspec(fn, **kw))
 
 
-if StrictVersion(sqlalchemy.__version__) >= StrictVersion('0.7.0'):
-    class HiveTypeCompiler(compiler.GenericTypeCompiler):
-        def visit_INTEGER(self, type_):
-            return 'INT'
+class HiveTypeCompiler(compiler.GenericTypeCompiler):
+    def visit_INTEGER(self, type_):
+        return 'INT'
 
-        def visit_NUMERIC(self, type_):
-            return 'DECIMAL'
+    def visit_NUMERIC(self, type_):
+        return 'DECIMAL'
 
-        def visit_CHAR(self, type_):
-            return 'STRING'
+    def visit_CHAR(self, type_):
+        return 'STRING'
 
-        def visit_VARCHAR(self, type_):
-            return 'STRING'
+    def visit_VARCHAR(self, type_):
+        return 'STRING'
 
-        def visit_NCHAR(self, type_):
-            return 'STRING'
+    def visit_NCHAR(self, type_):
+        return 'STRING'
 
-        def visit_TEXT(self, type_):
-            return 'STRING'
+    def visit_TEXT(self, type_):
+        return 'STRING'
 
-        def visit_CLOB(self, type_):
-            return 'STRING'
+    def visit_CLOB(self, type_):
+        return 'STRING'
 
-        def visit_BLOB(self, type_):
-            return 'BINARY'
+    def visit_BLOB(self, type_):
+        return 'BINARY'
 
-        def visit_TIME(self, type_):
-            return 'TIMESTAMP'
+    def visit_TIME(self, type_):
+        return 'TIMESTAMP'
 
-        def visit_DATE(self, type_):
-            return 'TIMESTAMP'
+    def visit_DATE(self, type_):
+        return 'TIMESTAMP'
 
-        def visit_DATETIME(self, type_):
-            return 'TIMESTAMP'
+    def visit_DATETIME(self, type_):
+        return 'TIMESTAMP'
 
 
 class HiveDialect(default.DefaultDialect):
@@ -187,6 +176,7 @@ class HiveDialect(default.DefaultDialect):
         'TIMESTAMP_TYPE': HiveTimestamp(),
         'DECIMAL_TYPE': HiveDecimal(),
     }
+    type_compiler = HiveTypeCompiler
 
     @classmethod
     def dbapi(cls):
@@ -313,14 +303,3 @@ class HiveDialect(default.DefaultDialect):
     def _check_unicode_description(self, connection):
         # We decode everything as UTF-8
         return True
-
-
-if StrictVersion(sqlalchemy.__version__) < StrictVersion('0.7.0'):
-    from pyhive import sqlalchemy_backports
-
-    def reflecttable(self, connection, table, include_columns=None, exclude_columns=None):
-        insp = sqlalchemy_backports.Inspector.from_engine(connection)
-        return insp.reflecttable(table, include_columns, exclude_columns)
-    HiveDialect.reflecttable = reflecttable
-else:
-    HiveDialect.type_compiler = HiveTypeCompiler

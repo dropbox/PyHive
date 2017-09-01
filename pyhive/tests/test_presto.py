@@ -40,11 +40,6 @@ class TestPresto(unittest.TestCase, DBAPITestCase):
     @with_cursor
     def test_complex(self, cursor):
         cursor.execute('SELECT * FROM one_row_complex')
-        # TODO delete this code after dropping test support for older presto
-        # old presto uses <>, while new presto uses ()
-        description = []
-        for row in cursor.description:
-            description.append((row[0], row[1].replace('<', '(').replace('>', ')')) + row[2:])
         # TODO Presto drops the union field
         if os.environ.get('PRESTO') == '0.147':
             tinyint_type = 'integer'
@@ -55,7 +50,7 @@ class TestPresto(unittest.TestCase, DBAPITestCase):
             tinyint_type = 'tinyint'
             smallint_type = 'smallint'
             float_type = 'real'
-        self.assertEqual(description, [
+        self.assertEqual(cursor.description, [
             ('boolean', 'boolean', None, None, None, None, True),
             ('tinyint', tinyint_type, None, None, None, None, True),
             ('smallint', smallint_type, None, None, None, None, True),

@@ -44,7 +44,7 @@ setup(
     extras_require={
         'presto': ['requests>=1.0.0'],
         'hive': ['sasl>=0.2.1', 'thrift>=0.10.0', 'thrift_sasl>=0.1.0'],
-        'sqlalchemy': ['sqlalchemy>=0.6.0'],
+        'sqlalchemy': ['sqlalchemy>=0.7.10'],
     },
     tests_require=[
         'mock>=1.0.0',
@@ -52,8 +52,8 @@ setup(
         'pytest-cov',
         'requests>=1.0.0',
         'sasl>=0.2.1',
-        'sqlalchemy>=0.6.0',
-        'thrift>=0.8.0',
+        'sqlalchemy>=0.7.10',
+        'thrift>=0.10.0',
     ],
     cmdclass={'test': PyTest},
     package_data={
