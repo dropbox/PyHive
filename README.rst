@@ -97,8 +97,6 @@ PyHive works with
   (``pip install git+https://github.com/cloudera/thrift_sasl``).
   At the time of writing, the latest version of ``thrift_sasl`` was 0.2.1.
 
-There's also a `third party Conda package <https://binstar.org/blaze/pyhive>`_.
-
 Changelog
 =========
 See https://github.com/dropbox/PyHive/releases.
