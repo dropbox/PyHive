@@ -182,11 +182,11 @@ class TestPresto(unittest.TestCase, DBAPITestCase):
         )
 
     def test_invalid_password_and_kwargs(self):
-        """password and requests_kwargs are incompatible"""
+        """password and requests_kwargs authentication is incompatible"""
         self.assertRaisesRegexp(
             ValueError, 'Cannot use both', lambda: presto.connect(
                 host=_HOST, username='user', password='secret', protocol='https',
-                requests_kwargs={}
+                requests_kwargs={'auth': requests.auth.HTTPBasicAuth('user', 'secret')}
             ).cursor()
         )
 
