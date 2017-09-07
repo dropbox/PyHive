@@ -95,7 +95,7 @@ class Cursor(common.DBAPICursor):
         :param password: string -- Deprecated. Defaults to ``None``.
             Using BasicAuth, requires ``https``.
             Prefer ``requests_kwargs={'auth': HTTPBasicAuth(username, password)}``.
-            May not be specified with ``requests_kwargs``.
+            May not be specified with ``requests_kwargs['auth']``.
         :param requests_session: a ``requests.Session`` object for advanced usage. If absent, this
             class will use the default requests behavior of making a new session per HTTP request.
             Caller is responsible for closing session.
@@ -119,9 +119,9 @@ class Cursor(common.DBAPICursor):
 
         self._requests_session = requests_session or requests
 
-        if password is not None and requests_kwargs is not None:
-            raise ValueError("Cannot use both password and requests_kwargs")
         requests_kwargs = dict(requests_kwargs) if requests_kwargs is not None else {}
+        if password is not None and 'auth' in requests_kwargs:
+            raise ValueError("Cannot use both password and requests_kwargs authentication")
         for k in ('method', 'url', 'data', 'headers'):
             if k in requests_kwargs:
                 raise ValueError("Cannot override requests argument {}".format(k))
