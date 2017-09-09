@@ -8,12 +8,13 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import contextlib
+import os
+import socket
 import subprocess
 import time
 import unittest
 
 import mock
-import os
 import sasl
 import thrift.transport.TSocket
 import thrift.transport.TTransport
@@ -156,8 +157,7 @@ class TestHive(unittest.TestCase, DBAPITestCase):
         des = os.path.join('/', 'etc', 'hive', 'conf', 'hive-site.xml')
         try:
             subprocess.check_call(['sudo', 'cp', orig_ldap, des])
-            subprocess.check_call(['sudo', 'service', 'hive-server2', 'restart'])
-            time.sleep(10)
+            _restart_hs2()
             with contextlib.closing(hive.connect(
                 host=_HOST, username='existing', auth='LDAP', password='testpw')
             ) as connection:
@@ -173,8 +173,7 @@ class TestHive(unittest.TestCase, DBAPITestCase):
 
         finally:
             subprocess.check_call(['sudo', 'cp', orig_none, des])
-            subprocess.check_call(['sudo', 'service', 'hive-server2', 'restart'])
-            time.sleep(10)
+            _restart_hs2()
 
     def test_invalid_ldap_config(self):
         """password should be set if and only if using LDAP"""
@@ -216,3 +215,10 @@ class TestHive(unittest.TestCase, DBAPITestCase):
             with contextlib.closing(conn.cursor()) as cursor:
                 cursor.execute('SELECT * FROM one_row')
                 self.assertEqual(cursor.fetchall(), [(1,)])
+
+
+def _restart_hs2():
+    subprocess.check_call(['sudo', 'service', 'hive-server2', 'restart'])
+    with contextlib.closing(socket.socket()) as s:
+        while s.connect_ex(('localhost', 10000)) != 0:
+            time.sleep(1)

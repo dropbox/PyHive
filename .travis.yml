@@ -1,6 +1,6 @@
 sudo: required
 language: python
-dist: precise
+dist: trusty
 matrix:
   include:
     # https://docs.python.org/devguide/#status-of-python-branches
@@ -21,6 +21,5 @@ matrix:
 install:
   - ./scripts/travis-install.sh
   - pip install codecov
-# sleep so Presto has time to start up. Otherwise we might get 'No nodes available to run query'
-script: sleep 10 && PYTHONHASHSEED=random pytest -v
+script: PYTHONHASHSEED=random pytest -v
 after_success: codecov

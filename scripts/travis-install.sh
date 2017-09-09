@@ -1,19 +1,22 @@
 #!/bin/bash -eux
 
-echo "deb [arch=amd64] https://archive.cloudera.com/${CDH}/ubuntu/precise/amd64/cdh precise-cdh${CDH_VERSION} contrib
-deb-src https://archive.cloudera.com/${CDH}/ubuntu/precise/amd64/cdh precise-cdh${CDH_VERSION} contrib" | sudo tee /etc/apt/sources.list.d/cloudera.list
-sudo apt-get update
+source /etc/lsb-release
 
-sudo apt-get install -y oracle-java8-installer python-dev g++ libsasl2-dev maven
+echo "deb [arch=amd64] https://archive.cloudera.com/${CDH}/ubuntu/${DISTRIB_CODENAME}/amd64/cdh ${DISTRIB_CODENAME}-cdh${CDH_VERSION} contrib
+deb-src https://archive.cloudera.com/${CDH}/ubuntu/${DISTRIB_CODENAME}/amd64/cdh ${DISTRIB_CODENAME}-cdh${CDH_VERSION} contrib" | sudo tee /etc/apt/sources.list.d/cloudera.list
+sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 327574EE02A818DD
+sudo apt update
+
+sudo apt install -y oracle-java8-installer python-dev g++ libsasl2-dev maven
 sudo update-java-alternatives -s java-8-oracle
 
 #
 # LDAP
 #
-sudo apt-get -y --no-install-suggests --no-install-recommends --force-yes install ldap-utils slapd
+sudo apt -y --no-install-suggests --no-install-recommends --force-yes install ldap-utils slapd
 sudo mkdir -p /tmp/slapd
 sudo slapd -f $(dirname $0)/ldap_config/slapd.conf -h ldap://localhost:3389 &
-sleep 10
+while ! nc -vz localhost 3389; do sleep 1; done
 sudo ldapadd -h localhost:3389 -D cn=admin,dc=example,dc=com -w test -f $(dirname $0)/../pyhive/tests/ldif_data/base.ldif
 sudo ldapadd -h localhost:3389 -D cn=admin,dc=example,dc=com -w test -f $(dirname $0)/../pyhive/tests/ldif_data/INITIAL_TESTDATA.ldif
 
@@ -21,13 +24,20 @@ sudo ldapadd -h localhost:3389 -D cn=admin,dc=example,dc=com -w test -f $(dirnam
 # Hive
 #
 
-sudo apt-get install -y --force-yes hive
+sudo apt install -y --force-yes hive
+
+# Hack around broken symlink in Hive's installation
+# /usr/lib/hive/lib/zookeeper.jar -> ../../zookeeper/zookeeper.jar
+# Without this, Hive fails to start up due to failing to find ZK classes.
+sudo ln -nsfv /usr/share/java/zookeeper.jar /usr/lib/hive/lib/zookeeper.jar
+
 sudo mkdir -p /user/hive
 sudo chown hive:hive /user/hive
 sudo cp $(dirname $0)/travis-conf/hive/hive-site.xml /etc/hive/conf/hive-site.xml
-sudo apt-get install -y --force-yes hive-metastore hive-server2
+sudo apt install -y --force-yes hive-metastore hive-server2 || (grep . /var/log/hive/* && exit 2)
 
-sleep 5
+while ! nc -vz localhost 9083; do sleep 1; done
+while ! nc -vz localhost 10000; do sleep 1; done
 
 sudo -Eu hive $(dirname $0)/make_test_tables.sh
 
@@ -35,7 +45,7 @@ sudo -Eu hive $(dirname $0)/make_test_tables.sh
 # Presto
 #
 
-sudo apt-get install -y python # Use python2 for presto server
+sudo apt install -y python # Use python2 for presto server
 
 mvn org.apache.maven.plugins:maven-dependency-plugin:3.0.0:copy \
     -Dartifact=com.facebook.presto:presto-server:${PRESTO}:tar.gz \
@@ -55,3 +65,6 @@ cp -r $(dirname $0)/travis-conf/presto presto-server/etc
 pip install $SQLALCHEMY
 pip install -e .
 pip install -r dev_requirements.txt
+
+# sleep so Presto has time to start up. Otherwise we might get 'No nodes available to run query'
+sleep 10
