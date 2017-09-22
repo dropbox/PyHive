@@ -1,7 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from builtins import str
-from distutils.version import StrictVersion
 from pyhive.sqlalchemy_hive import HiveDate
 from pyhive.sqlalchemy_hive import HiveDecimal
 from pyhive.sqlalchemy_hive import HiveTimestamp
@@ -168,8 +167,6 @@ class TestSqlAlchemyHive(unittest.TestCase, SqlAlchemyTestCase):
         self.assertEqual(row.hive_timestamp, datetime.datetime(1970, 1, 1, 0, 0, 2, 123))
         table.drop()
 
-    @unittest.skipIf(StrictVersion(sqlalchemy.__version__) < StrictVersion('0.8.0'),
-                     "from_select not available yet")
     @with_engine_connection
     def test_insert_select(self, engine, connection):
         one_row = Table('one_row', MetaData(bind=engine), autoload=True)
@@ -186,8 +183,6 @@ class TestSqlAlchemyHive(unittest.TestCase, SqlAlchemyTestCase):
         expected = [(1,)]
         self.assertEqual(result, expected)
 
-    @unittest.skipIf(sqlalchemy.__version__ == '0.7.10',
-                     "Broken on this ancient version and I don't care about fixing it.")
     @with_engine_connection
     def test_insert_values(self, engine, connection):
         table = Table('insert_test', MetaData(bind=engine),

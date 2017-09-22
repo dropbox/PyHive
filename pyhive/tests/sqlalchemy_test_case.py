@@ -5,8 +5,6 @@ from __future__ import unicode_literals
 import abc
 import contextlib
 import functools
-import unittest
-from distutils.version import StrictVersion
 
 import pytest
 import sqlalchemy
@@ -102,7 +100,7 @@ class SqlAlchemyTestCase(with_metaclass(abc.ABCMeta, object)):
     @with_engine_connection
     def test_unicode(self, engine, connection):
         """Verify that unicode strings make it through SQLAlchemy and the backend"""
-        unicode_str = "白人看不懂"
+        unicode_str = "中文"
         one_row = Table('one_row', MetaData(bind=engine))
         returned_str = sqlalchemy.select(
             [expression.bindparam("好", unicode_str)],
@@ -110,8 +108,6 @@ class SqlAlchemyTestCase(with_metaclass(abc.ABCMeta, object)):
         ).scalar()
         self.assertEqual(returned_str, unicode_str)
 
-    @unittest.skipIf(StrictVersion(sqlalchemy.__version__) < StrictVersion('0.8.0'),
-                     "inspect not available yet")
     @with_engine_connection
     def test_reflect_schemas(self, engine, connection):
         insp = sqlalchemy.inspect(engine)
@@ -119,8 +115,6 @@ class SqlAlchemyTestCase(with_metaclass(abc.ABCMeta, object)):
         self.assertIn('pyhive_test_database', schemas)
         self.assertIn('default', schemas)
 
-    @unittest.skipIf(StrictVersion(sqlalchemy.__version__) < StrictVersion('0.8.0'),
-                     "inspect not available yet")
     @with_engine_connection
     def test_get_table_names(self, engine, connection):
         meta = MetaData()
