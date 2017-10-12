@@ -69,7 +69,7 @@ class Connection(object):
 
     def __init__(self, host=None, port=None, username=None, database='default', auth=None,
                  configuration=None, kerberos_service_name=None, password=None,
-                 thrift_transport=None):
+                 thrift_transport=None, hive_server2_proxy_user=None):
         """Connect to HiveServer2
 
         :param host: What host HiveServer2 runs on
@@ -81,6 +81,8 @@ class Connection(object):
         :param password: Use with auth='LDAP' only
         :param thrift_transport: A ``TTransportBase`` for custom advanced usage.
             Incompatible with host, port, auth, kerberos_service_name, and password.
+        :param hive_server2_proxy_user: If hive has enabled user impersonation
+            (hive.server2.enable.doAs=true), the end-user to impersonate.
 
         The way to support LDAP and GSSAPI is originated from cloudera/Impyla:
         https://github.com/cloudera/impyla/blob/255b07ed973d47a3395214ed92d35ec0615ebf62
@@ -121,6 +123,13 @@ class Connection(object):
                 # Defer import so package dependency is optional
                 import sasl
                 import thrift_sasl
+
+                if auth in ('LDAP', 'KERBEROS'):
+                    # Hive 0.13.0 added the "hive.server2.proxy.user" property
+                    # for user impersonation. Since it is a request param,
+                    # the python variable name must substitute the dots for underscores.
+                    if hive_server2_proxy_user is not None:
+                        configuration["hive.server2.proxy.user"] = hive_server2_proxy_user
 
                 if auth == 'KERBEROS':
                     # KERBEROS mode in hive.server2.authentication is GSSAPI in sasl library
