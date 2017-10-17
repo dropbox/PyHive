@@ -279,7 +279,6 @@ class Cursor(common.DBAPICursor):
         if 'nextUri' not in response_json:
             self._state = self._STATE_FINISHED
         if 'error' in response_json:
-            assert not self._nextUri, "Should not have nextUri if failed"
             raise DatabaseError(response_json['error'])
 
 
