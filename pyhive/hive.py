@@ -78,7 +78,7 @@ class Connection(object):
             Defaults to ``NONE``.
         :param configuration: A dictionary of Hive settings (functionally same as the `set` command)
         :param kerberos_service_name: Use with auth='KERBEROS' only
-        :param password: Use with auth='LDAP' only
+        :param password: Use with auth='LDAP' or auth='CUSTOM' only
         :param thrift_transport: A ``TTransportBase`` for custom advanced usage.
             Incompatible with host, port, auth, kerberos_service_name, and password.
 
@@ -89,9 +89,9 @@ class Connection(object):
         username = username or getpass.getuser()
         configuration = configuration or {}
 
-        if (password is not None) != (auth == 'LDAP'):
-            raise ValueError("Password should be set if and only if in LDAP mode; "
-                             "Remove password or add auth='LDAP'")
+        if (password is not None) != (auth in ('LDAP', 'CUSTOM')):
+            raise ValueError("Password should be set if and only if in LDAP or CUSTOM mode; "
+                             "Remove password or use one of those modes")
         if (kerberos_service_name is not None) != (auth == 'KERBEROS'):
             raise ValueError("kerberos_service_name should be set if and only if in KERBEROS mode")
         if thrift_transport is not None:
@@ -117,7 +117,7 @@ class Connection(object):
             if auth == 'NOSASL':
                 # NOSASL corresponds to hive.server2.authentication=NOSASL in hive-site.xml
                 self._transport = thrift.transport.TTransport.TBufferedTransport(socket)
-            elif auth in ('LDAP', 'KERBEROS', 'NONE'):
+            elif auth in ('LDAP', 'KERBEROS', 'NONE', 'CUSTOM'):
                 # Defer import so package dependency is optional
                 import sasl
                 import thrift_sasl
@@ -145,8 +145,11 @@ class Connection(object):
                     return sasl_client
                 self._transport = thrift_sasl.TSaslClientTransport(sasl_factory, sasl_auth, socket)
             else:
+                # All HS2 config options:
+                # https://cwiki.apache.org/confluence/display/Hive/Setting+Up+HiveServer2#SettingUpHiveServer2-Configuration
+                # PAM currently left to end user via thrift_transport option.
                 raise NotImplementedError(
-                    "Only NONE, NOSASL, LDAP, KERBEROS "
+                    "Only NONE, NOSASL, LDAP, KERBEROS, CUSTOM "
                     "authentication are supported, got {}".format(auth))
 
         protocol = thrift.protocol.TBinaryProtocol.TBinaryProtocol(self._transport)

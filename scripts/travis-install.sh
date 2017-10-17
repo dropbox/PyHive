@@ -26,6 +26,10 @@ sudo ldapadd -h localhost:3389 -D cn=admin,dc=example,dc=com -w test -f $(dirnam
 
 sudo apt install -y --force-yes hive
 
+javac -cp /usr/lib/hive/lib/hive-service.jar $(dirname $0)/travis-conf/com/dropbox/DummyPasswdAuthenticationProvider.java
+jar cf $(dirname $0)/dummy-auth.jar -C $(dirname $0)/travis-conf com
+sudo cp $(dirname $0)/dummy-auth.jar /usr/lib/hive/lib
+
 # Hack around broken symlink in Hive's installation
 # /usr/lib/hive/lib/zookeeper.jar -> ../../zookeeper/zookeeper.jar
 # Without this, Hive fails to start up due to failing to find ZK classes.

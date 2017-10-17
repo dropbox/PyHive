@@ -177,9 +177,9 @@ class TestHive(unittest.TestCase, DBAPITestCase):
 
     def test_invalid_ldap_config(self):
         """password should be set if and only if using LDAP"""
-        self.assertRaisesRegexp(ValueError, 'password.*LDAP',
+        self.assertRaisesRegexp(ValueError, 'Password.*LDAP',
                                 lambda: hive.connect(_HOST, password=''))
-        self.assertRaisesRegexp(ValueError, 'password.*LDAP',
+        self.assertRaisesRegexp(ValueError, 'Password.*LDAP',
                                 lambda: hive.connect(_HOST, auth='LDAP'))
 
     def test_invalid_kerberos_config(self):
@@ -215,6 +215,31 @@ class TestHive(unittest.TestCase, DBAPITestCase):
             with contextlib.closing(conn.cursor()) as cursor:
                 cursor.execute('SELECT * FROM one_row')
                 self.assertEqual(cursor.fetchall(), [(1,)])
+
+    def test_custom_connection(self):
+        rootdir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+        orig_ldap = os.path.join(rootdir, 'scripts', 'travis-conf', 'hive', 'hive-site-custom.xml')
+        orig_none = os.path.join(rootdir, 'scripts', 'travis-conf', 'hive', 'hive-site.xml')
+        des = os.path.join('/', 'etc', 'hive', 'conf', 'hive-site.xml')
+        try:
+            subprocess.check_call(['sudo', 'cp', orig_ldap, des])
+            _restart_hs2()
+            with contextlib.closing(hive.connect(
+                    host=_HOST, username='the-user', auth='CUSTOM', password='p4ssw0rd')
+            ) as connection:
+                with contextlib.closing(connection.cursor()) as cursor:
+                    cursor.execute('SELECT * FROM one_row')
+                    self.assertEqual(cursor.fetchall(), [(1,)])
+
+            self.assertRaisesRegexp(
+                TTransportException, 'Error validating the login',
+                lambda: hive.connect(
+                    host=_HOST, username='the-user', auth='CUSTOM', password='wrong')
+            )
+
+        finally:
+            subprocess.check_call(['sudo', 'cp', orig_none, des])
+            _restart_hs2()
 
 
 def _restart_hs2():
