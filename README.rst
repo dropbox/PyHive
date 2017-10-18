@@ -105,6 +105,12 @@ Contributing
 ============
 - Please fill out the Dropbox Contributor License Agreement at https://opensource.dropbox.com/cla/ and note this in your pull request.
 - Changes must come with tests, with the exception of trivial things like fixing comments. See .travis.yml for the test environment setup.
+- Notes on project scope:
+
+  - This project is intended to be a minimal Hive/Presto client that does that one thing and nothing else.
+    Features that can be implemented on top of PyHive, such integration with your favorite data analysis library, are likely out of scope.
+  - We prefer having a small number of generic features over a large number of specialized, inflexible features.
+    For example, the Presto code takes an arbitrary ``requests_session`` argument for customizing HTTP calls, as opposed to having a separate parameter/branch for each ``requests`` option.
 
 Testing
 =======
