@@ -27,6 +27,7 @@ _ONE_ROW_COMPLEX_CONTENTS = [
     0.25,
     'a string',
     datetime.datetime(1970, 1, 1),
+    datetime.date(1970, 2, 1),
     b'123',
     '[1,2]',
     '{1:2,3:4}',
@@ -68,7 +69,7 @@ class TestSqlAlchemyHive(unittest.TestCase, SqlAlchemyTestCase):
     def test_reflect_select(self, engine, connection):
         """reflecttable should be able to fill in a table from the name"""
         one_row_complex = Table('one_row_complex', MetaData(bind=engine), autoload=True)
-        self.assertEqual(len(one_row_complex.c), 15)
+        self.assertEqual(len(one_row_complex.c), 16)
         self.assertIsInstance(one_row_complex.c.string, Column)
         rows = one_row_complex.select().execute().fetchall()
         self.assertEqual(len(rows), 1)
@@ -84,6 +85,7 @@ class TestSqlAlchemyHive(unittest.TestCase, SqlAlchemyTestCase):
         self.assertIsInstance(one_row_complex.c.double.type, types.Float)
         self.assertIsInstance(one_row_complex.c.string.type, types.String)
         self.assertIsInstance(one_row_complex.c.timestamp.type, HiveTimestamp)
+        self.assertIsInstance(one_row_complex.c.date.type, HiveDate)
         self.assertIsInstance(one_row_complex.c.binary.type, types.String)
         self.assertIsInstance(one_row_complex.c.array.type, types.String)
         self.assertIsInstance(one_row_complex.c.map.type, types.String)
