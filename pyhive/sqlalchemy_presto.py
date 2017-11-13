@@ -7,9 +7,8 @@ which is released under the MIT license.
 
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from distutils.version import StrictVersion
-from pyhive import presto
-from pyhive.common import UniversalSet
+
+import re
 from sqlalchemy import exc
 from sqlalchemy import types
 from sqlalchemy import util
@@ -17,13 +16,10 @@ from sqlalchemy import util
 from sqlalchemy.databases import mysql
 from sqlalchemy.engine import default
 from sqlalchemy.sql import compiler
-import re
-import sqlalchemy
+from sqlalchemy.sql.compiler import SQLCompiler
 
-try:
-    from sqlalchemy.sql.compiler import SQLCompiler
-except ImportError:
-    from sqlalchemy.sql.compiler import DefaultCompiler as SQLCompiler
+from pyhive import presto
+from pyhive.common import UniversalSet
 
 
 class PrestoIdentifierPreparer(compiler.IdentifierPreparer):
@@ -31,27 +27,44 @@ class PrestoIdentifierPreparer(compiler.IdentifierPreparer):
     reserved_words = UniversalSet()
 
 
-try:
-    from sqlalchemy.types import BigInteger
-except ImportError:
-    from sqlalchemy.databases.mysql import MSBigInteger as BigInteger
 _type_map = {
     'boolean': types.Boolean,
     'tinyint': mysql.MSTinyInteger,
     'smallint': types.SmallInteger,
     'integer': types.Integer,
-    'bigint': BigInteger,
+    'bigint': types.BigInteger,
     'real': types.Float,
     'double': types.Float,
     'varchar': types.String,
     'timestamp': types.TIMESTAMP,
     'date': types.DATE,
+    'varbinary': types.VARBINARY,
 }
 
 
 class PrestoCompiler(SQLCompiler):
     def visit_char_length_func(self, fn, **kw):
         return 'length{}'.format(self.function_argspec(fn, **kw))
+
+
+class PrestoTypeCompiler(compiler.GenericTypeCompiler):
+    def visit_CLOB(self, type_, **kw):
+        raise ValueError("Presto does not support the CLOB column type.")
+
+    def visit_NCLOB(self, type_, **kw):
+        raise ValueError("Presto does not support the NCLOB column type.")
+
+    def visit_DATETIME(self, type_, **kw):
+        raise ValueError("Presto does not support the DATETIME column type.")
+
+    def visit_FLOAT(self, type_, **kw):
+        return 'DOUBLE'
+
+    def visit_TEXT(self, type_, **kw):
+        if type_.length:
+            return 'VARCHAR({:d})'.format(type_.length)
+        else:
+            return 'VARCHAR'
 
 
 class PrestoDialect(default.DefaultDialect):
@@ -68,6 +81,7 @@ class PrestoDialect(default.DefaultDialect):
     returns_unicode_strings = True
     description_encoding = None
     supports_native_boolean = True
+    type_compiler = PrestoTypeCompiler
 
     @classmethod
     def dbapi(cls):
@@ -189,33 +203,3 @@ class PrestoDialect(default.DefaultDialect):
     def _check_unicode_description(self, connection):
         # requests gives back Unicode strings
         return True
-
-
-if StrictVersion(sqlalchemy.__version__) < StrictVersion('0.7.0'):
-    from pyhive import sqlalchemy_backports
-
-    def reflecttable(self, connection, table, include_columns=None, exclude_columns=None):
-        insp = sqlalchemy_backports.Inspector.from_engine(connection)
-        return insp.reflecttable(table, include_columns, exclude_columns)
-    PrestoDialect.reflecttable = reflecttable
-else:
-    class PrestoTypeCompiler(compiler.GenericTypeCompiler):
-        def visit_CLOB(self, type_, **kw):
-            raise ValueError("Presto does not support the CLOB column type.")
-
-        def visit_NCLOB(self, type_, **kw):
-            raise ValueError("Presto does not support the NCLOB column type.")
-
-        def visit_DATETIME(self, type_, **kw):
-            raise ValueError("Presto does not support the DATETIME column type.")
-
-        def visit_FLOAT(self, type_, **kw):
-            return 'DOUBLE'
-
-        def visit_TEXT(self, type_, **kw):
-            if type_.length:
-                return 'VARCHAR({:d})'.format(type_.length)
-            else:
-                return 'VARCHAR'
-
-    PrestoDialect.type_compiler = PrestoTypeCompiler

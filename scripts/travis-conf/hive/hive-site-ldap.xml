@@ -13,15 +13,6 @@
     <name>fs.defaultFS</name>
     <value>file:///</value>
   </property>
-  <!--
-  TODO tests rely having result set column names unprefixed
-  This could be improved by having an option to strip out prefixes when it would not result in
-  ambiguity.
-  -->
-  <property>
-    <name>hive.resultset.use.unique.column.names</name>
-    <value>false</value>
-  </property>
   <property>
     <name>hive.server2.authentication</name>
     <value>LDAP</value>

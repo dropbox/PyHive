@@ -9,6 +9,7 @@ from __future__ import unicode_literals
 
 import contextlib
 import os
+import requests
 
 from pyhive import exc
 from pyhive import presto
@@ -39,11 +40,6 @@ class TestPresto(unittest.TestCase, DBAPITestCase):
     @with_cursor
     def test_complex(self, cursor):
         cursor.execute('SELECT * FROM one_row_complex')
-        # TODO delete this code after dropping test support for older presto
-        # old presto uses <>, while new presto uses ()
-        description = []
-        for row in cursor.description:
-            description.append((row[0], row[1].replace('<', '(').replace('>', ')')) + row[2:])
         # TODO Presto drops the union field
         if os.environ.get('PRESTO') == '0.147':
             tinyint_type = 'integer'
@@ -54,7 +50,7 @@ class TestPresto(unittest.TestCase, DBAPITestCase):
             tinyint_type = 'tinyint'
             smallint_type = 'smallint'
             float_type = 'real'
-        self.assertEqual(description, [
+        self.assertEqual(cursor.description, [
             ('boolean', 'boolean', None, None, None, None, True),
             ('tinyint', tinyint_type, None, None, None, None, True),
             ('smallint', smallint_type, None, None, None, None, True),
@@ -157,7 +153,7 @@ class TestPresto(unittest.TestCase, DBAPITestCase):
         session_prop = rows[0]
         assert session_prop[1] != '1234m'
 
-    def test_set_session_in_consructor(self):
+    def test_set_session_in_constructor(self):
         conn = presto.connect(
             host=_HOST, source=self.id(), session_props={'query_max_run_time': '1234m'}
         )
@@ -184,3 +180,38 @@ class TestPresto(unittest.TestCase, DBAPITestCase):
             ValueError, 'Protocol.*https.*password', lambda: presto.connect(
                 host=_HOST, username='user', password='secret', protocol='http').cursor()
         )
+
+    def test_invalid_password_and_kwargs(self):
+        """password and requests_kwargs authentication are incompatible"""
+        self.assertRaisesRegexp(
+            ValueError, 'Cannot use both', lambda: presto.connect(
+                host=_HOST, username='user', password='secret', protocol='https',
+                requests_kwargs={'auth': requests.auth.HTTPBasicAuth('user', 'secret')}
+            ).cursor()
+        )
+
+    def test_invalid_kwargs(self):
+        """some kwargs are reserved"""
+        self.assertRaisesRegexp(
+            ValueError, 'Cannot override', lambda: presto.connect(
+                host=_HOST, username='user', requests_kwargs={'url': 'test'}
+            ).cursor()
+        )
+
+    def test_requests_kwargs(self):
+        connection = presto.connect(
+            host=_HOST, port=_PORT, source=self.id(),
+            requests_kwargs={'proxies': {'http': 'localhost:99999'}},
+        )
+        cursor = connection.cursor()
+        self.assertRaises(requests.exceptions.ProxyError,
+                          lambda: cursor.execute('SELECT * FROM one_row'))
+
+    def test_requests_session(self):
+        with requests.Session() as session:
+            connection = presto.connect(
+                host=_HOST, port=_PORT, source=self.id(), requests_session=session
+            )
+            cursor = connection.cursor()
+            cursor.execute('SELECT * FROM one_row')
+            self.assertEqual(cursor.fetchall(), [(1,)])

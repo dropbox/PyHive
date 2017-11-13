@@ -7,6 +7,7 @@ Many docstrings in this file are based on the PEP, which is in the public domain
 
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
 from builtins import object
 from pyhive import common
 from pyhive.common import DBAPITypeObject
@@ -79,7 +80,7 @@ class Cursor(common.DBAPICursor):
 
     def __init__(self, host, port='8080', username=None, catalog='hive',
                  schema='default', poll_interval=1, source='pyhive', session_props=None,
-                 protocol='http', password=None):
+                 protocol='http', password=None, requests_session=None, requests_kwargs=None):
         """
         :param host: hostname to connect to, e.g. ``presto.example.com``
         :param port: int -- port, defaults to 8080
@@ -91,29 +92,45 @@ class Cursor(common.DBAPICursor):
         :param source: string -- arbitrary identifier (shows up in the Presto monitoring page)
         :param protocol: string -- network protocol, valid options are ``http`` and ``https``.
             defaults to ``http``
-        :param password: string -- defaults to ``None``, using BasicAuth, requires ``https``
+        :param password: string -- Deprecated. Defaults to ``None``.
+            Using BasicAuth, requires ``https``.
+            Prefer ``requests_kwargs={'auth': HTTPBasicAuth(username, password)}``.
+            May not be specified with ``requests_kwargs['auth']``.
+        :param requests_session: a ``requests.Session`` object for advanced usage. If absent, this
+            class will use the default requests behavior of making a new session per HTTP request.
+            Caller is responsible for closing session.
+        :param requests_kwargs: Additional ``**kwargs`` to pass to requests
         """
         super(Cursor, self).__init__(poll_interval)
         # Config
         self._host = host
         self._port = port
         self._username = username or getpass.getuser()
-        self._password = password
         self._catalog = catalog
         self._schema = schema
         self._arraysize = 1
         self._poll_interval = poll_interval
         self._source = source
         self._session_props = session_props if session_props is not None else {}
+
         if protocol not in ('http', 'https'):
             raise ValueError("Protocol must be http/https, was {!r}".format(protocol))
         self._protocol = protocol
-        if password is None:
-            self._auth = None
-        else:
-            self._auth = HTTPBasicAuth(username, self._password)
+
+        self._requests_session = requests_session or requests
+
+        requests_kwargs = dict(requests_kwargs) if requests_kwargs is not None else {}
+        if password is not None and 'auth' in requests_kwargs:
+            raise ValueError("Cannot use both password and requests_kwargs authentication")
+        for k in ('method', 'url', 'data', 'headers'):
+            if k in requests_kwargs:
+                raise ValueError("Cannot override requests argument {}".format(k))
+        if password is not None:
+            requests_kwargs['auth'] = HTTPBasicAuth(username, password)
             if protocol != 'https':
                 raise ValueError("Protocol must be https when passing a password")
+        self._requests_kwargs = requests_kwargs
+
         self._reset_state()
 
     def _reset_state(self):
@@ -184,7 +201,8 @@ class Cursor(common.DBAPICursor):
             '{}:{}'.format(self._host, self._port), '/v1/statement', None, None, None))
         _logger.info('%s', sql)
         _logger.debug("Headers: %s", headers)
-        response = requests.post(url, data=sql.encode('utf-8'), headers=headers, auth=self._auth)
+        response = self._requests_session.post(
+            url, data=sql.encode('utf-8'), headers=headers, **self._requests_kwargs)
         self._process_response(response)
 
     def cancel(self):
@@ -194,7 +212,7 @@ class Cursor(common.DBAPICursor):
             assert self._state == self._STATE_FINISHED, "Should be finished if nextUri is None"
             return
 
-        response = requests.delete(self._nextUri, auth=self._auth)
+        response = self._requests_session.delete(self._nextUri, **self._requests_kwargs)
         if response.status_code != requests.codes.no_content:
             fmt = "Unexpected status code after cancel {}\n{}"
             raise OperationalError(fmt.format(response.status_code, response.content))
@@ -216,13 +234,13 @@ class Cursor(common.DBAPICursor):
         if self._nextUri is None:
             assert self._state == self._STATE_FINISHED, "Should be finished if nextUri is None"
             return None
-        response = requests.get(self._nextUri, auth=self._auth)
+        response = self._requests_session.get(self._nextUri, **self._requests_kwargs)
         self._process_response(response)
         return response.json()
 
     def _fetch_more(self):
         """Fetch the next URI and update state"""
-        self._process_response(requests.get(self._nextUri, auth=self._auth))
+        self._process_response(self._requests_session.get(self._nextUri, **self._requests_kwargs))
 
     def _decode_binary(self, rows):
         # As of Presto 0.69, binary data is returned as the varbinary type in base64 format
@@ -261,7 +279,6 @@ class Cursor(common.DBAPICursor):
         if 'nextUri' not in response_json:
             self._state = self._STATE_FINISHED
         if 'error' in response_json:
-            assert not self._nextUri, "Should not have nextUri if failed"
             raise DatabaseError(response_json['error'])
 
 
