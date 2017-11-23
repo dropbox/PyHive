@@ -7,6 +7,8 @@ Many docstrings in this file are based on the PEP, which is in the public domain
 
 from __future__ import absolute_import
 from __future__ import unicode_literals
+import decimal
+import datetime as dt
 from TCLIService import TCLIService
 from TCLIService import constants
 from TCLIService import ttypes
@@ -27,7 +29,8 @@ import thrift.transport.TTransport
 # PEP 249 module globals
 apilevel = '2.0'
 threadsafety = 2  # Threads may share the module and connections.
-paramstyle = 'pyformat'  # Python extended format codes, e.g. ...WHERE name=%(name)s
+# Python extended format codes, e.g. ...WHERE name=%(name)s
+paramstyle = 'pyformat'
 
 _logger = logging.getLogger(__name__)
 
@@ -93,7 +96,8 @@ class Connection(object):
             raise ValueError("Password should be set if and only if in LDAP or CUSTOM mode; "
                              "Remove password or use one of those modes")
         if (kerberos_service_name is not None) != (auth == 'KERBEROS'):
-            raise ValueError("kerberos_service_name should be set if and only if in KERBEROS mode")
+            raise ValueError(
+                "kerberos_service_name should be set if and only if in KERBEROS mode")
         if thrift_transport is not None:
             has_incompatible_arg = (
                 host is not None
@@ -116,7 +120,8 @@ class Connection(object):
             socket = thrift.transport.TSocket.TSocket(host, port)
             if auth == 'NOSASL':
                 # NOSASL corresponds to hive.server2.authentication=NOSASL in hive-site.xml
-                self._transport = thrift.transport.TTransport.TBufferedTransport(socket)
+                self._transport = thrift.transport.TTransport.TBufferedTransport(
+                    socket)
             elif auth in ('LDAP', 'KERBEROS', 'NONE', 'CUSTOM'):
                 # Defer import so package dependency is optional
                 import sasl
@@ -143,7 +148,8 @@ class Connection(object):
                         raise AssertionError
                     sasl_client.init()
                     return sasl_client
-                self._transport = thrift_sasl.TSaslClientTransport(sasl_factory, sasl_auth, socket)
+                self._transport = thrift_sasl.TSaslClientTransport(
+                    sasl_factory, sasl_auth, socket)
             else:
                 # All HS2 config options:
                 # https://cwiki.apache.org/confluence/display/Hive/Setting+Up+HiveServer2#SettingUpHiveServer2-Configuration
@@ -152,7 +158,8 @@ class Connection(object):
                     "Only NONE, NOSASL, LDAP, KERBEROS, CUSTOM "
                     "authentication are supported, got {}".format(auth))
 
-        protocol = thrift.protocol.TBinaryProtocol.TBinaryProtocol(self._transport)
+        protocol = thrift.protocol.TBinaryProtocol.TBinaryProtocol(
+            self._transport)
         self._client = TCLIService.Client(protocol)
         # oldest version that still contains features we care about
         # "V6 uses binary type for binary payload (was string) and uses columnar result set"
@@ -169,7 +176,8 @@ class Connection(object):
             assert response.sessionHandle is not None, "Expected a session from OpenSession"
             self._sessionHandle = response.sessionHandle
             assert response.serverProtocolVersion == protocol_version, \
-                "Unable to handle protocol version {}".format(response.serverProtocolVersion)
+                "Unable to handle protocol version {}".format(
+                    response.serverProtocolVersion)
             with contextlib.closing(self.cursor()) as cursor:
                 cursor.execute('USE `{}`'.format(database))
         except:
@@ -200,7 +208,23 @@ class Connection(object):
         return self._sessionHandle
 
     def rollback(self):
-        raise NotSupportedError("Hive does not have transactions")  # pragma: no cover
+        raise NotSupportedError(
+            "Hive does not have transactions")  # pragma: no cover
+
+
+def process_timestamp(value):
+    return dt.datetime.strptime(value, '%Y-%m-%d %H:%M:%S.%f')
+
+
+def process_date(value):
+    return dt.datetime.strptime(value, '%Y-%m-%d').date()
+
+
+TYPE_PROCESSORS = {
+    ttypes.TTypeId.DECIMAL_TYPE: decimal.Decimal,
+    ttypes.TTypeId.TIMESTAMP_TYPE: process_timestamp,
+    ttypes.TTypeId.DATE_TYPE: process_date
+}
 
 
 class Cursor(common.DBAPICursor):
@@ -221,6 +245,7 @@ class Cursor(common.DBAPICursor):
         """Reset state about the previous query in preparation for running another query"""
         super(Cursor, self)._reset_state()
         self._description = None
+        self._column_processors = None
         if self._operationHandle is not None:
             request = ttypes.TCloseOperationReq(self._operationHandle)
             try:
@@ -266,11 +291,41 @@ class Cursor(common.DBAPICursor):
                     type_id = primary_type_entry.primitiveEntry.type
                     type_code = ttypes.TTypeId._VALUES_TO_NAMES[type_id]
                 self._description.append((
-                    col.columnName.decode('utf-8') if sys.version_info[0] == 2 else col.columnName,
-                    type_code.decode('utf-8') if sys.version_info[0] == 2 else type_code,
+                    col.columnName.decode(
+                        'utf-8') if sys.version_info[0] == 2 else col.columnName,
+                    type_code.decode(
+                        'utf-8') if sys.version_info[0] == 2 else type_code,
                     None, None, None, None, True
                 ))
         return self._description
+
+    @property
+    def column_processors(self):
+        if self._operationHandle is None or not self._operationHandle.hasResultSet:
+            return None
+        if self._column_processors is not None:
+            return self._column_processors
+
+        req = ttypes.TGetResultSetMetadataReq(self._operationHandle)
+        response = self._connection.client.GetResultSetMetadata(req)
+        _check_status(response)
+        columns = response.schema.columns
+
+        self._column_processors = dict()
+        for pos, col in enumerate(columns):
+            primary_type_entry = col.typeDesc.types[0]
+            if primary_type_entry.primitiveEntry is not None:
+                type_id = primary_type_entry.primitiveEntry.type
+                if type_id in TYPE_PROCESSORS:
+                    self._column_processors[pos] = TYPE_PROCESSORS[type_id]
+        return self._column_processors
+
+    def process_column(self, position, values):
+        if position not in self.column_processors:
+            return values
+
+        processor = self.column_processors[position]
+        return [processor(value) if value is not None else None for value in values]
 
     def close(self):
         """Close the operation handle"""
@@ -308,8 +363,10 @@ class Cursor(common.DBAPICursor):
 
     def _fetch_more(self):
         """Send another TFetchResultsReq and update state"""
-        assert(self._state == self._STATE_RUNNING), "Should be running when in _fetch_more"
-        assert(self._operationHandle is not None), "Should have an op handle in _fetch_more"
+        assert(self._state ==
+               self._STATE_RUNNING), "Should be running when in _fetch_more"
+        assert(
+            self._operationHandle is not None), "Should have an op handle in _fetch_more"
         if not self._operationHandle.hasResultSet:
             raise ProgrammingError("No result set")
         req = ttypes.TFetchResultsReq(
@@ -321,6 +378,8 @@ class Cursor(common.DBAPICursor):
         _check_status(response)
         assert not response.results.rows, 'expected data in columnar format'
         columns = map(_unwrap_column, response.results.columns)
+        columns = (self.process_column(pos, values)
+                   for pos, values in enumerate(columns))
         new_data = list(zip(*columns))
         self._data += new_data
         # response.hasMoreRows seems to always be False, so we instead check the number of rows
@@ -376,7 +435,8 @@ class Cursor(common.DBAPICursor):
                 response = self._connection.client.FetchResults(req)
                 _check_status(response)
                 assert not response.results.rows, 'expected data in columnar format'
-                assert len(response.results.columns) == 1, response.results.columns
+                assert len(
+                    response.results.columns) == 1, response.results.columns
                 new_logs = _unwrap_column(response.results.columns[0])
                 logs += new_logs
 
@@ -414,7 +474,8 @@ def _unwrap_column(col):
                     if byte & (1 << b):
                         result[i * 8 + b] = None
             return result
-    raise DataError("Got empty column value {}".format(col))  # pragma: no cover
+    raise DataError("Got empty column value {}".format(col)
+                    )  # pragma: no cover
 
 
 def _check_status(response):

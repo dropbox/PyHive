@@ -5,22 +5,21 @@ https://github.com/zzzeek/sqlalchemy/blob/rel_0_5/lib/sqlalchemy/databases/sqlit
 which is released under the MIT license.
 """
 
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
 
+import ast
+import datetime
 import decimal
-
 import re
-from sqlalchemy import exc
-from sqlalchemy import processors
-from sqlalchemy import types
-from sqlalchemy import util
+
+from sqlalchemy import exc, processors, types, util
 # TODO shouldn't use mysql type
 from sqlalchemy.databases import mysql
+from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.engine import default
-import datetime
 from sqlalchemy.sql import compiler
 from sqlalchemy.sql.compiler import SQLCompiler
+from sqlalchemy.sql.sqltypes import Indexable, TypeEngine
 
 from pyhive import hive
 from pyhive.common import UniversalSet
@@ -34,52 +33,87 @@ class HiveStringTypeBase(types.TypeDecorator):
         raise NotImplementedError("Writing to Hive not supported")
 
 
-class HiveDate(HiveStringTypeBase):
-    """Translates date strings to date objects"""
-    impl = types.DATE
+# class HiveDate(HiveStringTypeBase):
+#     """Translates date strings to date objects"""
+#     impl = types.DATE
 
-    def process_result_value(self, value, dialect):
-        return processors.str_to_date(value)
+#     def process_result_value(self, value, dialect):
+#         return processors.str_to_date(value)
 
-    def process_bind_param(self, value, dialect):
-        if isinstance(value, datetime.date) or isinstance(value, datetime.datetime):
-            return value.strftime('%Y-%m-%d')
-        else:
-            raise TypeError(
-                "Hive Date type only accepts Python date or datetime objects as input.")
-
-
-class HiveTimestamp(HiveStringTypeBase):
-    """Translates timestamp strings to datetime objects"""
-    impl = types.TIMESTAMP
-
-    def process_result_value(self, value, dialect):
-        return processors.str_to_datetime(value)
-
-    def process_bind_param(self, value, dialect):
-        if isinstance(value, datetime.datetime):
-            return value.strftime('%Y-%m-%d %H:%M:%S.%f')
-        else:
-            raise TypeError(
-                "Hive Timestamp type only accepts Python datetime objects as input.")
+#     def process_bind_param(self, value, dialect):
+#         if isinstance(value, datetime.date) or isinstance(value, datetime.datetime):
+#             return value.strftime('%Y-%m-%d')
+#         else:
+#             raise TypeError(
+#                 "Hive Date type only accepts Python date or datetime objects as input.")
 
 
-class HiveDecimal(HiveStringTypeBase):
-    """Translates strings to decimals"""
-    impl = types.DECIMAL
+# class HiveTimestamp(HiveStringTypeBase):
+#     """Translates timestamp strings to datetime objects"""
+#     impl = types.TIMESTAMP
 
-    def process_result_value(self, value, dialect):
-        if value is None:
-            return None
-        else:
-            return decimal.Decimal(value)
+#     def process_result_value(self, value, dialect):
+#         return processors.str_to_datetime(value)
 
-    def process_bind_param(self, value, dialect):
-        if isinstance(value, decimal.Decimal):
-            return '{0:f}'.format(value)
-        else:
-            raise TypeError(
-                "Hive Decimal type only accepts Python decimal objects as input.")
+#     def process_bind_param(self, value, dialect):
+#         if isinstance(value, datetime.datetime):
+#             return value.strftime('%Y-%m-%d %H:%M:%S.%f')
+#         else:
+#             raise TypeError(
+#                 "Hive Timestamp type only accepts Python datetime objects as input.")
+
+
+# class HiveDecimal(HiveStringTypeBase):
+#     """Translates strings to decimals"""
+#     impl = types.DECIMAL
+
+#     def process_result_value(self, value, dialect):
+#         if value is None:
+#             return None
+#         else:
+#             return decimal.Decimal(value)
+
+#     def process_bind_param(self, value, dialect):
+#         if isinstance(value, decimal.Decimal):
+#             return '{0:f}'.format(value)
+#         else:
+#             raise TypeError(
+#                 "Hive Decimal type only accepts Python decimal objects as input.")
+
+
+class HiveResultParseError(Exception):
+    pass
+
+
+class MAP(Indexable, TypeEngine):
+    __visit_name__ = 'MAP'
+    python_type = dict
+    should_evaluate_none = True
+    hashable = False
+
+    def __init__(self, key_type, value_type):
+        # key_type should be primitive type
+        self.key_type = (key_type()
+                         if isinstance(key_type, type) else key_type)
+        self.value_type = (value_type()
+                           if isinstance(value_type, type) else value_type)
+
+    # def literal_processor(self, dialect):
+    #     def process(value):
+
+    def bind_processor(self, dialect):
+        def process(value):
+            return repr(value)
+
+    def result_processor(self, dialect, coltype):
+        def process(value):
+            if value is None:
+                return None
+            evaluated = ast.literal_eval(value)
+            if not isinstance(evaluated, dict):
+                raise HiveResultParseError()
+            return evaluated
+        return process
 
 
 class HiveIdentifierPreparer(compiler.IdentifierPreparer):
@@ -102,14 +136,14 @@ _type_map = {
     'float': types.Float,
     'double': types.Float,
     'string': types.String,
-    'date': HiveDate,
-    'timestamp': HiveTimestamp,
+    'date': types.DATE,
+    'timestamp': types.TIMESTAMP,
     'binary': types.String,
-    'array': types.String,
-    'map': types.String,
+    'array': ARRAY,
+    'map': MAP,
     'struct': types.String,
     'uniontype': types.String,
-    'decimal': HiveDecimal,
+    'decimal': types.DECIMAL,
 }
 
 
@@ -177,6 +211,12 @@ class HiveTypeCompiler(compiler.GenericTypeCompiler):
     def visit_DATETIME(self, type_):
         return 'TIMESTAMP'
 
+    def visit_ARRAY(self, type_):
+        return 'ARRAY<{}>'.format(type_.item_type)
+
+    def visit_MAP(self, type_):
+        return 'MAP<{}, {}>'.format(type_.key_type, type_.value_type)
+
 
 class HiveExecutionContext(default.DefaultExecutionContext):
     """This is pretty much the same as SQLiteExecutionContext to work around the same issue.
@@ -219,12 +259,14 @@ class HiveDialect(default.DefaultDialect):
     returns_unicode_strings = True
     description_encoding = None
     supports_multivalues_insert = True
-    dbapi_type_map = {
-        'DATE_TYPE': HiveDate(),
-        'TIMESTAMP_TYPE': HiveTimestamp(),
-        'DECIMAL_TYPE': HiveDecimal(),
-    }
+    # dbapi_type_map = {
+    #     'DATE_TYPE': HiveDate(),
+    #     'TIMESTAMP_TYPE': HiveTimestamp(),
+    #     'DECIMAL_TYPE': types.DECIMAL()
+    # }
     type_compiler = HiveTypeCompiler
+    _json_deserializer = None
+    _json_serializer = None
 
     @classmethod
     def dbapi(cls):

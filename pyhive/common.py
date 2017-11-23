@@ -11,6 +11,8 @@ from builtins import object
 from builtins import range
 from builtins import str
 from past.builtins import basestring
+
+import datetime as dt
 from pyhive import exc
 import abc
 import collections
@@ -102,7 +104,8 @@ class DBAPICursor(with_metaclass(abc.ABCMeta, object)):
             raise exc.ProgrammingError("No query yet")
 
         # Sleep until we're done or we have some data to return
-        self._fetch_while(lambda: not self._data and self._state != self._STATE_FINISHED)
+        self._fetch_while(
+            lambda: not self._data and self._state != self._STATE_FINISHED)
 
         if not self._data:
             return None
@@ -221,7 +224,8 @@ class ParamEscaper(object):
         elif isinstance(parameters, (list, tuple)):
             return tuple(self.escape_item(x) for x in parameters)
         else:
-            raise exc.ProgrammingError("Unsupported param format: {}".format(parameters))
+            raise exc.ProgrammingError(
+                "Unsupported param format: {}".format(parameters))
 
     def escape_number(self, item):
         return item
@@ -242,6 +246,9 @@ class ParamEscaper(object):
         l = map(str, map(self.escape_item, item))
         return '(' + ','.join(l) + ')'
 
+    def escape_datetime(self, item):
+        return self.escape_string(str(item))
+
     def escape_item(self, item):
         if item is None:
             return 'NULL'
@@ -249,6 +256,8 @@ class ParamEscaper(object):
             return self.escape_number(item)
         elif isinstance(item, basestring):
             return self.escape_string(item)
+        elif isinstance(item, (dt.datetime, dt.date)):
+            return self.escape_datetime(item)
         elif isinstance(item, collections.Iterable):
             return self.escape_sequence(item)
         else:
@@ -257,5 +266,6 @@ class ParamEscaper(object):
 
 class UniversalSet(object):
     """set containing everything"""
+
     def __contains__(self, item):
         return True
