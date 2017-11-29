@@ -14,7 +14,6 @@ from pyhive import common
 from pyhive.common import DBAPITypeObject
 # Make all exceptions visible in this module per DB-API
 from pyhive.exc import *  # noqa
-from builtins import range
 import contextlib
 from future.utils import iteritems
 import getpass
@@ -23,6 +22,11 @@ import sys
 import thrift.protocol.TBinaryProtocol
 import thrift.transport.TSocket
 import thrift.transport.TTransport
+
+try:  # Python 3
+    from builtins import range
+except ImportError:  # Python 2
+    from __builtin__ import range
 
 # PEP 249 module globals
 apilevel = '2.0'
