@@ -15,7 +15,7 @@ import re
 from sqlalchemy import exc, processors, types, util
 # TODO shouldn't use mysql type
 from sqlalchemy.databases import mysql
-from sqlalchemy.dialects.postgresql import ARRAY
+from sqlalchemy.dialects.postgresql import ARRAY as PG_ARRAY, array as pg_array
 from sqlalchemy.engine import default
 from sqlalchemy.sql import compiler
 from sqlalchemy.sql.compiler import SQLCompiler
@@ -23,6 +23,8 @@ from sqlalchemy.sql.sqltypes import Indexable, TypeEngine
 
 from pyhive import hive
 from pyhive.common import UniversalSet
+
+from IPython.core.debugger import set_trace
 
 
 class HiveStringTypeBase(types.TypeDecorator):
@@ -85,6 +87,20 @@ class HiveResultParseError(Exception):
     pass
 
 
+class array(pg_array):
+
+    def __init__(self, clauses, **kw):
+        super(array, self).__init__(clauses, **kw)
+        self.type = ARRAY(self.type.item_type)
+
+
+class ARRAY(PG_ARRAY):
+
+    def _proc_array(self, arr, itemproc, dim, collection):
+        arr = ast.literal_eval(arr)
+        return super(ARRAY, self)._proc_array(arr, itemproc, dim, collection)
+
+
 class MAP(Indexable, TypeEngine):
     __visit_name__ = 'MAP'
     python_type = dict
@@ -102,16 +118,36 @@ class MAP(Indexable, TypeEngine):
     #     def process(value):
 
     def bind_processor(self, dialect):
+        key_proc = self.key_type.dialect_impl(dialect).\
+            bind_processor(dialect)
+        value_proc = self.value_type.dialect_impl(dialect).\
+            bind_processor(dialect)
+
         def process(value):
+            set_trace()
             return repr(value)
 
     def result_processor(self, dialect, coltype):
+        key_proc = self.key_type.dialect_impl(dialect).\
+            result_processor(dialect, coltype)
+        value_proc = self.value_type.dialect_impl(dialect).\
+            result_processor(dialect, coltype)
+
+        if not key_proc:
+            def key_proc(x): return x
+
+        if not value_proc:
+            def value_proc(x): return x
+
         def process(value):
             if value is None:
                 return None
             evaluated = ast.literal_eval(value)
             if not isinstance(evaluated, dict):
                 raise HiveResultParseError()
+            set_trace()
+            evaluated = {key_proc(k): value_proc(v)
+                         for k, v in evaluated.items()}
             return evaluated
         return process
 
@@ -148,6 +184,9 @@ _type_map = {
 
 
 class HiveCompiler(SQLCompiler):
+    def visit_array(self, element, **kw):
+        return 'array({})'.format(self.visit_clauselist(element, **kw))
+
     def visit_concat_op_binary(self, binary, operator, **kw):
         return "concat(%s, %s)" % (self.process(binary.left), self.process(binary.right))
 

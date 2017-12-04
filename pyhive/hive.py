@@ -26,6 +26,8 @@ import thrift.protocol.TBinaryProtocol
 import thrift.transport.TSocket
 import thrift.transport.TTransport
 
+from IPython.core.debugger import set_trace
+
 # PEP 249 module globals
 apilevel = '2.0'
 threadsafety = 2  # Threads may share the module and connections.
@@ -163,7 +165,7 @@ class Connection(object):
         self._client = TCLIService.Client(protocol)
         # oldest version that still contains features we care about
         # "V6 uses binary type for binary payload (was string) and uses columnar result set"
-        protocol_version = ttypes.TProtocolVersion.HIVE_CLI_SERVICE_PROTOCOL_V6
+        protocol_version = ttypes.TProtocolVersion.HIVE_CLI_SERVICE_PROTOCOL_V8
 
         try:
             self._transport.open()
@@ -285,6 +287,7 @@ class Cursor(common.DBAPICursor):
             for col in columns:
                 primary_type_entry = col.typeDesc.types[0]
                 if primary_type_entry.primitiveEntry is None:
+                    set_trace()
                     # All fancy stuff maps to string
                     type_code = ttypes.TTypeId._VALUES_TO_NAMES[ttypes.TTypeId.STRING_TYPE]
                 else:
