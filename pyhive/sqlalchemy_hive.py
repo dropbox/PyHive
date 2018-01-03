@@ -429,8 +429,10 @@ class HiveDDLCompiler(DDLCompiler):
         #     colspec += " NOT NULL"
         return colspec
 
-    def visit_primary_key_constraint(self, constraint):
-        # no primary_key_constraint
+    def create_table_constraints(
+        self, table,
+            _include_foreign_key_constraints=None):
+        # no constraints
         return ''
 
     def visit_create_column(self, create, first_pk=False):
