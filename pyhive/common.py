@@ -88,8 +88,9 @@ class DBAPICursor(with_metaclass(abc.ABCMeta, object)):
         """
         for parameters in seq_of_parameters[:-1]:
             self.execute(operation, parameters)
-            while self._state != self._STATE_FINISHED:
-                self._fetch_more()
+            if self._operationHandle.hasResultSet:
+                while self._state != self._STATE_FINISHED:
+                    self._fetch_more()
         if seq_of_parameters:
             self.execute(operation, seq_of_parameters[-1])
 
