@@ -172,6 +172,7 @@ class Connection(object):
             open_session_req = ttypes.TOpenSessionReq(
                 client_protocol=protocol_version,
                 configuration=configuration,
+                username=username,
             )
             response = self._client.OpenSession(open_session_req)
             _check_status(response)
