@@ -5,24 +5,35 @@ https://github.com/zzzeek/sqlalchemy/blob/rel_0_5/lib/sqlalchemy/databases/sqlit
 which is released under the MIT license.
 """
 
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
 
-import decimal
-
+import ast
 import re
-from sqlalchemy import exc
-from sqlalchemy import processors
-from sqlalchemy import types
-from sqlalchemy import util
+
+from IPython.core.debugger import set_trace
+from sqlalchemy import exc, types, util
 # TODO shouldn't use mysql type
 from sqlalchemy.databases import mysql
+from sqlalchemy.dialects.postgresql import ARRAY as PG_ARRAY
+from sqlalchemy.dialects.postgresql import array as pg_array
 from sqlalchemy.engine import default
-from sqlalchemy.sql import compiler
-from sqlalchemy.sql.compiler import SQLCompiler
+from sqlalchemy.schema import (ColumnCollectionConstraint,
+                               ColumnCollectionMixin, SchemaItem)
+from sqlalchemy.sql import compiler, crud, operators
+from sqlalchemy.sql.base import DialectKWArgs, _generative
+from sqlalchemy.sql.compiler import DDLCompiler, SQLCompiler
+from sqlalchemy.sql.dml import Insert as StandardInsert
+from sqlalchemy.sql.sqltypes import Indexable, TypeEngine
 
 from pyhive import hive
 from pyhive.common import UniversalSet
+
+
+class Insert(StandardInsert):
+    @_generative
+    def overwrite(self):
+        self._overwrite = True
+        return self
 
 
 class HiveStringTypeBase(types.TypeDecorator):
@@ -33,31 +44,128 @@ class HiveStringTypeBase(types.TypeDecorator):
         raise NotImplementedError("Writing to Hive not supported")
 
 
-class HiveDate(HiveStringTypeBase):
-    """Translates date strings to date objects"""
-    impl = types.DATE
+# class HiveDate(HiveStringTypeBase):
+#     """Translates date strings to date objects"""
+#     impl = types.DATE
 
-    def process_result_value(self, value, dialect):
-        return processors.str_to_date(value)
+#     def process_result_value(self, value, dialect):
+#         return processors.str_to_date(value)
+
+#     def process_bind_param(self, value, dialect):
+#         if isinstance(value, datetime.date) or isinstance(value, datetime.datetime):
+#             return value.strftime('%Y-%m-%d')
+#         else:
+#             raise TypeError(
+#                 "Hive Date type only accepts Python date or datetime objects as input.")
 
 
-class HiveTimestamp(HiveStringTypeBase):
-    """Translates timestamp strings to datetime objects"""
-    impl = types.TIMESTAMP
+# class HiveTimestamp(HiveStringTypeBase):
+#     """Translates timestamp strings to datetime objects"""
+#     impl = types.TIMESTAMP
 
-    def process_result_value(self, value, dialect):
-        return processors.str_to_datetime(value)
+#     def process_result_value(self, value, dialect):
+#         return processors.str_to_datetime(value)
+
+#     def process_bind_param(self, value, dialect):
+#         if isinstance(value, datetime.datetime):
+#             return value.strftime('%Y-%m-%d %H:%M:%S.%f')
+#         else:
+#             raise TypeError(
+#                 "Hive Timestamp type only accepts Python datetime objects as input.")
 
 
-class HiveDecimal(HiveStringTypeBase):
-    """Translates strings to decimals"""
-    impl = types.DECIMAL
+# class HiveDecimal(HiveStringTypeBase):
+#     """Translates strings to decimals"""
+#     impl = types.DECIMAL
 
-    def process_result_value(self, value, dialect):
-        if value is None:
-            return None
-        else:
-            return decimal.Decimal(value)
+#     def process_result_value(self, value, dialect):
+#         if value is None:
+#             return None
+#         else:
+#             return decimal.Decimal(value)
+
+#     def process_bind_param(self, value, dialect):
+#         if isinstance(value, decimal.Decimal):
+#             return '{0:f}'.format(value)
+#         else:
+#             raise TypeError(
+#                 "Hive Decimal type only accepts Python decimal objects as input.")
+
+
+class HiveResultParseError(Exception):
+    pass
+
+
+class array(pg_array):
+
+    def __init__(self, clauses, **kw):
+        super(array, self).__init__(clauses, **kw)
+        self.type = ARRAY(self.type.item_type)
+
+
+class ARRAY(PG_ARRAY):
+
+    def _proc_array(self, arr, itemproc, dim, collection):
+        arr = ast.literal_eval(arr)
+        return super(ARRAY, self)._proc_array(arr, itemproc, dim, collection)
+
+
+class MAP(Indexable, TypeEngine):
+    __visit_name__ = 'MAP'
+    python_type = dict
+    should_evaluate_none = True
+    hashable = False
+
+    def __init__(self, key_type, value_type):
+        # key_type should be primitive type
+        self.key_type = (key_type()
+                         if isinstance(key_type, type) else key_type)
+        self.value_type = (value_type()
+                           if isinstance(value_type, type) else value_type)
+
+    # def literal_processor(self, dialect):
+    #     def process(value):
+
+    def bind_processor(self, dialect):
+        # TODO: bind for complex type
+        key_proc = self.key_type.dialect_impl(dialect).\
+            bind_processor(dialect)
+        value_proc = self.value_type.dialect_impl(dialect).\
+            bind_processor(dialect)
+
+        def process(value):
+            return repr(value)
+
+    def result_processor(self, dialect, coltype):
+        key_proc = self.key_type.dialect_impl(dialect).\
+            result_processor(dialect, coltype)
+        value_proc = self.value_type.dialect_impl(dialect).\
+            result_processor(dialect, coltype)
+
+        if not key_proc:
+            def key_proc(x): return x
+
+        if not value_proc:
+            def value_proc(x): return x
+
+        def process(value):
+            if value is None:
+                return None
+            evaluated = ast.literal_eval(value)
+            if not isinstance(evaluated, dict):
+                raise HiveResultParseError()
+            evaluated = {key_proc(k): value_proc(v)
+                         for k, v in evaluated.items()}
+            return evaluated
+        return process
+
+    class Comparator(Indexable.Comparator):
+        """Define comparison operations for :class:`MAP`."""
+
+        def _setup_getitem(self, index):
+            return operators.getitem, index, self.type.value_type
+
+    comparator_factory = Comparator
 
 
 class HiveIdentifierPreparer(compiler.IdentifierPreparer):
@@ -80,35 +188,146 @@ _type_map = {
     'float': types.Float,
     'double': types.Float,
     'string': types.String,
-    'date': HiveDate,
-    'timestamp': HiveTimestamp,
+    'date': types.DATE,
+    'timestamp': types.TIMESTAMP,
     'binary': types.String,
-    'array': types.String,
-    'map': types.String,
+    'array': ARRAY,
+    'map': MAP,
     'struct': types.String,
     'uniontype': types.String,
-    'decimal': HiveDecimal,
+    'decimal': types.DECIMAL,
 }
 
 
-class HiveCompiler(SQLCompiler):
+class HiveSQLCompiler(SQLCompiler):
+
+    def visit_getitem_binary(self, binary, operator, **kw):
+        return "%s[%s]" % (
+            self.process(binary.left, **kw),
+            self.process(binary.right, **kw)
+        )
+
+    def visit_array(self, element, **kw):
+        return 'array({})'.format(self.visit_clauselist(element, **kw))
+
     def visit_concat_op_binary(self, binary, operator, **kw):
         return "concat(%s, %s)" % (self.process(binary.left), self.process(binary.right))
 
-    def visit_insert(self, *args, **kwargs):
-        result = super(HiveCompiler, self).visit_insert(*args, **kwargs)
-        # Massage the result into Hive's format
-        #   INSERT INTO `pyhive_test_database`.`test_table` (`a`) SELECT ...
-        #   =>
-        #   INSERT INTO TABLE `pyhive_test_database`.`test_table` SELECT ...
-        regex = r'^(INSERT INTO) ([^\s]+) \([^\)]*\)'
-        assert re.search(regex, result), "Unexpected visit_insert result: {}".format(result)
-        return re.sub(regex, r'\1 TABLE \2', result)
+    def visit_insert(self, insert_stmt, asfrom=False, **kw):
+        toplevel = not self.stack
+
+        self.stack.append(
+            {'correlate_froms': set(),
+             "asfrom_froms": set(),
+             "selectable": insert_stmt})
+
+        crud_params = crud._setup_crud_params(
+            self, insert_stmt, crud.ISINSERT, **kw)
+
+        if not crud_params and \
+                not self.dialect.supports_default_values and \
+                not self.dialect.supports_empty_insert:
+            raise exc.CompileError("The '%s' dialect with current database "
+                                   "version settings does not support empty "
+                                   "inserts." %
+                                   self.dialect.name)
+
+        if insert_stmt._has_multi_parameters:
+            if not self.dialect.supports_multivalues_insert:
+                raise exc.CompileError(
+                    "The '%s' dialect with current database "
+                    "version settings does not support "
+                    "in-place multirow inserts." %
+                    self.dialect.name)
+            crud_params_single = crud_params[0]
+        else:
+            crud_params_single = crud_params
+
+        preparer = self.preparer
+        supports_default_values = self.dialect.supports_default_values
+
+        text = "INSERT "
+
+        if insert_stmt._prefixes:
+            text += self._generate_prefixes(insert_stmt,
+                                            insert_stmt._prefixes, **kw)
+
+        if getattr(insert_stmt, '_overwrite', False):
+            text += "OVERWRITE "
+        else:
+            text += "INTO "
+
+        table_text = preparer.format_table(insert_stmt.table)
+
+        # Add PARTITION(partitions) hint
+        partitioned_by = getattr(insert_stmt.table, 'partitioned_by', False)
+        if partitioned_by:
+            pt_columns_str = ', '.join(self.preparer.format_column(c)
+                                       for c in partitioned_by.columns)
+            insert_stmt = insert_stmt.with_hint(f'PARTITION ({pt_columns_str})')
+
+        if insert_stmt._hints:
+            dialect_hints, table_text = self._setup_crud_hints(
+                insert_stmt, table_text)
+        else:
+            dialect_hints = None
+
+        text += "TABLE " + table_text
+
+        # if crud_params_single or not supports_default_values:
+        #     text += " (%s)" % ', '.join([preparer.format_column(c[0])
+        #                                  for c in crud_params_single])
+
+        if self.returning or insert_stmt._returning:
+            returning_clause = self.returning_clause(
+                insert_stmt, self.returning or insert_stmt._returning)
+
+            if self.returning_precedes_values:
+                text += " " + returning_clause
+        else:
+            returning_clause = None
+
+        if insert_stmt.select is not None:
+            text += " %s" % self.process(self._insert_from_select, **kw)
+        elif not crud_params and supports_default_values:
+            text += " DEFAULT VALUES"
+        elif insert_stmt._has_multi_parameters:
+            text += " VALUES %s" % (
+                ", ".join(
+                    "(%s)" % (
+                        ', '.join(c[1] for c in crud_param_set)
+                    )
+                    for crud_param_set in crud_params
+                )
+            )
+        else:
+            text += " VALUES (%s)" % \
+                ', '.join([c[1] for c in crud_params])
+
+        if insert_stmt._post_values_clause is not None:
+            post_values_clause = self.process(
+                insert_stmt._post_values_clause, **kw)
+            if post_values_clause:
+                text += " " + post_values_clause
+
+        if returning_clause and not self.returning_precedes_values:
+            text += " " + returning_clause
+
+        if self.ctes and toplevel:
+            text = self._render_cte_clause() + text
+
+        self.stack.pop(-1)
+
+        if asfrom:
+            return "(" + text + ")"
+        else:
+            return text
 
     def visit_column(self, *args, **kwargs):
-        result = super(HiveCompiler, self).visit_column(*args, **kwargs)
+        result = super(HiveSQLCompiler, self).visit_column(*args, **kwargs)
         dot_count = result.count('.')
-        assert dot_count in (0, 1, 2), "Unexpected visit_column result {}".format(result)
+        assert dot_count in (
+            0, 1, 2), "Unexpected visit_column result {}".format(result)
         if dot_count == 2:
             # we have something of the form schema.table.column
             # hive doesn't like the schema in front, so chop it out
@@ -117,6 +336,19 @@ class HiveCompiler(SQLCompiler):
 
     def visit_char_length_func(self, fn, **kw):
         return 'length{}'.format(self.function_argspec(fn, **kw))
+
+    def get_select_hint_text(self, byfroms):
+        return None
+
+    def get_from_hint_text(self, table, text):
+        # TODO:
+        return text
+
+    def get_crud_hint_text(self, table, text):
+        return None
+
+    def get_statement_hint_text(self, hint_texts):
+        return " ".join(hint_texts)
 
 
 class HiveTypeCompiler(compiler.GenericTypeCompiler):
@@ -148,10 +380,16 @@ class HiveTypeCompiler(compiler.GenericTypeCompiler):
         return 'TIMESTAMP'
 
     def visit_DATE(self, type_):
-        return 'TIMESTAMP'
+        return 'DATE'
 
     def visit_DATETIME(self, type_):
         return 'TIMESTAMP'
+
+    def visit_ARRAY(self, type_):
+        return 'ARRAY<{}>'.format(type_.item_type)
+
+    def visit_MAP(self, type_):
+        return 'MAP<{}, {}>'.format(type_.key_type, type_.value_type)
 
 
 class HiveExecutionContext(default.DefaultExecutionContext):
@@ -177,12 +415,121 @@ class HiveExecutionContext(default.DefaultExecutionContext):
             return colname, None
 
 
+class HiveDDLCompiler(DDLCompiler):
+
+    def get_column_specification(self, column, **kwargs):
+        colspec = self.preparer.format_column(column) + " " + \
+            self.dialect.type_compiler.process(
+                column.type, type_expression=column)
+        default = self.get_column_default_string(column)
+        if default is not None:
+            colspec += " DEFAULT " + default
+
+        # if not column.nullable:
+        #     colspec += " NOT NULL"
+        return colspec
+
+    def create_table_constraints(
+        self, table,
+            _include_foreign_key_constraints=None):
+        # no constraints
+        return ''
+
+    def visit_create_column(self, create, first_pk=False):
+        # ignore partition keys
+        column = create.element
+        if hasattr(column.table, 'partitioned_by'):
+            if column.name in column.table.partitioned_by.columns:
+                return None
+        return DDLCompiler.visit_create_column(self, create, first_pk=False)
+
+    def create_table_suffix(self, table):
+        '''
+        CREATE TABLE <create_tabel_suffix> (...)
+        '''
+        return ''
+
+    def visit_partitioned_by(self, partitioned_by):
+
+        partition_by_str = ', '.join(self.get_column_specification(c)
+                                     for c in partitioned_by.columns)
+        partition_by_str = f'PARTITIONED BY ({partition_by_str})'
+        return partition_by_str
+
+    def post_create_table(self, table):
+        '''
+        CREATE TABLE (...) <post_create_table>
+        '''
+        table_opts = []
+
+        if hasattr(table, 'partitioned_by'):
+            table_opts.append(self.process(table.partitioned_by))
+
+        dialect_name = self.dialect.name
+        if isinstance(dialect_name, bytes):
+            dialect_name = dialect_name.decode()
+
+        opts = dict(
+            (
+                k[len(dialect_name) + 1:].upper(),
+                v
+            )
+            for k, v in table.kwargs.items()
+            if k.startswith('%s_' % dialect_name)
+        )
+
+        # Example
+        # PARTITIONED BY (YYYY INT, MM INT, DD INT)
+        # CLUSTERED BY (beacon) INTO 2 BUCKETS
+        # STORED AS ORC
+        # TBLPROPERTIES ('transactional'='true');
+
+        for opt in util.topological.sort([('PARTITIONED_BY', 'STORED_AS')], opts):
+            arg = opts[opt]
+            # if opt in _reflection._options_of_type_string:
+            #     arg = "'%s'" % arg.replace("\\", "\\\\").replace("'", "''")
+
+            if opt in ('DATA_DIRECTORY', 'INDEX_DIRECTORY',
+                       'DEFAULT_CHARACTER_SET', 'CHARACTER_SET',
+                       'DEFAULT_CHARSET',
+                       'DEFAULT_COLLATE', 'PARTITIONED_BY',
+                       'CLUSTERED_BY',
+                       'STORED_AS'
+                       ):
+                opt = opt.replace('_', ' ')
+
+            joiner = '='
+            if opt in ('TABLESPACE', 'DEFAULT CHARACTER SET',
+                       'CHARACTER SET', 'COLLATE',
+                       'PARTITIONED BY', 'PARTITIONS',
+                       'STORED AS',
+                       ):
+                joiner = ' '
+
+            table_opts.append(joiner.join((opt, arg)))
+        return '\n' + '\n'.join(table_opts)
+
+
+class PartitionedBy(ColumnCollectionMixin, DialectKWArgs, SchemaItem):
+    __visit_name__ = 'partitioned_by'
+
+    def __init__(self, *columns, **kw):
+        SchemaItem.__init__(self, **kw)
+        DialectKWArgs.__init__(self, **kw)
+        ColumnCollectionMixin.__init__(self, *columns, **kw)
+
+    def _set_parent(self, table):
+        ColumnCollectionMixin._set_parent(self, table)
+        table.partitioned_by = self
+
+
 class HiveDialect(default.DefaultDialect):
     name = b'hive'
     driver = b'thrift'
     execution_ctx_cls = HiveExecutionContext
     preparer = HiveIdentifierPreparer
-    statement_compiler = HiveCompiler
+    statement_compiler = HiveSQLCompiler
+    ddl_compiler = HiveDDLCompiler
     supports_views = True
     supports_alter = True
     supports_pk_autoincrement = False
@@ -195,12 +542,14 @@ class HiveDialect(default.DefaultDialect):
     returns_unicode_strings = True
     description_encoding = None
     supports_multivalues_insert = True
-    dbapi_type_map = {
-        'DATE_TYPE': HiveDate(),
-        'TIMESTAMP_TYPE': HiveTimestamp(),
-        'DECIMAL_TYPE': HiveDecimal(),
-    }
+    # dbapi_type_map = {
+    #     'DATE_TYPE': HiveDate(),
+    #     'TIMESTAMP_TYPE': HiveTimestamp(),
+    #     'DECIMAL_TYPE': types.DECIMAL()
+    # }
     type_compiler = HiveTypeCompiler
+    _json_deserializer = None
+    _json_serializer = None
 
     @classmethod
     def dbapi(cls):
@@ -234,7 +583,8 @@ class HiveDialect(default.DefaultDialect):
         # Using DESCRIBE works but is uglier.
         try:
             # This needs the table name to be unescaped (no backticks).
-            rows = connection.execute('DESCRIBE {}'.format(full_table)).fetchall()
+            rows = connection.execute(
+                'DESCRIBE {}'.format(full_table)).fetchall()
         except exc.OperationalError as e:
             # Does the table exist?
             regex_fmt = r'TExecuteStatementResp.*SemanticException.*Table not found {}'
@@ -274,7 +624,8 @@ class HiveDialect(default.DefaultDialect):
             try:
                 coltype = _type_map[col_type]
             except KeyError:
-                util.warn("Did not recognize type '%s' of column '%s'" % (col_type, col_name))
+                util.warn("Did not recognize type '%s' of column '%s'" %
+                          (col_type, col_name))
                 coltype = types.NullType
             result.append({
                 'name': col_name,
