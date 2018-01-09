@@ -110,6 +110,50 @@ class ARRAY(PG_ARRAY):
         return super(ARRAY, self)._proc_array(arr, itemproc, dim, collection)
 
 
+def identity(x):
+    return x
+
+
+class STRUCT(TypeEngine):
+    __visit_name__ = 'STRUCT'
+    python_type = dict
+    shoulde_evaluate_none = True
+    hashable = True
+
+    def __init__(self, cols_name_type):
+        self.cols_name_type = cols_name_type
+
+    def bind_processor(self, dialect):
+        # TODO: bind for complex type
+        def process(value):
+            return repr(value)
+        return process
+
+    def result_processor(self, dialect, coltype):
+        def get_type_proc(t):
+            proc = t.dialect_impl(dialect).result_processor(dialect, coltype)
+            if proc is None:
+                return identity
+            else:
+                return proc
+
+        col_procs_map = {
+            n: get_type_proc(t)
+            for n, t in self.cols_name_type}
+
+        def process(value):
+            if value is None:
+                return None
+            value = ast.literal_eval(value)
+            if not isinstance(value, dict):
+                raise HiveResultParseError()
+            value = {k: col_procs_map[k](v)
+                     for k, v in value.items()}
+            return value
+
+        return process
+
+
 class MAP(Indexable, TypeEngine):
     __visit_name__ = 'MAP'
     python_type = dict
@@ -135,6 +179,7 @@ class MAP(Indexable, TypeEngine):
 
         def process(value):
             return repr(value)
+        return process
 
     def result_processor(self, dialect, coltype):
         key_proc = self.key_type.dialect_impl(dialect).\
