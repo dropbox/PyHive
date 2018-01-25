@@ -13,7 +13,7 @@ DB-API
 ------
 .. code-block:: python
 
-    from pyhive import presto
+    from pyhive import presto  # or import hive
     cursor = presto.connect('localhost').cursor()
     cursor.execute('SELECT * FROM my_awesome_data LIMIT 10')
     print cursor.fetchone()
@@ -50,7 +50,10 @@ First install this package to register it with SQLAlchemy (see ``setup.py``).
     from sqlalchemy import *
     from sqlalchemy.engine import create_engine
     from sqlalchemy.schema import *
+    # Presto
     engine = create_engine('presto://localhost:8080/hive/default')
+    # Hive
+    engine = create_engine('hive://localhost:10000/default')
     logs = Table('my_awesome_data', MetaData(bind=engine), autoload=True)
     print select([func.count('*')], from_obj=logs).scalar()
 
@@ -67,8 +70,18 @@ Passing session configuration
     presto.connect('localhost', session_props={'query_max_run_time': '1234m'})
     # SQLAlchemy
     create_engine(
+        'presto://user@host:443/hive',
+        connect_args={'protocol': 'https',
+                      'session_props': {'query_max_run_time': '1234m'}}
+    )
+    create_engine(
         'hive://user@host:10000/database',
         connect_args={'configuration': {'hive.exec.reducers.max': '123'}},
+    )
+    # SQLAlchemy with LDAP
+    create_engine(
+        'hive://user:password@host:10000/database',
+        connect_args={'auth': 'LDAP'},
     )
 
 Requirements
@@ -79,13 +92,14 @@ Install using
 - ``pip install pyhive[hive]`` for the Hive interface and
 - ``pip install pyhive[presto]`` for the Presto interface.
 
-`PyHive` works with
+PyHive works with
 
-- Python 2.7
+- Python 2.7 / Python 3
 - For Presto: Presto install
 - For Hive: `HiveServer2 <https://cwiki.apache.org/confluence/display/Hive/Setting+up+HiveServer2>`_ daemon
-
-There's also a `third party Conda package <https://binstar.org/blaze/pyhive>`_.
+- For Python 3 + Hive + SASL, you currently need to install an unreleased version of ``thrift_sasl``
+  (``pip install git+https://github.com/cloudera/thrift_sasl``).
+  At the time of writing, the latest version of ``thrift_sasl`` was 0.2.1.
 
 Changelog
 =========
@@ -95,6 +109,12 @@ Contributing
 ============
 - Please fill out the Dropbox Contributor License Agreement at https://opensource.dropbox.com/cla/ and note this in your pull request.
 - Changes must come with tests, with the exception of trivial things like fixing comments. See .travis.yml for the test environment setup.
+- Notes on project scope:
+
+  - This project is intended to be a minimal Hive/Presto client that does that one thing and nothing else.
+    Features that can be implemented on top of PyHive, such integration with your favorite data analysis library, are likely out of scope.
+  - We prefer having a small number of generic features over a large number of specialized, inflexible features.
+    For example, the Presto code takes an arbitrary ``requests_session`` argument for customizing HTTP calls, as opposed to having a separate parameter/branch for each ``requests`` option.
 
 Testing
 =======

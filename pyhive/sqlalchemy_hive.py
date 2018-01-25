@@ -7,27 +7,22 @@ which is released under the MIT license.
 
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from distutils.version import StrictVersion
-from pyhive import hive
-from pyhive.common import UniversalSet
-from sqlalchemy.sql import compiler
+
+import decimal
+
+import re
 from sqlalchemy import exc
+from sqlalchemy import processors
 from sqlalchemy import types
 from sqlalchemy import util
+# TODO shouldn't use mysql type
 from sqlalchemy.databases import mysql
 from sqlalchemy.engine import default
-import decimal
-import re
-import sqlalchemy
+from sqlalchemy.sql import compiler
+from sqlalchemy.sql.compiler import SQLCompiler
 
-try:
-    from sqlalchemy import processors
-except ImportError:
-    from pyhive import sqlalchemy_backports as processors
-try:
-    from sqlalchemy.sql.compiler import SQLCompiler
-except ImportError:
-    from sqlalchemy.sql.compiler import DefaultCompiler as SQLCompiler
+from pyhive import hive
+from pyhive.common import UniversalSet
 
 
 class HiveStringTypeBase(types.TypeDecorator):
@@ -59,7 +54,10 @@ class HiveDecimal(HiveStringTypeBase):
     impl = types.DECIMAL
 
     def process_result_value(self, value, dialect):
-        return decimal.Decimal(value)
+        if value is None:
+            return None
+        else:
+            return decimal.Decimal(value)
 
 
 class HiveIdentifierPreparer(compiler.IdentifierPreparer):
@@ -73,16 +71,12 @@ class HiveIdentifierPreparer(compiler.IdentifierPreparer):
         )
 
 
-try:
-    from sqlalchemy.types import BigInteger
-except ImportError:
-    from sqlalchemy.databases.mysql import MSBigInteger as BigInteger
 _type_map = {
     'boolean': types.Boolean,
     'tinyint': mysql.MSTinyInteger,
     'smallint': types.SmallInteger,
     'int': types.Integer,
-    'bigint': BigInteger,
+    'bigint': types.BigInteger,
     'float': types.Float,
     'double': types.Float,
     'string': types.String,
@@ -125,45 +119,68 @@ class HiveCompiler(SQLCompiler):
         return 'length{}'.format(self.function_argspec(fn, **kw))
 
 
-if StrictVersion(sqlalchemy.__version__) >= StrictVersion('0.6.0'):
-    class HiveTypeCompiler(compiler.GenericTypeCompiler):
-        def visit_INTEGER(self, type_):
-            return 'INT'
+class HiveTypeCompiler(compiler.GenericTypeCompiler):
+    def visit_INTEGER(self, type_):
+        return 'INT'
 
-        def visit_NUMERIC(self, type_):
-            return 'DECIMAL'
+    def visit_NUMERIC(self, type_):
+        return 'DECIMAL'
 
-        def visit_CHAR(self, type_):
-            return 'STRING'
+    def visit_CHAR(self, type_):
+        return 'STRING'
 
-        def visit_VARCHAR(self, type_):
-            return 'STRING'
+    def visit_VARCHAR(self, type_):
+        return 'STRING'
 
-        def visit_NCHAR(self, type_):
-            return 'STRING'
+    def visit_NCHAR(self, type_):
+        return 'STRING'
 
-        def visit_TEXT(self, type_):
-            return 'STRING'
+    def visit_TEXT(self, type_):
+        return 'STRING'
 
-        def visit_CLOB(self, type_):
-            return 'STRING'
+    def visit_CLOB(self, type_):
+        return 'STRING'
 
-        def visit_BLOB(self, type_):
-            return 'BINARY'
+    def visit_BLOB(self, type_):
+        return 'BINARY'
 
-        def visit_TIME(self, type_):
-            return 'TIMESTAMP'
+    def visit_TIME(self, type_):
+        return 'TIMESTAMP'
 
-        def visit_DATE(self, type_):
-            return 'TIMESTAMP'
+    def visit_DATE(self, type_):
+        return 'TIMESTAMP'
 
-        def visit_DATETIME(self, type_):
-            return 'TIMESTAMP'
+    def visit_DATETIME(self, type_):
+        return 'TIMESTAMP'
+
+
+class HiveExecutionContext(default.DefaultExecutionContext):
+    """This is pretty much the same as SQLiteExecutionContext to work around the same issue.
+
+    http://docs.sqlalchemy.org/en/latest/dialects/sqlite.html#dotted-column-names
+
+    engine = create_engine('hive://...', execution_options={'hive_raw_colnames': True})
+    """
+
+    @util.memoized_property
+    def _preserve_raw_colnames(self):
+        # Ideally, this would also gate on hive.resultset.use.unique.column.names
+        return self.execution_options.get('hive_raw_colnames', False)
+
+    def _translate_colname(self, colname):
+        # Adjust for dotted column names.
+        # When hive.resultset.use.unique.column.names is true (the default), Hive returns column
+        # names as "tablename.colname" in cursor.description.
+        if not self._preserve_raw_colnames and '.' in colname:
+            return colname.split('.')[-1], colname
+        else:
+            return colname, None
 
 
 class HiveDialect(default.DefaultDialect):
     name = b'hive'
     driver = b'thrift'
+    execution_ctx_cls = HiveExecutionContext
     preparer = HiveIdentifierPreparer
     statement_compiler = HiveCompiler
     supports_views = True
@@ -183,6 +200,7 @@ class HiveDialect(default.DefaultDialect):
         'TIMESTAMP_TYPE': HiveTimestamp(),
         'DECIMAL_TYPE': HiveDecimal(),
     }
+    type_compiler = HiveTypeCompiler
 
     @classmethod
     def dbapi(cls):
@@ -193,6 +211,7 @@ class HiveDialect(default.DefaultDialect):
             'host': url.host,
             'port': url.port or 10000,
             'username': url.username,
+            'password': url.password,
             'database': url.database or 'default',
         }
         kwargs.update(url.query)
@@ -200,7 +219,7 @@ class HiveDialect(default.DefaultDialect):
 
     def get_schema_names(self, connection, **kw):
         # Equivalent to SHOW DATABASES
-        return [row.database_name for row in connection.execute('SHOW SCHEMAS')]
+        return [row[0] for row in connection.execute('SHOW SCHEMAS')]
 
     def get_view_names(self, connection, schema=None, **kw):
         # Hive does not provide functionality to query tableType
@@ -220,7 +239,7 @@ class HiveDialect(default.DefaultDialect):
             # Does the table exist?
             regex_fmt = r'TExecuteStatementResp.*SemanticException.*Table not found {}'
             regex = regex_fmt.format(re.escape(full_table))
-            if re.search(regex, e.message):
+            if re.search(regex, e.args[0]):
                 raise exc.NoSuchTableError(full_table)
             else:
                 raise
@@ -255,8 +274,7 @@ class HiveDialect(default.DefaultDialect):
             try:
                 coltype = _type_map[col_type]
             except KeyError:
-                util.warn("Did not recognize type '%s' of column '%s'" % (
-                    col_type, col_name))
+                util.warn("Did not recognize type '%s' of column '%s'" % (col_type, col_name))
                 coltype = types.NullType
             result.append({
                 'name': col_name,
@@ -309,13 +327,3 @@ class HiveDialect(default.DefaultDialect):
     def _check_unicode_description(self, connection):
         # We decode everything as UTF-8
         return True
-
-if StrictVersion(sqlalchemy.__version__) < StrictVersion('0.7.0'):
-    from pyhive import sqlalchemy_backports
-
-    def reflecttable(self, connection, table, include_columns=None, exclude_columns=None):
-        insp = sqlalchemy_backports.Inspector.from_engine(connection)
-        return insp.reflecttable(table, include_columns, exclude_columns)
-    HiveDialect.reflecttable = reflecttable
-else:
-    HiveDialect.type_compiler = HiveTypeCompiler

@@ -7,21 +7,19 @@ which is released under the MIT license.
 
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from distutils.version import StrictVersion
-from pyhive import presto
-from pyhive.common import UniversalSet
+
+import re
 from sqlalchemy import exc
 from sqlalchemy import types
 from sqlalchemy import util
+# TODO shouldn't use mysql type
+from sqlalchemy.databases import mysql
 from sqlalchemy.engine import default
 from sqlalchemy.sql import compiler
-import re
-import sqlalchemy
+from sqlalchemy.sql.compiler import SQLCompiler
 
-try:
-    from sqlalchemy.sql.compiler import SQLCompiler
-except ImportError:
-    from sqlalchemy.sql.compiler import DefaultCompiler as SQLCompiler
+from pyhive import presto
+from pyhive.common import UniversalSet
 
 
 class PrestoIdentifierPreparer(compiler.IdentifierPreparer):
@@ -29,24 +27,44 @@ class PrestoIdentifierPreparer(compiler.IdentifierPreparer):
     reserved_words = UniversalSet()
 
 
-try:
-    from sqlalchemy.types import BigInteger
-except ImportError:
-    from sqlalchemy.databases.mysql import MSBigInteger as BigInteger
 _type_map = {
-    'bigint': BigInteger,
-    'integer': types.Integer,
     'boolean': types.Boolean,
+    'tinyint': mysql.MSTinyInteger,
+    'smallint': types.SmallInteger,
+    'integer': types.Integer,
+    'bigint': types.BigInteger,
+    'real': types.Float,
     'double': types.Float,
     'varchar': types.String,
     'timestamp': types.TIMESTAMP,
     'date': types.DATE,
+    'varbinary': types.VARBINARY,
 }
 
 
 class PrestoCompiler(SQLCompiler):
     def visit_char_length_func(self, fn, **kw):
         return 'length{}'.format(self.function_argspec(fn, **kw))
+
+
+class PrestoTypeCompiler(compiler.GenericTypeCompiler):
+    def visit_CLOB(self, type_, **kw):
+        raise ValueError("Presto does not support the CLOB column type.")
+
+    def visit_NCLOB(self, type_, **kw):
+        raise ValueError("Presto does not support the NCLOB column type.")
+
+    def visit_DATETIME(self, type_, **kw):
+        raise ValueError("Presto does not support the DATETIME column type.")
+
+    def visit_FLOAT(self, type_, **kw):
+        return 'DOUBLE'
+
+    def visit_TEXT(self, type_, **kw):
+        if type_.length:
+            return 'VARCHAR({:d})'.format(type_.length)
+        else:
+            return 'VARCHAR'
 
 
 class PrestoDialect(default.DefaultDialect):
@@ -63,6 +81,7 @@ class PrestoDialect(default.DefaultDialect):
     returns_unicode_strings = True
     description_encoding = None
     supports_native_boolean = True
+    type_compiler = PrestoTypeCompiler
 
     @classmethod
     def dbapi(cls):
@@ -74,6 +93,7 @@ class PrestoDialect(default.DefaultDialect):
             'host': url.host,
             'port': url.port or 8080,
             'username': url.username,
+            'password': url.password
         }
         kwargs.update(url.query)
         if len(db_parts) == 1:
@@ -150,8 +170,16 @@ class PrestoDialect(default.DefaultDialect):
         col_names = []
         for row in rows:
             part_key = 'Partition Key'
-            # Newer Presto moved this information from a column to the comment
-            if (part_key in row and row[part_key]) or row['Comment'].startswith(part_key):
+            # Presto puts this information in one of 3 places depending on version
+            # - a boolean column named "Partition Key"
+            # - a string in the "Comment" column
+            # - a string in the "Extra" column
+            is_partition_key = (
+                (part_key in row and row[part_key])
+                or row['Comment'].startswith(part_key)
+                or ('Extra' in row and 'partition key' in row['Extra'])
+            )
+            if is_partition_key:
                 col_names.append(row['Column'])
         if col_names:
             return [{'name': 'partition', 'column_names': col_names, 'unique': False}]
@@ -175,11 +203,3 @@ class PrestoDialect(default.DefaultDialect):
     def _check_unicode_description(self, connection):
         # requests gives back Unicode strings
         return True
-
-if StrictVersion(sqlalchemy.__version__) < StrictVersion('0.7.0'):
-    from pyhive import sqlalchemy_backports
-
-    def reflecttable(self, connection, table, include_columns=None, exclude_columns=None):
-        insp = sqlalchemy_backports.Inspector.from_engine(connection)
-        return insp.reflecttable(table, include_columns, exclude_columns)
-    PrestoDialect.reflecttable = reflecttable

@@ -9,6 +9,7 @@ from builtins import bytes
 from builtins import int
 from builtins import object
 from builtins import range
+from builtins import str
 from past.builtins import basestring
 from pyhive import exc
 import abc
@@ -216,10 +217,7 @@ class DBAPITypeObject(object):
 class ParamEscaper(object):
     def escape_args(self, parameters):
         if isinstance(parameters, dict):
-            result = {}
-            for k, v in parameters.items():
-                result[k] = v
-            return result
+            return {k: self.escape_item(v) for k, v in parameters.items()}
         elif isinstance(parameters, (list, tuple)):
             return tuple(self.escape_item(x) for x in parameters)
         else:
@@ -240,6 +238,10 @@ class ParamEscaper(object):
         # (i.e. only special character is single quote)
         return "'{}'".format(item.replace("'", "''"))
 
+    def escape_sequence(self, item):
+        l = map(str, map(self.escape_item, item))
+        return '(' + ','.join(l) + ')'
+
     def escape_item(self, item):
         if item is None:
             return 'NULL'
@@ -247,6 +249,8 @@ class ParamEscaper(object):
             return self.escape_number(item)
         elif isinstance(item, basestring):
             return self.escape_string(item)
+        elif isinstance(item, collections.Iterable):
+            return self.escape_sequence(item)
         else:
             raise exc.ProgrammingError("Unsupported object {}".format(item))
 

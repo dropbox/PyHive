@@ -51,22 +51,17 @@ class TestSqlAlchemyPresto(unittest.TestCase, SqlAlchemyTestCase):
             '0.1',
         ])
 
-        try:
-            from sqlalchemy.types import BigInteger
-        except ImportError:
-            from sqlalchemy.databases.mysql import MSBigInteger as BigInteger
-
         # TODO some of these types could be filled in better
         self.assertIsInstance(one_row_complex.c.boolean.type, types.Boolean)
         self.assertIsInstance(one_row_complex.c.tinyint.type, types.Integer)
         self.assertIsInstance(one_row_complex.c.smallint.type, types.Integer)
         self.assertIsInstance(one_row_complex.c.int.type, types.Integer)
-        self.assertIsInstance(one_row_complex.c.bigint.type, BigInteger)
+        self.assertIsInstance(one_row_complex.c.bigint.type, types.BigInteger)
         self.assertIsInstance(one_row_complex.c.float.type, types.Float)
         self.assertIsInstance(one_row_complex.c.double.type, types.Float)
         self.assertIsInstance(one_row_complex.c.string.type, String)
         self.assertIsInstance(one_row_complex.c.timestamp.type, types.TIMESTAMP)
-        self.assertIsInstance(one_row_complex.c.binary.type, types.NullType)
+        self.assertIsInstance(one_row_complex.c.binary.type, types.VARBINARY)
         self.assertIsInstance(one_row_complex.c.array.type, types.NullType)
         self.assertIsInstance(one_row_complex.c.map.type, types.NullType)
         self.assertIsInstance(one_row_complex.c.struct.type, types.NullType)

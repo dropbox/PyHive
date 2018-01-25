@@ -13,4 +13,20 @@
     <name>fs.defaultFS</name>
     <value>file:///</value>
   </property>
+  <property>
+    <name>hive.server2.authentication</name>
+    <value>LDAP</value>
+  </property>
+  <property>
+    <name>hive.server2.authentication.ldap.url</name>
+    <value>ldap://localhost:3389</value>
+  </property>
+  <property>
+    <name>hive.server2.authentication.ldap.baseDN</name>
+    <value>dc=example,dc=com</value>
+  </property>
+  <property>
+    <name>hive.server2.authentication.ldap.guidKey</name>
+    <value>cn</value>
+  </property>
 </configuration>

@@ -13,4 +13,12 @@
     <name>fs.defaultFS</name>
     <value>file:///</value>
   </property>
+  <property>
+    <name>hive.server2.authentication</name>
+    <value>CUSTOM</value>
+  </property>
+  <property>
+    <name>hive.server2.custom.authentication.class</name>
+    <value>com.dropbox.DummyPasswdAuthenticationProvider</value>
+  </property>
 </configuration>

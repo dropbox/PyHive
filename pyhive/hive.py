@@ -14,15 +14,15 @@ from pyhive import common
 from pyhive.common import DBAPITypeObject
 # Make all exceptions visible in this module per DB-API
 from pyhive.exc import *  # noqa
+from builtins import range
 import contextlib
+from future.utils import iteritems
 import getpass
 import logging
-import sasl
 import sys
 import thrift.protocol.TBinaryProtocol
 import thrift.transport.TSocket
 import thrift.transport.TTransport
-import thrift_sasl
 
 # PEP 249 module globals
 apilevel = '2.0'
@@ -40,7 +40,7 @@ class HiveParamEscaper(common.ParamEscaper):
         # Newer SQLAlchemy checks dialect.supports_unicode_binds before encoding Unicode strings
         # as byte strings. The old version always encodes Unicode as byte strings, which breaks
         # string formatting here.
-        if isinstance(item, str):
+        if isinstance(item, bytes):
             item = item.decode('utf-8')
         return "'{}'".format(
             item
@@ -50,6 +50,7 @@ class HiveParamEscaper(common.ParamEscaper):
             .replace('\n', '\\n')
             .replace('\t', '\\t')
         )
+
 
 _escaper = HiveParamEscaper()
 
@@ -66,33 +67,90 @@ def connect(*args, **kwargs):
 class Connection(object):
     """Wraps a Thrift session"""
 
-    def __init__(self, host, port=10000, username=None, database='default', auth='NONE',
-                 configuration=None, password=''):
+    def __init__(self, host=None, port=None, username=None, database='default', auth=None,
+                 configuration=None, kerberos_service_name=None, password=None,
+                 thrift_transport=None):
         """Connect to HiveServer2
 
-        :param auth: The value of hive.server2.authentication used by HiveServer2
+        :param host: What host HiveServer2 runs on
+        :param port: What port HiveServer2 runs on. Defaults to 10000.
+        :param auth: The value of hive.server2.authentication used by HiveServer2.
+            Defaults to ``NONE``.
+        :param configuration: A dictionary of Hive settings (functionally same as the `set` command)
+        :param kerberos_service_name: Use with auth='KERBEROS' only
+        :param password: Use with auth='LDAP' or auth='CUSTOM' only
+        :param thrift_transport: A ``TTransportBase`` for custom advanced usage.
+            Incompatible with host, port, auth, kerberos_service_name, and password.
+
+        The way to support LDAP and GSSAPI is originated from cloudera/Impyla:
+        https://github.com/cloudera/impyla/blob/255b07ed973d47a3395214ed92d35ec0615ebf62
+        /impala/_thrift_api.py#L152-L160
         """
-        socket = thrift.transport.TSocket.TSocket(host, port)
         username = username or getpass.getuser()
         configuration = configuration or {}
 
-        if auth == 'NOSASL':
-            # NOSASL corresponds to hive.server2.authentication=NOSASL in hive-site.xml
-            self._transport = thrift.transport.TTransport.TBufferedTransport(socket)
-        elif auth == 'NONE':
-            def sasl_factory():
-                sasl_client = sasl.Client()
-                sasl_client.setAttr(b'username', username.encode('latin-1'))
-                # Password doesn't matter in NONE mode, just needs to be nonempty.
-                sasl_client.setAttr(b'password', password)
-                sasl_client.init()
-                return sasl_client
+        if (password is not None) != (auth in ('LDAP', 'CUSTOM')):
+            raise ValueError("Password should be set if and only if in LDAP or CUSTOM mode; "
+                             "Remove password or use one of those modes")
+        if (kerberos_service_name is not None) != (auth == 'KERBEROS'):
+            raise ValueError("kerberos_service_name should be set if and only if in KERBEROS mode")
+        if thrift_transport is not None:
+            has_incompatible_arg = (
+                host is not None
+                or port is not None
+                or auth is not None
+                or kerberos_service_name is not None
+                or password is not None
+            )
+            if has_incompatible_arg:
+                raise ValueError("thrift_transport cannot be used with "
+                                 "host/port/auth/kerberos_service_name/password")
 
-            # PLAIN corresponds to hive.server2.authentication=NONE in hive-site.xml
-            self._transport = thrift_sasl.TSaslClientTransport(sasl_factory, b'PLAIN', socket)
+        if thrift_transport is not None:
+            self._transport = thrift_transport
         else:
-            raise NotImplementedError(
-                "Only NONE & NOSASL authentication are supported, got {}".format(auth))
+            if port is None:
+                port = 10000
+            if auth is None:
+                auth = 'NONE'
+            socket = thrift.transport.TSocket.TSocket(host, port)
+            if auth == 'NOSASL':
+                # NOSASL corresponds to hive.server2.authentication=NOSASL in hive-site.xml
+                self._transport = thrift.transport.TTransport.TBufferedTransport(socket)
+            elif auth in ('LDAP', 'KERBEROS', 'NONE', 'CUSTOM'):
+                # Defer import so package dependency is optional
+                import sasl
+                import thrift_sasl
+
+                if auth == 'KERBEROS':
+                    # KERBEROS mode in hive.server2.authentication is GSSAPI in sasl library
+                    sasl_auth = 'GSSAPI'
+                else:
+                    sasl_auth = 'PLAIN'
+                    if password is None:
+                        # Password doesn't matter in NONE mode, just needs to be nonempty.
+                        password = 'x'
+
+                def sasl_factory():
+                    sasl_client = sasl.Client()
+                    sasl_client.setAttr('host', host)
+                    if sasl_auth == 'GSSAPI':
+                        sasl_client.setAttr('service', kerberos_service_name)
+                    elif sasl_auth == 'PLAIN':
+                        sasl_client.setAttr('username', username)
+                        sasl_client.setAttr('password', password)
+                    else:
+                        raise AssertionError
+                    sasl_client.init()
+                    return sasl_client
+                self._transport = thrift_sasl.TSaslClientTransport(sasl_factory, sasl_auth, socket)
+            else:
+                # All HS2 config options:
+                # https://cwiki.apache.org/confluence/display/Hive/Setting+Up+HiveServer2#SettingUpHiveServer2-Configuration
+                # PAM currently left to end user via thrift_transport option.
+                raise NotImplementedError(
+                    "Only NONE, NOSASL, LDAP, KERBEROS, CUSTOM "
+                    "authentication are supported, got {}".format(auth))
 
         protocol = thrift.protocol.TBinaryProtocol.TBinaryProtocol(self._transport)
         self._client = TCLIService.Client(protocol)
@@ -105,6 +163,7 @@ class Connection(object):
             open_session_req = ttypes.TOpenSessionReq(
                 client_protocol=protocol_version,
                 configuration=configuration,
+                username=username,
             )
             response = self._client.OpenSession(open_session_req)
             _check_status(response)
@@ -113,7 +172,7 @@ class Connection(object):
             assert response.serverProtocolVersion == protocol_version, \
                 "Unable to handle protocol version {}".format(response.serverProtocolVersion)
             with contextlib.closing(self.cursor()) as cursor:
-                cursor.execute('USE `{0}`'.format(database))
+                cursor.execute('USE `{}`'.format(database))
         except:
             self._transport.close()
             raise
@@ -208,7 +267,8 @@ class Cursor(common.DBAPICursor):
                     type_id = primary_type_entry.primitiveEntry.type
                     type_code = ttypes.TTypeId._VALUES_TO_NAMES[type_id]
                 self._description.append((
-                    col.columnName.decode('utf-8'), type_code.decode('utf-8'),
+                    col.columnName.decode('utf-8') if sys.version_info[0] == 2 else col.columnName,
+                    type_code.decode('utf-8') if sys.version_info[0] == 2 else type_code,
                     None, None, None, None, True
                 ))
         return self._description
@@ -234,7 +294,7 @@ class Cursor(common.DBAPICursor):
         _logger.info('%s', sql)
 
         req = ttypes.TExecuteStatementReq(self._connection.sessionHandle,
-                                          sql.encode('utf-8'), runAsync=async)
+                                          sql, runAsync=async)
         _logger.debug(req)
         response = self._connection.client.ExecuteStatement(req)
         _check_status(response)
@@ -262,7 +322,7 @@ class Cursor(common.DBAPICursor):
         _check_status(response)
         assert not response.results.rows, 'expected data in columnar format'
         columns = map(_unwrap_column, response.results.columns)
-        new_data = zip(*columns)
+        new_data = list(zip(*columns))
         self._data += new_data
         # response.hasMoreRows seems to always be False, so we instead check the number of rows
         # https://github.com/apache/hive/blob/release-1.2.1/service/src/java/org/apache/hive/service/cli/thrift/ThriftCLIService.java#L678
@@ -270,7 +330,7 @@ class Cursor(common.DBAPICursor):
         if not new_data:
             self._state = self._STATE_FINISHED
 
-    def poll(self):
+    def poll(self, get_progress_update=True):
         """Poll for and return the raw status data provided by the Hive Thrift REST API.
         :returns: ``ttypes.TGetOperationStatusResp``
         :raises: ``ProgrammingError`` when no query has been started
@@ -281,7 +341,8 @@ class Cursor(common.DBAPICursor):
             raise ProgrammingError("No query yet")
 
         req = ttypes.TGetOperationStatusReq(
-            operationHandle=self._operationHandle
+            operationHandle=self._operationHandle,
+            getProgressUpdate=get_progress_update,
         )
         response = self._connection.client.GetOperationStatus(req)
         _check_status(response)
@@ -299,23 +360,29 @@ class Cursor(common.DBAPICursor):
         if self._state == self._STATE_NONE:
             raise ProgrammingError("No query yet")
 
-        logs = []
-        while True:
-            req = ttypes.TFetchResultsReq(
-                operationHandle=self._operationHandle,
-                orientation=ttypes.TFetchOrientation.FETCH_NEXT,
-                maxRows=self.arraysize,
-                fetchType=1  # 0: results, 1: logs
-            )
-            response = self._connection.client.FetchResults(req)
-            _check_status(response)
-            assert not response.results.rows, 'expected data in columnar format'
-            assert len(response.results.columns) == 1, response.results.columns
-            new_logs = _unwrap_column(response.results.columns[0])
-            logs += new_logs
+        try:  # Older Hive instances require logs to be retrieved using GetLog
+            req = ttypes.TGetLogReq(operationHandle=self._operationHandle)
+            logs = self._connection.client.GetLog(req).log.splitlines()
+        except ttypes.TApplicationException as e:  # Otherwise, retrieve logs using newer method
+            if e.type != ttypes.TApplicationException.UNKNOWN_METHOD:
+                raise
+            logs = []
+            while True:
+                req = ttypes.TFetchResultsReq(
+                    operationHandle=self._operationHandle,
+                    orientation=ttypes.TFetchOrientation.FETCH_NEXT,
+                    maxRows=self.arraysize,
+                    fetchType=1  # 0: results, 1: logs
+                )
+                response = self._connection.client.FetchResults(req)
+                _check_status(response)
+                assert not response.results.rows, 'expected data in columnar format'
+                assert len(response.results.columns) == 1, response.results.columns
+                new_logs = _unwrap_column(response.results.columns[0])
+                logs += new_logs
 
-            if not new_logs:
-                break
+                if not new_logs:
+                    break
 
         return logs
 
@@ -337,18 +404,14 @@ for type_id in constants.PRIMITIVE_TYPES:
 
 def _unwrap_column(col):
     """Return a list of raw values from a TColumn instance."""
-    for attr, wrapper in col.__dict__.iteritems():
+    for attr, wrapper in iteritems(col.__dict__):
         if wrapper is not None:
-            values = wrapper.values
+            result = wrapper.values
             nulls = wrapper.nulls  # bit set describing what's null
-            assert isinstance(nulls, str)
-            if attr == 'stringVal':
-                result = [val.decode('utf-8') for val in values]
-            else:
-                result = values
+            assert isinstance(nulls, bytes)
             for i, char in enumerate(nulls):
-                byte = ord(char)
-                for b in xrange(8):
+                byte = ord(char) if sys.version_info[0] == 2 else char
+                for b in range(8):
                     if byte & (1 << b):
                         result[i * 8 + b] = None
             return result
