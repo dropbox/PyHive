@@ -217,7 +217,11 @@ class DBAPITypeObject(object):
 class ParamEscaper(object):
     def escape_args(self, parameters):
         if isinstance(parameters, dict):
-            return {k: self.escape_item(v) for k, v in parameters.items()}
+            # return {k: self.escape_item(v) for k, v in parameters.items()}
+            result = {}
+            for k, v in parameters.items():
+                result[k] = v
+            return result
         elif isinstance(parameters, (list, tuple)):
             return tuple(self.escape_item(x) for x in parameters)
         else:
