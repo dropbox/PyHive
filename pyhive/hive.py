@@ -172,7 +172,7 @@ class Connection(object):
             assert response.serverProtocolVersion == protocol_version, \
                 "Unable to handle protocol version {}".format(response.serverProtocolVersion)
             with contextlib.closing(self.cursor()) as cursor:
-                cursor.execute('USE `{}`'.format(database))
+                cursor.execute('USE `{0}`'.format(database))
         except:
             self._transport.close()
             raise
