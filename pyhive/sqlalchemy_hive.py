@@ -10,20 +10,20 @@ from __future__ import absolute_import, unicode_literals
 import ast
 import re
 
-from IPython.core.debugger import set_trace
 from sqlalchemy import exc, types, util
 # TODO shouldn't use mysql type
 from sqlalchemy.databases import mysql
 from sqlalchemy.dialects.postgresql import ARRAY as PG_ARRAY
 from sqlalchemy.dialects.postgresql import array as pg_array
 from sqlalchemy.engine import default
-from sqlalchemy.schema import (ColumnCollectionConstraint,
-                               ColumnCollectionMixin, SchemaItem)
-from sqlalchemy.sql import compiler, crud, operators
+from sqlalchemy.schema import ColumnCollectionMixin, SchemaItem
+from sqlalchemy.sql import compiler, crud, elements, operators
 from sqlalchemy.sql.base import DialectKWArgs, _generative
 from sqlalchemy.sql.compiler import DDLCompiler, SQLCompiler
 from sqlalchemy.sql.dml import Insert as StandardInsert
+from sqlalchemy.sql.expression import FunctionElement
 from sqlalchemy.sql.sqltypes import Indexable, TypeEngine
+from sqlalchemy.types import UserDefinedType, to_instance
 
 from pyhive import hive
 from pyhive.common import UniversalSet
@@ -34,62 +34,6 @@ class Insert(StandardInsert):
     def overwrite(self):
         self._overwrite = True
         return self
-
-
-class HiveStringTypeBase(types.TypeDecorator):
-    """Translates strings returned by Thrift into something else"""
-    impl = types.String
-
-    def process_bind_param(self, value, dialect):
-        raise NotImplementedError("Writing to Hive not supported")
-
-
-# class HiveDate(HiveStringTypeBase):
-#     """Translates date strings to date objects"""
-#     impl = types.DATE
-
-#     def process_result_value(self, value, dialect):
-#         return processors.str_to_date(value)
-
-#     def process_bind_param(self, value, dialect):
-#         if isinstance(value, datetime.date) or isinstance(value, datetime.datetime):
-#             return value.strftime('%Y-%m-%d')
-#         else:
-#             raise TypeError(
-#                 "Hive Date type only accepts Python date or datetime objects as input.")
-
-
-# class HiveTimestamp(HiveStringTypeBase):
-#     """Translates timestamp strings to datetime objects"""
-#     impl = types.TIMESTAMP
-
-#     def process_result_value(self, value, dialect):
-#         return processors.str_to_datetime(value)
-
-#     def process_bind_param(self, value, dialect):
-#         if isinstance(value, datetime.datetime):
-#             return value.strftime('%Y-%m-%d %H:%M:%S.%f')
-#         else:
-#             raise TypeError(
-#                 "Hive Timestamp type only accepts Python datetime objects as input.")
-
-
-# class HiveDecimal(HiveStringTypeBase):
-#     """Translates strings to decimals"""
-#     impl = types.DECIMAL
-
-#     def process_result_value(self, value, dialect):
-#         if value is None:
-#             return None
-#         else:
-#             return decimal.Decimal(value)
-
-#     def process_bind_param(self, value, dialect):
-#         if isinstance(value, decimal.Decimal):
-#             return '{0:f}'.format(value)
-#         else:
-#             raise TypeError(
-#                 "Hive Decimal type only accepts Python decimal objects as input.")
 
 
 class HiveResultParseError(Exception):
@@ -114,14 +58,84 @@ def identity(x):
     return x
 
 
-class STRUCT(TypeEngine):
+class Struct(object):
+    __slots__ = ('_col_names', '_col_values', '_col_dict')
+
+    def __init__(self,
+                 names=None, values=None,
+                 *args, **kwargs):
+        if kwargs:
+            self._col_names = tuple(kwargs.keys())
+            self._col_values = tuple(kwargs.values())
+            self._col_dict = kwargs
+        else:
+            self._col_names = tuple(names)
+            self._col_values = tuple(values)
+            self._col_dict = dict(zip(names, values))
+
+    def values(self):
+        return self._col_values
+
+    def keys(self):
+        return self._col_names
+
+    def __iter__(self):
+        for value in self._col_values:
+            yield value
+
+    def __len__(self):
+        return len(self._col_values)
+
+    def __getitem__(self, col_name):
+        self._col_dict[col_name]
+
+    def __getattr__(self, name):
+        try:
+            return self._col_dict[name]
+        except KeyError as e:
+            raise AttributeError(e.args[0])
+
+    def __hash__(self):
+        return hash((self._col_names, self._col_values))
+
+    def __eq__(self, other):
+        return(self._col_names == other._col_names and
+               self._col_values == other._col_values)
+
+    def __repr__(self):
+        kwargs_str = ', '.join(f'{k}={v!r}' for k, v in self._col_dict.items())
+        return f'{self.__class__.__name__}({kwargs_str})'
+
+
+try:
+    from collections.abc import Sequence
+    Sequence.register(Struct)
+except ImportError:
+    pass
+
+
+class StructElement(FunctionElement):
+    '''
+    Instances of this class wrap a Hive struct type.
+    '''
+    __visit_name__ = 'struct_element'
+
+    def __init__(self, base, col, type_):
+        self.name = col
+        self.type = to_instance(type_)
+
+        super(StructElement, self).__init__(base)
+
+
+class STRUCT(UserDefinedType):
     __visit_name__ = 'STRUCT'
-    python_type = dict
+    python_type = Struct
     shoulde_evaluate_none = True
     hashable = True
 
     def __init__(self, cols_name_type):
         self.cols_name_type = cols_name_type
+        self.cols_name_type_map = {n: t for n, t in cols_name_type}
 
     def bind_processor(self, dialect):
         # TODO: bind for complex type
@@ -149,12 +163,34 @@ class STRUCT(TypeEngine):
                 raise HiveResultParseError()
             value = {k: col_procs_map[k](v)
                      for k, v in value.items()}
-            return value
+            return Struct(**value)
 
         return process
 
+    class comparator_factory(UserDefinedType.Comparator):
+        """Define comparison operations for :class:`STRUCT`."""
 
-class MAP(Indexable, TypeEngine):
+        def __getattr__(self, key):
+            try:
+                type_ = self.type.cols_name_type_map[key]
+            except KeyError:
+                raise AttributeError(
+                    'Type %r doesn\'t have an attribute: %s' % (
+                        self.type, key)
+                )
+            return StructElement(self.expr, key, type_)
+
+        # def __getitem__(self, name):
+        #     return self.operate(struct_getcol, name, self.type.cols_name_type_map[name])
+
+        # def _setup_getitem(self, index):
+        #     return operators.getitem, index, self.type.cols_name_type_map[index]
+
+        # def __getattr__(self, name):
+        #     return self.operate(struct_getcol, name, self.type.cols_name_type_map[name])
+
+
+class MAP(Indexable, UserDefinedType):
     __visit_name__ = 'MAP'
     python_type = dict
     should_evaluate_none = True
@@ -207,8 +243,12 @@ class MAP(Indexable, TypeEngine):
     class Comparator(Indexable.Comparator):
         """Define comparison operations for :class:`MAP`."""
 
-        def _setup_getitem(self, index):
-            return operators.getitem, index, self.type.value_type
+        def __getitem__(self, index):
+            return self.operate(
+                operators.getitem,
+                index,
+                result_type=self.type.value_type
+            )
 
     comparator_factory = Comparator
 
@@ -252,11 +292,35 @@ class HiveSQLCompiler(SQLCompiler):
             self.process(binary.right, **kw)
         )
 
+    def visit_struct_element(self, element, **kw):
+        return '%s.%s' % (
+            self.process(element.clauses, **kw), element.name
+        )
+
     def visit_array(self, element, **kw):
         return 'array({})'.format(self.visit_clauselist(element, **kw))
 
     def visit_concat_op_binary(self, binary, operator, **kw):
         return "concat(%s, %s)" % (self.process(binary.left), self.process(binary.right))
+
+    def visit_lateral_view(self, lateral_view, asfrom=False, **kwargs):
+        from_table_str = lateral_view.from_table._compiler_dispatch(
+            self, asfrom=True, **kwargs)
+        udtf_expr_str = lateral_view.udtf_expr._compiler_dispatch(
+            self, **kwargs)
+        # udtf_columns_str = ', '.join(self.preparer.quote(c)
+        #                              for c in lateral_view.udtf_column_names)
+        column_name = self.preparer.quote(lateral_view.udtf_expr.name)
+        if isinstance(lateral_view.name, elements._truncated_label):
+            udtf_table_name = self._truncated_identifier(
+                "lateral_view", lateral_view.name)
+        else:
+            udtf_table_name = lateral_view.name
+
+        udtf_table_name = self.preparer.quote(udtf_table_name)
+
+        return (f'{from_table_str} LATERAL VIEW {udtf_expr_str} '
+                f'{udtf_table_name} AS {column_name}')
 
     def visit_insert(self, insert_stmt, asfrom=False, **kw):
         toplevel = not self.stack
