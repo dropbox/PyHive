@@ -8,25 +8,32 @@ which is released under the MIT license.
 from __future__ import absolute_import, unicode_literals
 
 import ast
+import itertools
 import re
 
-from sqlalchemy import exc, types, util
-# TODO shouldn't use mysql type
+from sqlalchemy import exc, inspect, types, util
 from sqlalchemy.databases import mysql
 from sqlalchemy.dialects.postgresql import ARRAY as PG_ARRAY
 from sqlalchemy.dialects.postgresql import array as pg_array
 from sqlalchemy.engine import default
+# TODO shouldn't use mysql type
 from sqlalchemy.schema import ColumnCollectionMixin, SchemaItem
-from sqlalchemy.sql import compiler, crud, elements, operators
+from sqlalchemy.sql import (Alias, ColumnElement, FromClause, compiler, crud,
+                            elements, operators)
 from sqlalchemy.sql.base import DialectKWArgs, _generative
 from sqlalchemy.sql.compiler import DDLCompiler, SQLCompiler
 from sqlalchemy.sql.dml import Insert as StandardInsert
+from sqlalchemy.sql.elements import (ColumnClause, _anonymous_label, _clone,
+                                     _literal_as_binds)
 from sqlalchemy.sql.expression import FunctionElement
-from sqlalchemy.sql.sqltypes import Indexable, TypeEngine
+from sqlalchemy.sql.functions import FunctionElement
+from sqlalchemy.sql.selectable import _interpret_as_from
+from sqlalchemy.sql.sqltypes import Indexable
 from sqlalchemy.types import UserDefinedType, to_instance
 
 from pyhive import hive
 from pyhive.common import UniversalSet
+from pyhive.sqlalchemy_hive import ARRAY, MAP
 
 
 class Insert(StandardInsert):
@@ -125,6 +132,79 @@ class StructElement(FunctionElement):
         self.type = to_instance(type_)
 
         super(StructElement, self).__init__(base)
+
+
+class UDTF(FunctionElement):
+    col_type_pairs = []
+
+
+class explode(UDTF):
+    __visit_name__ = 'function'
+    name = 'explode'
+
+    def __init__(self, clause, *, names, **kw):
+        self.clause = _literal_as_binds(clause)
+        if isinstance(clause.type, ARRAY):
+            self.col_type_pairs = [(names[0], clause.type.item_type)]
+        elif isinstance(clause.type, MAP):
+            self.col_type_pairs = [(names[0], clause.type.key_type),
+                                   (names[1], clause.type.value_type)]
+        super(explode, self).__init__(clause, **kw)
+
+
+class LateralView(FromClause):
+    __visit_name__ = 'lateral_view'
+
+    named_with_column = True
+    _is_from_container = True
+
+    def __init__(self, from_table, udtf_expr, name=None):
+        baseselectable = from_table
+        while isinstance(baseselectable, Alias):
+            baseselectable = baseselectable.element
+        self.original = baseselectable
+        self.from_table = _interpret_as_from(from_table)
+        self.udtf_expr = udtf_expr
+        if name is None:
+            if self.original.named_with_column:
+                name = getattr(self.original, 'name', None)
+            name = _anonymous_label('%%(%d %s)s' %
+                                    (id(self), name or 'anon'))
+        self.name = name
+
+    def _populate_column_collection(self):
+        columns = self.from_table.columns
+
+        self.primary_key.extend(c for c in columns if c.primary_key)
+        self._columns.update((col._label, col) for col in columns)
+
+        for col_name, col_type in self.udtf_expr.col_type_pairs:
+            co = ColumnClause(col_name, type_=col_type, _selectable=self)
+            self._columns[col_name] = co
+
+    def _copy_internals(self, clone=_clone, **kw):
+        raise NotImplementedError
+
+    def _refresh_for_new_column(self, column):
+        raise NotImplementedError
+
+    def select(self, whereclause=None, **kwargs):
+        raise NotImplementedError
+
+    def self_group(self, against=None):
+        raise NotImplementedError
+
+    def get_children(self, **kwargs):
+        raise NotImplementedError
+
+    @property
+    def _hide_froms(self):
+        return itertools.chain(*[x.from_table._from_objects
+                                 for x in self._cloned_set])
+
+    @property
+    def _from_objects(self):
+        return [self] + self.from_table._from_objects
 
 
 class STRUCT(UserDefinedType):
@@ -310,7 +390,10 @@ class HiveSQLCompiler(SQLCompiler):
             self, **kwargs)
         # udtf_columns_str = ', '.join(self.preparer.quote(c)
         #                              for c in lateral_view.udtf_column_names)
-        column_name = self.preparer.quote(lateral_view.udtf_expr.name)
+        column_names = [
+            self.preparer.quote(col_name)
+            for col_name, col_type in lateral_view.udtf_expr.col_type_pairs]
+        column_names_str = ','.join(column_names)
         if isinstance(lateral_view.name, elements._truncated_label):
             udtf_table_name = self._truncated_identifier(
                 "lateral_view", lateral_view.name)
@@ -320,7 +403,7 @@ class HiveSQLCompiler(SQLCompiler):
         udtf_table_name = self.preparer.quote(udtf_table_name)
 
         return (f'{from_table_str} LATERAL VIEW {udtf_expr_str} '
-                f'{udtf_table_name} AS {column_name}')
+                f'{udtf_table_name} AS {column_names_str}')
 
     def visit_insert(self, insert_stmt, asfrom=False, **kw):
         toplevel = not self.stack
