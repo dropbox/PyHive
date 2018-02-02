@@ -11,15 +11,15 @@ import ast
 import itertools
 import re
 
-from sqlalchemy import exc, inspect, types, util
+from sqlalchemy import exc, types, util
 from sqlalchemy.databases import mysql
 from sqlalchemy.dialects.postgresql import ARRAY as PG_ARRAY
 from sqlalchemy.dialects.postgresql import array as pg_array
 from sqlalchemy.engine import default
 # TODO shouldn't use mysql type
 from sqlalchemy.schema import ColumnCollectionMixin, SchemaItem
-from sqlalchemy.sql import (Alias, ColumnElement, FromClause, compiler, crud,
-                            elements, operators)
+from sqlalchemy.sql import (Alias, FromClause, compiler, crud, elements,
+                            operators)
 from sqlalchemy.sql.base import DialectKWArgs, _generative
 from sqlalchemy.sql.compiler import DDLCompiler, SQLCompiler
 from sqlalchemy.sql.dml import Insert as StandardInsert
@@ -33,7 +33,6 @@ from sqlalchemy.types import UserDefinedType, to_instance
 
 from pyhive import hive
 from pyhive.common import UniversalSet
-from pyhive.sqlalchemy_hive import ARRAY, MAP
 
 
 class Insert(StandardInsert):
@@ -48,14 +47,12 @@ class HiveResultParseError(Exception):
 
 
 class array(pg_array):
-
     def __init__(self, clauses, **kw):
         super(array, self).__init__(clauses, **kw)
         self.type = ARRAY(self.type.item_type)
 
 
 class ARRAY(PG_ARRAY):
-
     def _proc_array(self, arr, itemproc, dim, collection):
         arr = ast.literal_eval(arr)
         return super(ARRAY, self)._proc_array(arr, itemproc, dim, collection)
