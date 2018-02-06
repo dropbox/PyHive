@@ -11,7 +11,7 @@ import ast
 import itertools
 import re
 
-from sqlalchemy import exc, types, util
+from sqlalchemy import String, exc, types, util
 from sqlalchemy.databases import mysql
 from sqlalchemy.dialects.postgresql import ARRAY as PG_ARRAY
 from sqlalchemy.dialects.postgresql import array as pg_array
@@ -132,11 +132,11 @@ class StructElement(FunctionElement):
 
 
 class UDTF(FunctionElement):
+    __visit_name__ = 'function'
     col_type_pairs = []
 
 
 class explode(UDTF):
-    __visit_name__ = 'function'
     name = 'explode'
 
     def __init__(self, clause, *, names, **kw):
@@ -149,6 +149,20 @@ class explode(UDTF):
         super(explode, self).__init__(clause, **kw)
 
 
+class parse_url_tuple(UDTF):
+    name = 'parse_url_tuple'
+
+    def __init__(self, url, *parts, prefix='', names=None, **kw):
+        if names is None:
+            names = [part.replace(':', '_') for part in parts]
+
+        names = [prefix + name for name in names]
+        self.col_type_pairs = [(name, String())
+                               for name,  part in zip(names, parts)]
+
+        super(parse_url_tuple, self).__init__(url, *parts, **kw)
+
+
 class LateralView(FromClause):
     __visit_name__ = 'lateral_view'
 
@@ -159,6 +173,8 @@ class LateralView(FromClause):
         baseselectable = from_table
         while isinstance(baseselectable, Alias):
             baseselectable = baseselectable.element
+        while isinstance(baseselectable, LateralView):
+            baseselectable = baseselectable.from_table
         self.original = baseselectable
         self.from_table = _interpret_as_from(from_table)
         self.udtf_expr = udtf_expr
@@ -192,6 +208,7 @@ class LateralView(FromClause):
         raise NotImplementedError
 
     def get_children(self, **kwargs):
+        return self.from_table.get_children(**kwargs)
         raise NotImplementedError
 
     @property
