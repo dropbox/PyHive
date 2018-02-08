@@ -9,6 +9,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import re
+import datetime
 import decimal
 from sqlalchemy import exc
 from sqlalchemy import processors
@@ -48,9 +49,19 @@ class PrestoDate(PrestoStringTypeBase):
 class PrestoTimestamp(PrestoStringTypeBase):
     """Translates timestamp strings to datetime objects"""
     impl = types.TIMESTAMP
+    DATETIME_RE = re.compile(r"(\d+)-(\d+)-(\d+) (\d+):(\d+):(\d+)(?:\.(\d+))?")
 
     def process_result_value(self, value, dialect):
-        return processors.str_to_datetime(value)
+        if value is None:
+            return None
+
+        # preserves millisecond - sqlalchemy erroneously converts to microseconds
+        m = self.DATETIME_RE.match(value)
+        grps = list(m.groups(0))
+        mc = grps[6]
+        mc += '0' * (6 - len(mc))
+        grps[6] = mc
+        return datetime.datetime(*map(int, grps))
 
 
 class PrestoDecimal(PrestoStringTypeBase):
