@@ -9,9 +9,10 @@ from __future__ import absolute_import, unicode_literals
 
 import ast
 import itertools
+import json
 import re
 
-from sqlalchemy import String, exc, types, util
+from sqlalchemy import Integer, String, exc, types, util
 from sqlalchemy.databases import mysql
 from sqlalchemy.dialects.postgresql import ARRAY as PG_ARRAY
 from sqlalchemy.dialects.postgresql import array as pg_array
@@ -26,7 +27,7 @@ from sqlalchemy.sql.dml import Insert as StandardInsert
 from sqlalchemy.sql.elements import (ColumnClause, _anonymous_label, _clone,
                                      _literal_as_binds)
 from sqlalchemy.sql.expression import FunctionElement
-from sqlalchemy.sql.functions import FunctionElement
+from sqlalchemy.sql.functions import FunctionElement, GenericFunction
 from sqlalchemy.sql.selectable import _interpret_as_from
 from sqlalchemy.sql.sqltypes import Indexable
 from sqlalchemy.types import UserDefinedType, to_instance
@@ -152,11 +153,10 @@ class explode(UDTF):
 class parse_url_tuple(UDTF):
     name = 'parse_url_tuple'
 
-    def __init__(self, url, *parts, prefix='', names=None, **kw):
+    def __init__(self, url, *parts, names=None, **kw):
         if names is None:
             names = [part.replace(':', '_') for part in parts]
 
-        names = [prefix + name for name in names]
         self.col_type_pairs = [(name, String())
                                for name,  part in zip(names, parts)]
 
@@ -196,6 +196,7 @@ class LateralView(FromClause):
             self._columns[col_name] = co
 
     def _copy_internals(self, clone=_clone, **kw):
+        # TODO
         raise NotImplementedError
 
     def _refresh_for_new_column(self, column):
@@ -205,6 +206,7 @@ class LateralView(FromClause):
         raise NotImplementedError
 
     def self_group(self, against=None):
+        # TODO
         raise NotImplementedError
 
     def get_children(self, **kwargs):
@@ -252,7 +254,9 @@ class STRUCT(UserDefinedType):
         def process(value):
             if value is None:
                 return None
-            value = ast.literal_eval(value)
+            # from IPython.core.debugger import set_trace
+            # set_trace()
+            value = json.loads(value)
             if not isinstance(value, dict):
                 raise HiveResultParseError()
             value = {k: col_procs_map[k](v)
@@ -884,3 +888,74 @@ class HiveDialect(default.DefaultDialect):
     def _check_unicode_description(self, connection):
         # We decode everything as UTF-8
         return True
+
+
+class str_to_map(GenericFunction):
+    type = MAP(String(), String())
+    name = 'str_to_map'
+
+
+class map_keys(GenericFunction):
+    type = ARRAY(String())
+    name = 'map_keys'
+
+
+class instr(GenericFunction):
+    type = Integer()
+    name = 'instr'
+
+
+class parse_url(GenericFunction):
+    type = String()
+    name = 'parse_url'
+
+
+class length(GenericFunction):
+    type = Integer()
+    name = 'length'
+
+
+class named_struct(GenericFunction):
+    name = 'named_struct'
+
+    def __init__(self, name_value_pairs):
+        if isinstance(name_value_pairs, dict):
+            name_value_pairs = [(name, value)
+                                for name, value in name_value_pairs.items()]
+
+        args = itertools.chain.from_iterable(name_value_pairs)
+        type_ = STRUCT([(name, _literal_as_binds(value).type)
+                        for name, value in name_value_pairs])
+        super().__init__(*args, type_=type_)
+
+
+class collect_list(GenericFunction):
+    name = 'collect_list'
+
+    def __init__(self, col):
+        type_ = ARRAY(_literal_as_binds(col).type)
+        super().__init__(col, type_=type_)
+
+
+class map(GenericFunction):
+    '''
+    >>> func.map({1: 'B', 2: 'A'})
+    '''
+    name = 'map'
+
+    def __init__(self, data, type_=None):
+        key, value = next(iter(data.items()))
+        key_type = _literal_as_binds(value).type
+        value_type = _literal_as_binds(key).type
+        kwargs = {}
+        if type_ is not None:
+            kwargs['type_'] = type_
+        else:
+            kwargs['type_'] = MAP(key_type, value_type)
+
+        args = []
+        for k, v in data.items():
+            args.append(k)
+            args.append(v)
+
+        super().__init__(*args, **kwargs)
