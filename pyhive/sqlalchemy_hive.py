@@ -8,6 +8,7 @@ which is released under the MIT license.
 from __future__ import absolute_import, unicode_literals
 
 import ast
+import datetime as dt
 import itertools
 import json
 import re
@@ -17,6 +18,7 @@ from sqlalchemy.databases import mysql
 from sqlalchemy.dialects.postgresql import ARRAY as PG_ARRAY
 from sqlalchemy.dialects.postgresql import array as pg_array
 from sqlalchemy.engine import default
+from sqlalchemy.ext.compiler import compiles
 # TODO shouldn't use mysql type
 from sqlalchemy.schema import ColumnCollectionMixin, SchemaItem
 from sqlalchemy.sql import (Alias, FromClause, compiler, crud, elements,
@@ -29,11 +31,16 @@ from sqlalchemy.sql.elements import (ColumnClause, _anonymous_label, _clone,
 from sqlalchemy.sql.expression import FunctionElement
 from sqlalchemy.sql.functions import FunctionElement, GenericFunction
 from sqlalchemy.sql.selectable import _interpret_as_from
-from sqlalchemy.sql.sqltypes import Indexable
-from sqlalchemy.types import UserDefinedType, to_instance
+from sqlalchemy.sql.sqltypes import Date, Indexable
+from sqlalchemy.types import TypeDecorator, UserDefinedType, to_instance
 
 from pyhive import hive
 from pyhive.common import UniversalSet
+
+# @compiles(dt.date)
+# def compile_lateral_view(date, compiler, **kwargs):
+#     date_str = date.strftime('%Y-%m-%d')
+#     return f"DATE '{date_str}'"
 
 
 class Insert(StandardInsert):
@@ -53,14 +60,26 @@ class array(pg_array):
         self.type = ARRAY(self.type.item_type)
 
 
+def identity(_): return _
+
+
 class ARRAY(PG_ARRAY):
     def _proc_array(self, arr, itemproc, dim, collection):
-        arr = ast.literal_eval(arr)
+        if isinstance(arr, str):
+            arr = ast.literal_eval(arr)
         return super(ARRAY, self)._proc_array(arr, itemproc, dim, collection)
 
+    def literal_processor(self, dialect):
+        item_proc = self.item_type.dialect_impl(
+            dialect).literal_processor(dialect)
 
-def identity(x):
-    return x
+        if not item_proc:
+            item_proc = identity
+
+        def process(value):
+            value_str = ', '.join(item_proc(v) for v in value)
+            return f'array({value_str})'
+        return process
 
 
 class Struct(object):
@@ -84,6 +103,9 @@ class Struct(object):
     def keys(self):
         return self._col_names
 
+    def items(self):
+        return list(zip(self._col_names, self._col_values))
+
     def __iter__(self):
         for value in self._col_values:
             yield value
@@ -96,7 +118,9 @@ class Struct(object):
 
     def __getattr__(self, name):
         try:
-            return self._col_dict[name]
+            # for fixing pickle.load
+            col_dict = object.__getattribute__(self, '_col_dict')
+            return col_dict[name]
         except KeyError as e:
             raise AttributeError(e.args[0])
 
@@ -104,8 +128,11 @@ class Struct(object):
         return hash((self._col_names, self._col_values))
 
     def __eq__(self, other):
-        return(self._col_names == other._col_names and
-               self._col_values == other._col_values)
+        if isinstance(other, self.__class__):
+            return (self._col_names == other._col_names and
+                    self._col_values == other._col_values)
+        else:
+            return False
 
     def __repr__(self):
         kwargs_str = ', '.join(f'{k}={v!r}' for k, v in self._col_dict.items())
@@ -130,6 +157,13 @@ class StructElement(FunctionElement):
         self.type = to_instance(type_)
 
         super(StructElement, self).__init__(base)
+
+
+@compiles(StructElement)
+def compile_struct_element(element, compiler, **kw):
+    return '%s.%s' % (
+        compiler.process(element.clauses, **kw), element.name
+    )
 
 
 class UDTF(FunctionElement):
@@ -196,8 +230,10 @@ class LateralView(FromClause):
             self._columns[col_name] = co
 
     def _copy_internals(self, clone=_clone, **kw):
-        # TODO
-        raise NotImplementedError
+        self._reset_exported()
+        self.from_table = clone(self.from_table, **kw)
+        self.udtf_expr = clone(self.udtf_expr, **kw)
+        self.original = clone(self.original, **kw)
 
     def _refresh_for_new_column(self, column):
         raise NotImplementedError
@@ -223,6 +259,75 @@ class LateralView(FromClause):
         return [self] + self.from_table._from_objects
 
 
+@compiles(LateralView)
+def compile_lateral_view(lateral_view, compiler, asfrom=False, **kwargs):
+    from_table_str = lateral_view.from_table._compiler_dispatch(
+        compiler, asfrom=True, **kwargs)
+    udtf_expr_str = lateral_view.udtf_expr._compiler_dispatch(
+        compiler, **kwargs)
+    # udtf_columns_str = ', '.join(compiler.preparer.quote(c)
+    #                              for c in lateral_view.udtf_column_names)
+    column_names = [
+        compiler.preparer.quote(col_name)
+        for col_name, col_type in lateral_view.udtf_expr.col_type_pairs]
+    column_names_str = ','.join(column_names)
+    if isinstance(lateral_view.name, elements._truncated_label):
+        udtf_table_name = compiler._truncated_identifier(
+            "lateral_view", lateral_view.name)
+    else:
+        udtf_table_name = lateral_view.name
+
+    udtf_table_name = compiler.preparer.quote(udtf_table_name)
+
+    return (f'{from_table_str} LATERAL VIEW {udtf_expr_str} '
+            f'{udtf_table_name} AS {column_names_str}')
+
+
+class DATE(TypeDecorator):
+    impl = types.DATE
+
+    def process_bind_param(self, value, dialect):
+        if value is None:
+            return None
+        elif isinstance(value, dt.date):
+            return f"DATE '{value:%Y-%m-%d}'"
+        else:
+            raise TypeError(
+                'Hive Date type only accepts Python date objects as input.')
+
+    def get_dbapi_type(self, dbapi):
+        from IPython.core.debugger import set_trace
+        set_trace()
+        return dbapi.DATE
+
+
+class TIMESTAMP(TypeDecorator):
+    impl = types.TIMESTAMP
+
+    def process_literal_param(self, value, dialect):
+        if value is None:
+            return None
+        elif isinstance(value, dt.date):
+            return f"'{value:%Y-%m-%d %H:%M:%S.%f}'"
+        else:
+            raise TypeError(
+                'Hive Timestamp type only accepts Python datetime objects as input.')
+
+    def process_bind_param(self, value, dialect):
+        if value is None:
+            return None
+        elif isinstance(value, dt.date):
+            return f"'{value:%Y-%m-%d %H:%M:%S.%f}'"
+        else:
+            raise TypeError(
+                'Hive Timestamp type only accepts Python datetime objects as input.')
+
+    def get_dbapi_type(self, dbapi):
+        from IPython.core.debugger import set_trace
+        set_trace()
+        return dbapi.DATE
+
+
 class STRUCT(UserDefinedType):
     __visit_name__ = 'STRUCT'
     python_type = Struct
@@ -238,6 +343,19 @@ class STRUCT(UserDefinedType):
         def process(value):
             return repr(value)
         return process
+
+    def literal_processor(self, dialect):
+        name_proc = String().dialcet_impl(dialect).literal_processor(dialect)
+
+        def process(value):
+            args = itertools.chain(
+                (name_proc(n),
+                 self.cols_name_type_map[n].dialect_impl(
+                     dialect).literal_processor(dialect)(v),
+                 )
+                for n, v in value.items())
+            arg_str = ', '.join(args)
+            return f'named_struct({arg_str})'
 
     def result_processor(self, dialect, coltype):
         def get_type_proc(t):
@@ -371,8 +489,8 @@ _type_map = {
     'float': types.Float,
     'double': types.Float,
     'string': types.String,
-    'date': types.DATE,
-    'timestamp': types.TIMESTAMP,
+    'date': DATE,
+    'timestamp': TIMESTAMP,
     'binary': types.String,
     'array': ARRAY,
     'map': MAP,
@@ -383,6 +501,8 @@ _type_map = {
 
 
 class HiveSQLCompiler(SQLCompiler):
+    # def render_literal_value(self, value, type_):
+    #     if isinstance(value, Struct):
 
     def visit_getitem_binary(self, binary, operator, **kw):
         return "%s[%s]" % (
@@ -390,10 +510,10 @@ class HiveSQLCompiler(SQLCompiler):
             self.process(binary.right, **kw)
         )
 
-    def visit_struct_element(self, element, **kw):
-        return '%s.%s' % (
-            self.process(element.clauses, **kw), element.name
-        )
+    # def visit_struct_element(self, element, **kw):
+    #     return '%s.%s' % (
+    #         self.process(element.clauses, **kw), element.name
+    #     )
 
     def visit_array(self, element, **kw):
         return 'array({})'.format(self.visit_clauselist(element, **kw))
@@ -596,10 +716,17 @@ class HiveTypeCompiler(compiler.GenericTypeCompiler):
         return 'TIMESTAMP'
 
     def visit_ARRAY(self, type_):
-        return 'ARRAY<{}>'.format(type_.item_type)
+        return 'ARRAY<{}>'.format(self.process(type_.item_type))
 
     def visit_MAP(self, type_):
-        return 'MAP<{}, {}>'.format(type_.key_type, type_.value_type)
+        return 'MAP<{}, {}>'.format(
+            self.process(type_.key_type),
+            self.process(type_.value_type))
+
+    def visit_STRUCT(self, type_):
+        type_strs = ['{}:{}'.format(col_name, self.process(col_type))
+                     for col_name, col_type in type_.cols_name_type]
+        return 'STRUCT<{}>'.format(', '.join(type_strs))
 
 
 class HiveExecutionContext(default.DefaultExecutionContext):
@@ -753,10 +880,17 @@ class HiveDialect(default.DefaultDialect):
     description_encoding = None
     supports_multivalues_insert = True
     # dbapi_type_map = {
+    #     'DATE_TYPE': DATE()
+    # }
+    # dbapi_type_map = {
     #     'DATE_TYPE': HiveDate(),
     #     'TIMESTAMP_TYPE': HiveTimestamp(),
     #     'DECIMAL_TYPE': types.DECIMAL()
     # }
+    colspecs = {
+        types.TIMESTAMP: TIMESTAMP,
+        types.DATE: DATE
+    }
     type_compiler = HiveTypeCompiler
     _json_deserializer = None
     _json_serializer = None
@@ -913,6 +1047,16 @@ class parse_url(GenericFunction):
 class length(GenericFunction):
     type = Integer()
     name = 'length'
+
+
+class to_date(GenericFunction):
+    type = Date()
+    name = 'to_date'
+
+
+class concat_ws(GenericFunction):
+    type = String()
+    name = 'concat_ws'
 
 
 class named_struct(GenericFunction):
