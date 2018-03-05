@@ -81,6 +81,9 @@ class ARRAY(PG_ARRAY):
             return f'array({value_str})'
         return process
 
+    def adapt(self, impltype):
+        return ARRAY(self.item_type)
+
 
 class Struct(object):
     __slots__ = ('_col_names', '_col_values', '_col_dict')
@@ -334,21 +337,50 @@ class STRUCT(UserDefinedType):
     shoulde_evaluate_none = True
     hashable = True
 
+    def get_col_spec(self):
+        from IPython.core.debugger import set_trace
+        set_trace()
+        type_strs = ['{}:{}'.format(col_name, col_type._compiler_dispatch())
+                     for col_name, col_type in self.cols_name_type]
+        return 'STRUCT<{}>'.format(', '.join(type_strs))
+
     def __init__(self, cols_name_type):
         self.cols_name_type = cols_name_type
         self.cols_name_type_map = {n: t for n, t in cols_name_type}
 
     def bind_processor(self, dialect):
+        from IPython.core.debugger import set_trace
+        set_trace()
+        name_proc = String().dialect_impl(dialect).bind_processor(dialect)
         # TODO: bind for complex type
+        # def process(value):
+        #     return repr(value)
+
         def process(value):
-            return repr(value)
+            args = itertools.chain.from_iterable(
+                (name_proc(n),
+                 self.cols_name_type_map[n].dialect_impl(
+                     dialect).bind_processor(dialect)(v),
+                 )
+                for n, v in value.items())
+            arg_str = ', '.join(args)
+            return f'named_struct({arg_str})'
+
         return process
 
+    def bind_expression(self, bindvalue):
+        from sqlalchemy import func, literal
+        type_map = bindvalue.type.cols_name_type_map
+        args = list(itertools.chain.from_iterable(
+            (n, literal(v, type_=type_map[n]))
+            for n, v in bindvalue.value.items()))
+        return func.named_struct(*args)
+
     def literal_processor(self, dialect):
-        name_proc = String().dialcet_impl(dialect).literal_processor(dialect)
+        name_proc = String().dialect_impl(dialect).literal_processor(dialect)
 
         def process(value):
-            args = itertools.chain(
+            args = itertools.chain.from_iterable(
                 (name_proc(n),
                  self.cols_name_type_map[n].dialect_impl(
                      dialect).literal_processor(dialect)(v),
@@ -356,6 +388,8 @@ class STRUCT(UserDefinedType):
                 for n, v in value.items())
             arg_str = ', '.join(args)
             return f'named_struct({arg_str})'
+
+        return process
 
     def result_processor(self, dialect, coltype):
         def get_type_proc(t):
