@@ -13,7 +13,8 @@ import itertools
 import json
 import re
 
-from sqlalchemy import Integer, String, exc, types, util
+from sqlalchemy import (Integer, String, exc, literal, literal_column, null,
+                        types, util)
 from sqlalchemy.databases import mysql
 from sqlalchemy.dialects.postgresql import ARRAY as PG_ARRAY
 from sqlalchemy.dialects.postgresql import array as pg_array
@@ -28,7 +29,7 @@ from sqlalchemy.sql.compiler import DDLCompiler, SQLCompiler
 from sqlalchemy.sql.dml import Insert as StandardInsert
 from sqlalchemy.sql.elements import (ColumnClause, _anonymous_label, _clone,
                                      _literal_as_binds)
-from sqlalchemy.sql.expression import FunctionElement
+from sqlalchemy.sql.expression import ColumnElement, FunctionElement
 from sqlalchemy.sql.functions import FunctionElement, GenericFunction
 from sqlalchemy.sql.selectable import _interpret_as_from
 from sqlalchemy.sql.sqltypes import Date, Indexable
@@ -85,29 +86,68 @@ class ARRAY(PG_ARRAY):
         return ARRAY(self.item_type)
 
 
-class Struct(object):
-    __slots__ = ('_col_names', '_col_values', '_col_dict')
+def convert_to_columnelement(value, type_):
+    if value is None:
+        return null().cast(type_)
+    elif isinstance(value, (str, int)):
+        return literal(value)
+#     elif isinstance(value, dt.date):
+#         return literal(value, type_=DATE())
+    elif isinstance(value, Struct):
+        return Struct(value.names(), value.values(), value.types())
+    elif isinstance(value, dt.date):
+        return literal_column(f'DATE "{value:%Y-%m-%d}"')
+    elif isinstance(value, list):
+        return array(value)
+    else:
+        print(type(value))
+        assert False
+
+
+class Struct(GenericFunction):
+    __slots__ = ('_col_names', '_col_values', '_col_value_map')
+    name = 'named_struct'
 
     def __init__(self,
-                 names=None, values=None,
-                 *args, **kwargs):
-        if kwargs:
-            self._col_names = tuple(kwargs.keys())
-            self._col_values = tuple(kwargs.values())
-            self._col_dict = kwargs
-        else:
-            self._col_names = tuple(names)
-            self._col_values = tuple(values)
-            self._col_dict = dict(zip(names, values))
+                 names=None, values=None, types=None, type_=None):
+        self._col_names = tuple(names)
+        self._col_values = tuple(values)
+        self._col_value_map = dict(zip(names, values))
+
+        if types is None and type_ is None:
+            types = [_literal_as_binds(v).type for v in values]
+
+        if type_ is not None and types is None:
+            names_from_type_, types = zip(
+                *[(n, t) for n, t in type_.name_type_pairs])
+            if names_from_type_ != tuple(names):
+                raise ValueError('`names` differ from column names in `type_`')
+        if type_ is None:
+            type_ = STRUCT(list(zip(names, types)))
+
+        self._col_types = tuple(types)
+        self._col_type_map = dict(zip(names, types))
+
+        col_eles = [convert_to_columnelement(
+            v, t) for v, t in zip(values, types)]
+
+        args = itertools.chain.from_iterable(zip(names, col_eles))
+        super().__init__(*args, type_=type_)
 
     def values(self):
         return self._col_values
 
-    def keys(self):
+    def names(self):
         return self._col_names
 
-    def items(self):
-        return list(zip(self._col_names, self._col_values))
+    def types(self):
+        return self._col_types
+
+    def type_of(self, name):
+        return self._col_type_map[name]
+
+    def value_of(self, name):
+        return self._col_value_map[name]
 
     def __iter__(self):
         for value in self._col_values:
@@ -116,13 +156,13 @@ class Struct(object):
     def __len__(self):
         return len(self._col_values)
 
-    def __getitem__(self, col_name):
-        self._col_dict[col_name]
+    def __getitem__(self, name):
+        self._col_value_map[name]
 
     def __getattr__(self, name):
         try:
             # for fixing pickle.load
-            col_dict = object.__getattribute__(self, '_col_dict')
+            col_dict = object.__getattribute__(self, '_col_value_map')
             return col_dict[name]
         except KeyError as e:
             raise AttributeError(e.args[0])
@@ -138,7 +178,7 @@ class Struct(object):
             return False
 
     def __repr__(self):
-        kwargs_str = ', '.join(f'{k}={v!r}' for k, v in self._col_dict.items())
+        kwargs_str = ', '.join(f'{k}={v!r}' for k, v in self._col_value_map.items())
         return f'{self.__class__.__name__}({kwargs_str})'
 
 
@@ -149,7 +189,7 @@ except ImportError:
     pass
 
 
-class StructElement(FunctionElement):
+class StructElement(ColumnElement):
     '''
     Instances of this class wrap a Hive struct type.
     '''
@@ -157,21 +197,48 @@ class StructElement(FunctionElement):
 
     def __init__(self, base, col, type_):
         self.name = col
+        self.key = col
         self.type = to_instance(type_)
+        self.is_literal = True
+        self.base = base
 
-        super(StructElement, self).__init__(base)
+        ColumnElement.__init__(self)
 
 
 @compiles(StructElement)
 def compile_struct_element(element, compiler, **kw):
     return '%s.%s' % (
-        compiler.process(element.clauses, **kw), element.name
+        compiler.process(element.base, **kw), element.name
     )
 
 
 class UDTF(FunctionElement):
     __visit_name__ = 'function'
     col_type_pairs = []
+
+
+class stack(UDTF):
+    name = 'stack'
+
+    def __init__(self, n, *args, names=None):
+        self.n = n
+        column_len = len(args) // n
+        if names is None:
+            names = [f'col{i}'for i in range(column_len)]
+        self.col_type_pairs = [
+            (name, _literal_as_binds(arg).type)
+            for name, arg in zip(names, args[:column_len])]
+        UDTF.__init__(self, n, *args)
+
+
+class inline(UDTF):
+    name = 'inline'
+
+    def __init__(self, arr):
+        self.arr = arr
+        struct_type = arr.type.item_type
+        self.col_type_pairs = struct_type.name_type_pairs
+        UDTF.__init__(self, self.arr)
 
 
 class explode(UDTF):
@@ -288,15 +355,18 @@ def compile_lateral_view(lateral_view, compiler, asfrom=False, **kwargs):
 
 class DATE(TypeDecorator):
     impl = types.DATE
+    __visit_name__ = 'DATE'
 
-    def process_bind_param(self, value, dialect):
-        if value is None:
-            return None
-        elif isinstance(value, dt.date):
-            return f"DATE '{value:%Y-%m-%d}'"
-        else:
-            raise TypeError(
-                'Hive Date type only accepts Python date objects as input.')
+    def bind_processor(self, dialect):
+        def process(value):
+            if value is None:
+                return None
+            elif isinstance(value, dt.date):
+                return f"DATE '{value:%Y-%m-%d}'"
+            else:
+                raise TypeError(
+                    'Hive Date type only accepts Python date objects as input.')
+        return process
 
     def get_dbapi_type(self, dbapi):
         from IPython.core.debugger import set_trace
@@ -341,25 +411,33 @@ class STRUCT(UserDefinedType):
         from IPython.core.debugger import set_trace
         set_trace()
         type_strs = ['{}:{}'.format(col_name, col_type._compiler_dispatch())
-                     for col_name, col_type in self.cols_name_type]
+                     for col_name, col_type in self.name_type_pairs]
         return 'STRUCT<{}>'.format(', '.join(type_strs))
 
-    def __init__(self, cols_name_type):
-        self.cols_name_type = cols_name_type
-        self.cols_name_type_map = {n: t for n, t in cols_name_type}
+    def __init__(self, name_type_pairs):
+        self.name_type_pairs = name_type_pairs
+        self.name_type_map = {n: t for n, t in name_type_pairs}
 
     def bind_processor(self, dialect):
         from IPython.core.debugger import set_trace
         set_trace()
         name_proc = String().dialect_impl(dialect).bind_processor(dialect)
+
+        if name_proc is None:
+            name_proc = identity
+
         # TODO: bind for complex type
         # def process(value):
         #     return repr(value)
 
         def process(value):
+            from IPython.core.debugger import set_trace
+            set_trace()
+            from sqlalchemy import func, literal
+            return func.named_struct(value.items(), type_=self).compile(dialect=dialect)
             args = itertools.chain.from_iterable(
                 (name_proc(n),
-                 self.cols_name_type_map[n].dialect_impl(
+                 self.name_type_map[n].dialect_impl(
                      dialect).bind_processor(dialect)(v),
                  )
                 for n, v in value.items())
@@ -368,21 +446,21 @@ class STRUCT(UserDefinedType):
 
         return process
 
-    def bind_expression(self, bindvalue):
-        from sqlalchemy import func, literal
-        type_map = bindvalue.type.cols_name_type_map
-        args = list(itertools.chain.from_iterable(
-            (n, literal(v, type_=type_map[n]))
-            for n, v in bindvalue.value.items()))
-        return func.named_struct(*args)
+    # def bind_expression(self, bindvalue):
+    #     from IPython.core.debugger import set_trace
+    #     set_trace()
+    #     from sqlalchemy import func, literal
+    #     return func.named_struct(bindvalue.value.items(), type_=bindvalue.type)
 
     def literal_processor(self, dialect):
         name_proc = String().dialect_impl(dialect).literal_processor(dialect)
 
         def process(value):
+            from IPython.core.debugger import set_trace
+            set_trace()
             args = itertools.chain.from_iterable(
                 (name_proc(n),
-                 self.cols_name_type_map[n].dialect_impl(
+                 self.name_type_map[n].dialect_impl(
                      dialect).literal_processor(dialect)(v),
                  )
                 for n, v in value.items())
@@ -392,6 +470,7 @@ class STRUCT(UserDefinedType):
         return process
 
     def result_processor(self, dialect, coltype):
+
         def get_type_proc(t):
             proc = t.dialect_impl(dialect).result_processor(dialect, coltype)
             if proc is None:
@@ -401,19 +480,31 @@ class STRUCT(UserDefinedType):
 
         col_procs_map = {
             n: get_type_proc(t)
-            for n, t in self.cols_name_type}
+            for n, t in self.name_type_pairs}
 
         def process(value):
             if value is None:
                 return None
-            # from IPython.core.debugger import set_trace
-            # set_trace()
-            value = json.loads(value)
-            if not isinstance(value, dict):
+            if isinstance(value, str):
+                d = json.loads(value)
+            elif isinstance(value, dict):
+                d = value
+            elif isinstance(value, Struct):
+                return value
+            else:
                 raise HiveResultParseError()
-            value = {k: col_procs_map[k](v)
-                     for k, v in value.items()}
-            return Struct(**value)
+
+            if not isinstance(d, dict):
+                raise HiveResultParseError()
+
+            d_proced_v = {k: col_procs_map[k](v)
+                          for k, v in d.items()}
+
+            names = d_proced_v.keys()
+            values = [col_procs_map[k](v)
+                      for k, v in d_proced_v.items()]
+
+            return Struct(names=names, values=values, type_=self)
 
         return process
 
@@ -422,7 +513,7 @@ class STRUCT(UserDefinedType):
 
         def __getattr__(self, key):
             try:
-                type_ = self.type.cols_name_type_map[key]
+                type_ = self.type.name_type_map[key]
             except KeyError:
                 raise AttributeError(
                     'Type %r doesn\'t have an attribute: %s' % (
@@ -431,13 +522,13 @@ class STRUCT(UserDefinedType):
             return StructElement(self.expr, key, type_)
 
         # def __getitem__(self, name):
-        #     return self.operate(struct_getcol, name, self.type.cols_name_type_map[name])
+        #     return self.operate(struct_getcol, name, self.type.name_type_map[name])
 
         # def _setup_getitem(self, index):
-        #     return operators.getitem, index, self.type.cols_name_type_map[index]
+        #     return operators.getitem, index, self.type.name_type_map[index]
 
         # def __getattr__(self, name):
-        #     return self.operate(struct_getcol, name, self.type.cols_name_type_map[name])
+        #     return self.operate(struct_getcol, name, self.type.name_type_map[name])
 
 
 class MAP(Indexable, UserDefinedType):
@@ -535,8 +626,14 @@ _type_map = {
 
 
 class HiveSQLCompiler(SQLCompiler):
-    # def render_literal_value(self, value, type_):
-    #     if isinstance(value, Struct):
+
+    def render_literal_value(self, value, type_):
+        if isinstance(value, dt.date):
+
+            type_ = DATE()
+            # from IPython.core.debugger import set_trace
+            # set_trace()
+        return super(HiveSQLCompiler, self).render_literal_value(value, type_)
 
     def visit_getitem_binary(self, binary, operator, **kw):
         return "%s[%s]" % (
@@ -548,6 +645,10 @@ class HiveSQLCompiler(SQLCompiler):
     #     return '%s.%s' % (
     #         self.process(element.clauses, **kw), element.name
     #     )
+    def visit_DATE(self, element, **kw):
+        from IPython.core.debugger import set_trace
+        set_trace()
+        return 'DATE %s' % (self.process(element))
 
     def visit_array(self, element, **kw):
         return 'array({})'.format(self.visit_clauselist(element, **kw))
@@ -689,6 +790,7 @@ class HiveSQLCompiler(SQLCompiler):
 
     def visit_column(self, *args, **kwargs):
         result = super(HiveSQLCompiler, self).visit_column(*args, **kwargs)
+        return result
         dot_count = result.count('.')
         assert dot_count in (
             0, 1, 2), "Unexpected visit_column result {}".format(result)
@@ -759,7 +861,7 @@ class HiveTypeCompiler(compiler.GenericTypeCompiler):
 
     def visit_STRUCT(self, type_):
         type_strs = ['{}:{}'.format(col_name, self.process(col_type))
-                     for col_name, col_type in type_.cols_name_type]
+                     for col_name, col_type in type_.name_type_pairs]
         return 'STRUCT<{}>'.format(', '.join(type_strs))
 
 
@@ -1096,14 +1198,15 @@ class concat_ws(GenericFunction):
 class named_struct(GenericFunction):
     name = 'named_struct'
 
-    def __init__(self, name_value_pairs):
+    def __init__(self, name_value_pairs, type_=None):
         if isinstance(name_value_pairs, dict):
             name_value_pairs = [(name, value)
                                 for name, value in name_value_pairs.items()]
 
         args = itertools.chain.from_iterable(name_value_pairs)
-        type_ = STRUCT([(name, _literal_as_binds(value).type)
-                        for name, value in name_value_pairs])
+        if type_ is None:
+            type_ = STRUCT([(name, _literal_as_binds(value).type)
+                            for name, value in name_value_pairs])
         super().__init__(*args, type_=type_)
 
 
