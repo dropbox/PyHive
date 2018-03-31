@@ -112,6 +112,12 @@ class Cursor(common.DBAPICursor):
         self._poll_interval = poll_interval
         self._source = source
         self._session_props = session_props if session_props is not None else {}
+        self._headers = {
+            'X-Presto-Catalog': self._catalog,
+            'X-Presto-Schema': self._schema,
+            'X-Presto-Source': self._source,
+            'X-Presto-User': self._username,
+        }
 
         if protocol not in ('http', 'https'):
             raise ValueError("Protocol must be http/https, was {!r}".format(protocol))
@@ -174,15 +180,8 @@ class Cursor(common.DBAPICursor):
 
         Return values are not defined.
         """
-        headers = {
-            'X-Presto-Catalog': self._catalog,
-            'X-Presto-Schema': self._schema,
-            'X-Presto-Source': self._source,
-            'X-Presto-User': self._username,
-        }
-
         if self._session_props:
-            headers['X-Presto-Session'] = ','.join(
+            self._headers['X-Presto-Session'] = ','.join(
                 '{}={}'.format(propname, propval)
                 for propname, propval in self._session_props.items()
             )
@@ -200,9 +199,9 @@ class Cursor(common.DBAPICursor):
             self._protocol,
             '{}:{}'.format(self._host, self._port), '/v1/statement', None, None, None))
         _logger.info('%s', sql)
-        _logger.debug("Headers: %s", headers)
+        _logger.debug("Headers: %s", self._headers)
         response = self._requests_session.post(
-            url, data=sql.encode('utf-8'), headers=headers, **self._requests_kwargs)
+            url, data=sql.encode('utf-8'), headers=self._headers, **self._requests_kwargs)
         self._process_response(response)
 
     def cancel(self):
@@ -212,7 +211,7 @@ class Cursor(common.DBAPICursor):
             assert self._state == self._STATE_FINISHED, "Should be finished if nextUri is None"
             return
 
-        response = self._requests_session.delete(self._nextUri, **self._requests_kwargs)
+        response = self._requests_session.delete(self._nextUri, headers=self._headers, **self._requests_kwargs)
         if response.status_code != requests.codes.no_content:
             fmt = "Unexpected status code after cancel {}\n{}"
             raise OperationalError(fmt.format(response.status_code, response.content))
@@ -234,13 +233,13 @@ class Cursor(common.DBAPICursor):
         if self._nextUri is None:
             assert self._state == self._STATE_FINISHED, "Should be finished if nextUri is None"
             return None
-        response = self._requests_session.get(self._nextUri, **self._requests_kwargs)
+        response = self._requests_session.get(self._nextUri, headers=self._headers, **self._requests_kwargs)
         self._process_response(response)
         return response.json()
 
     def _fetch_more(self):
         """Fetch the next URI and update state"""
-        self._process_response(self._requests_session.get(self._nextUri, **self._requests_kwargs))
+        self._process_response(self._requests_session.get(self._nextUri, headers=self._headers, **self._requests_kwargs))
 
     def _decode_binary(self, rows):
         # As of Presto 0.69, binary data is returned as the varbinary type in base64 format
