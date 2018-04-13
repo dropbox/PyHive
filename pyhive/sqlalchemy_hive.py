@@ -178,8 +178,9 @@ class Struct(GenericFunction):
             return False
 
     def __repr__(self):
-        kwargs_str = ', '.join(f'{k}={v!r}' for k, v in self._col_value_map.items())
-        return f'{self.__class__.__name__}({kwargs_str})'
+        # kwargs_str = ', '.join(f'{k}={v!r}' for k, v in self._col_value_map.items())
+
+        return f'{self.__class__.__name__}(names={self._col_names}, values={self._col_values})'
 
 
 try:
@@ -729,7 +730,8 @@ class HiveSQLCompiler(SQLCompiler):
         if partitioned_by:
             pt_columns_str = ', '.join(self.preparer.format_column(c)
                                        for c in partitioned_by.columns)
-            insert_stmt = insert_stmt.with_hint(f'PARTITION ({pt_columns_str})')
+            insert_stmt = insert_stmt.with_hint(
+                f'PARTITION ({pt_columns_str})')
 
         if insert_stmt._hints:
             dialect_hints, table_text = self._setup_crud_hints(
