@@ -70,6 +70,7 @@ class PrestoTypeCompiler(compiler.GenericTypeCompiler):
 class PrestoDialect(default.DefaultDialect):
     name = 'presto'
     driver = 'rest'
+    paramstyle = 'pyformat'
     preparer = PrestoIdentifierPreparer
     statement_compiler = PrestoCompiler
     supports_alter = False
