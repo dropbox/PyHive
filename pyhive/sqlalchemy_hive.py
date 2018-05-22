@@ -12,6 +12,7 @@ import datetime as dt
 import itertools
 import json
 import re
+from collections import UserDict
 
 from sqlalchemy import (Integer, String, exc, literal, literal_column, null,
                         types, util)
@@ -99,6 +100,8 @@ def convert_to_columnelement(value, type_):
         return literal_column(f'DATE "{value:%Y-%m-%d}"')
     elif isinstance(value, list):
         return array(value)
+    elif isinstance(value, Map):
+        return value
     else:
         print(type(value))
         assert False
@@ -574,12 +577,20 @@ class MAP(Indexable, UserDefinedType):
         def process(value):
             if value is None:
                 return None
-            evaluated = ast.literal_eval(value)
-            if not isinstance(evaluated, dict):
+            if isinstance(value, Map):
+                return value
+            elif isinstance(value, dict):
+                return Map(value, type_=self)
+            elif isinstance(value, str):
+                evaluated = ast.literal_eval(value)
+                if not isinstance(evaluated, dict):
+                    raise HiveResultParseError()
+                evaluated = {key_proc(k): value_proc(v)
+                             for k, v in evaluated.items()}
+
+                return Map(evaluated, type_=self)
+            else:
                 raise HiveResultParseError()
-            evaluated = {key_proc(k): value_proc(v)
-                         for k, v in evaluated.items()}
-            return evaluated
         return process
 
     class Comparator(Indexable.Comparator):
@@ -1220,7 +1231,7 @@ class collect_list(GenericFunction):
         super().__init__(col, type_=type_)
 
 
-class map(GenericFunction):
+class Map(GenericFunction):
     '''
     >>> func.map({1: 'B', 2: 'A'})
     '''
@@ -1241,4 +1252,24 @@ class map(GenericFunction):
             args.append(k)
             args.append(v)
 
-        super().__init__(*args, **kwargs)
+        self.data = data
+
+        GenericFunction.__init__(self, *args, **kwargs)
+
+    def values(self):
+        return self.data.values()
+
+    def keys(self):
+        return self.data.keys()
+
+    def __iter__(self):
+        return iter(self.data)
+
+    def __getitem__(self, key):
+        return self.data[key]
+
+    def __len__(self):
+        return len(self.data)
+
+    def __repr__(self):
+        return f'{self.__class__.__name__}({repr(self.data)})'
