@@ -144,11 +144,17 @@ class PrestoDialect(default.DefaultDialect):
         rows = self._get_table_columns(connection, table_name, schema)
         result = []
         for row in rows:
+
             try:
                 coltype = _type_map[row.Type]
             except KeyError:
-                util.warn("Did not recognize type '%s' of column '%s'" % (row.Type, row.Column))
-                coltype = types.NullType
+                # try recognize
+                try:
+                    coltype = row.Type.split("(")[0]
+                    coltype = _type_map[coltype]
+                except (IndexError, KeyError):
+                    util.warn("Did not recognize type '%s' of column '%s'" % (row.Type, row.Column))
+                    coltype = types.NullType
             result.append({
                 'name': row.Column,
                 'type': coltype,
