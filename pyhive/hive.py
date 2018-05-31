@@ -177,6 +177,14 @@ class Connection(object):
             self._transport.close()
             raise
 
+    def __enter__(self):
+        """Transport should already be opened by __init__"""
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Call close"""
+        self.close()
+
     def close(self):
         """Close the underlying session and Thrift transport"""
         req = ttypes.TCloseSessionReq(sessionHandle=self._sessionHandle)
@@ -272,6 +280,12 @@ class Cursor(common.DBAPICursor):
                     None, None, None, None, True
                 ))
         return self._description
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()
 
     def close(self):
         """Close the operation handle"""
