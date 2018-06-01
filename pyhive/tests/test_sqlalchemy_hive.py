@@ -6,7 +6,7 @@ from pyhive.sqlalchemy_hive import HiveDecimal
 from pyhive.sqlalchemy_hive import HiveTimestamp
 from pyhive.tests.sqlalchemy_test_case import SqlAlchemyTestCase
 from pyhive.tests.sqlalchemy_test_case import with_engine_connection
-from sqlalchemy import types
+from sqlalchemy import types, text
 from sqlalchemy.engine import create_engine
 from sqlalchemy.schema import Column
 from sqlalchemy.schema import MetaData
@@ -36,6 +36,25 @@ _ONE_ROW_COMPLEX_CONTENTS = [
 ]
 
 
+# [
+# ('boolean', 'boolean', ''),
+# ('tinyint', 'tinyint', ''),
+# ('smallint', 'smallint', ''),
+# ('int', 'int', ''),
+# ('bigint', 'bigint', ''),
+# ('float', 'float', ''),
+# ('double', 'double', ''),
+# ('string', 'string', ''),
+# ('timestamp', 'timestamp', ''),
+# ('binary', 'binary', ''),
+# ('array', 'array<int>', ''),
+# ('map', 'map<int,int>', ''),
+# ('struct', 'struct<a:int,b:int>', ''),
+# ('union', 'uniontype<int,string>', ''),
+# ('decimal', 'decimal(10,1)', '')
+# ]
+
+
 class TestSqlAlchemyHive(unittest.TestCase, SqlAlchemyTestCase):
     def create_engine(self):
         return create_engine('hive://localhost:10000/default')
@@ -57,7 +76,7 @@ class TestSqlAlchemyHive(unittest.TestCase, SqlAlchemyTestCase):
     def test_dotted_column_names_raw(self, engine, connection):
         """When Hive returns a dotted column name, and raw mode is on, nothing should be modified.
         """
-        row = connection.execution_options(hive_raw_colnames=True)\
+        row = connection.execution_options(hive_raw_colnames=True) \
             .execute('SELECT * FROM one_row').fetchone()
         assert row.keys() == ['one_row.number_of_rows']
         assert 'number_of_rows' not in row
@@ -70,9 +89,8 @@ class TestSqlAlchemyHive(unittest.TestCase, SqlAlchemyTestCase):
         one_row_complex = Table('one_row_complex', MetaData(bind=engine), autoload=True)
         self.assertEqual(len(one_row_complex.c), 15)
         self.assertIsInstance(one_row_complex.c.string, Column)
-        rows = one_row_complex.select().execute().fetchall()
-        self.assertEqual(len(rows), 1)
-        self.assertEqual(list(rows[0]), _ONE_ROW_COMPLEX_CONTENTS)
+        row = one_row_complex.select().execute().fetchone()
+        self.assertEqual(list(row), _ONE_ROW_COMPLEX_CONTENTS)
 
         # TODO some of these types could be filled in better
         self.assertIsInstance(one_row_complex.c.boolean.type, types.Boolean)
@@ -94,9 +112,11 @@ class TestSqlAlchemyHive(unittest.TestCase, SqlAlchemyTestCase):
     @with_engine_connection
     def test_type_map(self, engine, connection):
         """sqlalchemy should use the dbapi_type_map to infer types from raw queries"""
-        rows = connection.execute('SELECT * FROM one_row_complex').fetchall()
-        self.assertEqual(len(rows), 1)
-        self.assertEqual(list(rows[0]), _ONE_ROW_COMPLEX_CONTENTS)
+        tbl = Table('one_row_complex', MetaData(bind=engine)).columns
+        row = connection.execute(
+            text('SELECT * FROM one_row_complex').columns(*tbl)
+        ).fetchone()
+        self.assertEqual(row, _ONE_ROW_COMPLEX_CONTENTS)
 
     @with_engine_connection
     def test_reserved_words(self, engine, connection):
@@ -164,7 +184,7 @@ class TestSqlAlchemyHive(unittest.TestCase, SqlAlchemyTestCase):
         row = connection.execute(table.select()).fetchone()
         self.assertEqual(row.hive_date, datetime.date(1970, 1, 1))
         self.assertEqual(row.hive_decimal, decimal.Decimal(big_number))
-        self.assertEqual(row.hive_timestamp, datetime.datetime(1970, 1, 1, 0, 0, 2, 123))
+        self.assertEqual(row.hive_timestamp, datetime.datetime(1970, 1, 1, 0, 0, 2, 123000))
         table.drop()
 
     @with_engine_connection

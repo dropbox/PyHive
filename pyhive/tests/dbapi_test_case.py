@@ -64,9 +64,9 @@ class DBAPITestCase(with_metaclass(abc.ABCMeta, object)):
     def test_description_failed(self, cursor):
         try:
             cursor.execute('blah_blah')
+            self.assertIsNone(cursor.description)
         except exc.DatabaseError:
             pass
-        self.assertIsNone(cursor.description)
 
     @with_cursor
     def test_bad_query(self, cursor):
