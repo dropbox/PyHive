@@ -8,6 +8,7 @@ which is released under the MIT license.
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+import datetime
 import decimal
 
 import re
@@ -45,7 +46,11 @@ class HiveDate(HiveStringTypeBase):
 
     def result_processor(self, dialect, coltype):
         def process(value):
-            if value is not None:
+            if isinstance(value, datetime.datetime):
+                return value.date()
+            elif isinstance(value, datetime.date):
+                return value
+            elif value is not None:
                 return parse(value).date()
             else:
                 return None
@@ -65,7 +70,9 @@ class HiveTimestamp(HiveStringTypeBase):
 
     def result_processor(self, dialect, coltype):
         def process(value):
-            if value is not None:
+            if isinstance(value, datetime.datetime):
+                return value
+            elif value is not None:
                 return parse(value)
             else:
                 return None
@@ -88,7 +95,9 @@ class HiveDecimal(HiveStringTypeBase):
 
     def result_processor(self, dialect, coltype):
         def process(value):
-            if value is not None:
+            if isinstance(value, Decimal):
+                return value
+            elif value is not None:
                 return Decimal(value)
             else:
                 return None

@@ -6,7 +6,7 @@ from pyhive.sqlalchemy_hive import HiveDecimal
 from pyhive.sqlalchemy_hive import HiveTimestamp
 from pyhive.tests.sqlalchemy_test_case import SqlAlchemyTestCase
 from pyhive.tests.sqlalchemy_test_case import with_engine_connection
-from sqlalchemy import types, text
+from sqlalchemy import types
 from sqlalchemy.engine import create_engine
 from sqlalchemy.schema import Column
 from sqlalchemy.schema import MetaData
@@ -112,11 +112,8 @@ class TestSqlAlchemyHive(unittest.TestCase, SqlAlchemyTestCase):
     @with_engine_connection
     def test_type_map(self, engine, connection):
         """sqlalchemy should use the dbapi_type_map to infer types from raw queries"""
-        tbl = Table('one_row_complex', MetaData(bind=engine)).columns
-        row = connection.execute(
-            text('SELECT * FROM one_row_complex').columns(*tbl)
-        ).fetchone()
-        self.assertEqual(row, _ONE_ROW_COMPLEX_CONTENTS)
+        row = connection.execute('SELECT * FROM one_row_complex').fetchone()
+        self.assertListEqual(list(row), _ONE_ROW_COMPLEX_CONTENTS)
 
     @with_engine_connection
     def test_reserved_words(self, engine, connection):

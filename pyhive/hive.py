@@ -40,7 +40,6 @@ _TIMESTAMP_PATTERN = re.compile(r'(\d+-\d+-\d+ \d+:\d+:\d+(\.\d{,6})?)')
 
 
 def _parse_timestamp(value):
-    input_value = value
     if value:
         match = _TIMESTAMP_PATTERN.match(value)
         if match:
@@ -61,6 +60,7 @@ def _parse_timestamp(value):
 
 TYPES_CONVERTER = {"DECIMAL_TYPE": Decimal,
                    "TIMESTAMP_TYPE": _parse_timestamp}
+
 
 class HiveParamEscaper(common.ParamEscaper):
     def escape_string(self, item):
