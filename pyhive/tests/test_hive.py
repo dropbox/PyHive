@@ -8,11 +8,13 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import contextlib
+import datetime
 import os
 import socket
 import subprocess
 import time
 import unittest
+from decimal import Decimal
 
 import mock
 import sasl
@@ -72,13 +74,13 @@ class TestHive(unittest.TestCase, DBAPITestCase):
             0.5,
             0.25,
             'a string',
-            '1970-01-01 00:00:00.0',
+            datetime.datetime(1970, 1, 1, 0, 0),
             b'123',
             '[1,2]',
             '{1:2,3:4}',
             '{"a":1,"b":2}',
             '{0:1}',
-            '0.1',
+            Decimal('0.1'),
         )]
         self.assertEqual(rows, expected)
         # catch unicode/str
