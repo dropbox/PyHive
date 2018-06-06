@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 from builtins import str
 from pyhive.tests.sqlalchemy_test_case import SqlAlchemyTestCase
 from pyhive.tests.sqlalchemy_test_case import with_engine_connection
+from pyhive.sqlalchemy_presto import PrestoTimestamp, PrestoDate, PrestoDecimal
 from sqlalchemy import types
 from sqlalchemy.engine import create_engine
 from sqlalchemy.schema import Column
@@ -12,6 +13,8 @@ from sqlalchemy.types import String
 
 import contextlib
 import unittest
+import datetime
+import decimal
 
 
 class TestSqlAlchemyPresto(unittest.TestCase, SqlAlchemyTestCase):
@@ -29,7 +32,7 @@ class TestSqlAlchemyPresto(unittest.TestCase, SqlAlchemyTestCase):
         """reflecttable should be able to fill in a table from the name"""
         one_row_complex = Table('one_row_complex', MetaData(bind=engine), autoload=True)
         # Presto ignores the union column
-        self.assertEqual(len(one_row_complex.c), 15 - 1)
+        self.assertEqual(len(one_row_complex.c), 16 - 1)
         self.assertIsInstance(one_row_complex.c.string, Column)
         rows = one_row_complex.select().execute().fetchall()
         self.assertEqual(len(rows), 1)
@@ -42,13 +45,14 @@ class TestSqlAlchemyPresto(unittest.TestCase, SqlAlchemyTestCase):
             0.5,
             0.25,
             'a string',
-            '1970-01-01 00:00:00.000',
+            datetime.datetime(1970, 1, 1),
+            datetime.date(1970, 2, 1),
             b'123',
             [1, 2],
             {"1": 2, "3": 4},  # Presto converts all keys to strings so that they're valid JSON
             [1, 2],  # struct is returned as a list of elements
             # '{0:1}',
-            '0.1',
+            decimal.Decimal('0.1'),
         ])
 
         # TODO some of these types could be filled in better
@@ -60,12 +64,13 @@ class TestSqlAlchemyPresto(unittest.TestCase, SqlAlchemyTestCase):
         self.assertIsInstance(one_row_complex.c.float.type, types.Float)
         self.assertIsInstance(one_row_complex.c.double.type, types.Float)
         self.assertIsInstance(one_row_complex.c.string.type, String)
-        self.assertIsInstance(one_row_complex.c.timestamp.type, types.TIMESTAMP)
+        self.assertIsInstance(one_row_complex.c.timestamp.type, PrestoTimestamp)
+        self.assertIsInstance(one_row_complex.c.date.type, PrestoDate)
         self.assertIsInstance(one_row_complex.c.binary.type, types.VARBINARY)
         self.assertIsInstance(one_row_complex.c.array.type, types.NullType)
         self.assertIsInstance(one_row_complex.c.map.type, types.NullType)
         self.assertIsInstance(one_row_complex.c.struct.type, types.NullType)
-        self.assertIsInstance(one_row_complex.c.decimal.type, types.NullType)
+        self.assertIsInstance(one_row_complex.c.decimal.type, PrestoDecimal)
 
     def test_url_default(self):
         engine = create_engine('presto://localhost:8080/hive')

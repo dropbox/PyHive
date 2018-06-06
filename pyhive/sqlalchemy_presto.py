@@ -9,7 +9,10 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import re
+import datetime
+import decimal
 from sqlalchemy import exc
+from sqlalchemy import processors
 from sqlalchemy import types
 from sqlalchemy import util
 # TODO shouldn't use mysql type
@@ -27,6 +30,50 @@ class PrestoIdentifierPreparer(compiler.IdentifierPreparer):
     reserved_words = UniversalSet()
 
 
+class PrestoStringTypeBase(types.TypeDecorator):
+    """Translates strings returned by Thrift into something else"""
+    impl = types.String
+
+    def process_bind_param(self, value, dialect):
+        raise NotImplementedError("Writing to Hive not supported")
+
+
+class PrestoDate(PrestoStringTypeBase):
+    """Translates date strings to date objects"""
+    impl = types.DATE
+
+    def process_result_value(self, value, dialect):
+        return processors.str_to_date(value)
+
+
+class PrestoTimestamp(PrestoStringTypeBase):
+    """Translates timestamp strings to datetime objects"""
+    impl = types.TIMESTAMP
+    DATETIME_RE = re.compile(r"(\d+)-(\d+)-(\d+) (\d+):(\d+):(\d+)(?:\.(\d+))?")
+
+    def process_result_value(self, value, dialect):
+        if value is None:
+            return None
+
+        # preserves millisecond - sqlalchemy erroneously converts to microseconds
+        m = self.DATETIME_RE.match(value)
+        grps = list(m.groups(0))
+        mc = grps[6]
+        mc += '0' * (6 - len(mc))
+        grps[6] = mc
+        return datetime.datetime(*map(int, grps))
+
+
+class PrestoDecimal(PrestoStringTypeBase):
+    """Translates strings to decimals"""
+
+    def process_result_value(self, value, dialect):
+        if value is None:
+            return None
+        else:
+            return decimal.Decimal(value)
+
+
 _type_map = {
     'boolean': types.Boolean,
     'tinyint': mysql.MSTinyInteger,
@@ -36,9 +83,10 @@ _type_map = {
     'real': types.Float,
     'double': types.Float,
     'varchar': types.String,
-    'timestamp': types.TIMESTAMP,
-    'date': types.DATE,
+    'timestamp': PrestoTimestamp,
+    'date': PrestoDate,
     'varbinary': types.VARBINARY,
+    'decimal': PrestoDecimal
 }
 
 
@@ -82,6 +130,11 @@ class PrestoDialect(default.DefaultDialect):
     returns_unicode_strings = True
     description_encoding = None
     supports_native_boolean = True
+    dbapi_type_map = {
+        'date': PrestoDate(),
+        'timestamp': PrestoTimestamp(),
+        'decimal': PrestoDecimal()
+    }
     type_compiler = PrestoTypeCompiler
 
     @classmethod
@@ -145,7 +198,11 @@ class PrestoDialect(default.DefaultDialect):
         result = []
         for row in rows:
             try:
-                coltype = _type_map[row.Type]
+                # Take out the more detailed type information
+                # e.g. 'map<int,int>' -> 'map'
+                #      'decimal(10,1)' -> decimal
+                col_type = re.search(r'^\w+', row.Type).group(0)
+                coltype = _type_map[col_type]
             except KeyError:
                 util.warn("Did not recognize type '%s' of column '%s'" % (row.Type, row.Column))
                 coltype = types.NullType
@@ -159,11 +216,11 @@ class PrestoDialect(default.DefaultDialect):
         return result
 
     def get_foreign_keys(self, connection, table_name, schema=None, **kw):
-        # Hive has no support for foreign keys.
+        # Presto has no support for foreign keys.
         return []
 
     def get_pk_constraint(self, connection, table_name, schema=None, **kw):
-        # Hive has no support for primary keys.
+        # Presto has no support for primary keys.
         return []
 
     def get_indexes(self, connection, table_name, schema=None, **kw):

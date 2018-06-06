@@ -13,6 +13,7 @@ from pyhive import common
 from pyhive.common import DBAPITypeObject
 # Make all exceptions visible in this module per DB-API
 from pyhive.exc import *  # noqa
+import re
 import base64
 import getpass
 import logging
@@ -35,8 +36,8 @@ _escaper = common.ParamEscaper()
 
 
 def connect(*args, **kwargs):
-    """Constructor for creating a connection to the database. See class :py:class:`Connection` for
-    arguments.
+    """Constructor for creating a connection to the database.
+    See class :py:class:`Connection` for arguments.
 
     :returns: a :py:class:`Connection` object.
     """
@@ -163,11 +164,24 @@ class Cursor(common.DBAPICursor):
         )
         if self._columns is None:
             return None
-        return [
-            # name, type_code, display_size, internal_size, precision, scale, null_ok
-            (col['name'], col['type'], None, None, None, None, True)
-            for col in self._columns
-        ]
+
+        def _col_process(col_name, col_type):
+            """Strip scale and precision from decimal col_type. This allows `decimal` to
+            be mapped thru sqlalchemy to Decimal type.
+            :param col_name: string - column name
+            :param col_type: string - column type
+            :return: name, type_code, display_size, internal_size, precision, scale, null_ok
+            """
+            if col_type.startswith('decimal'):
+                m = re.search(r'(\d+),(\d+)', col_type)
+                precision = int(m.group(1))
+                scale = int(m.group(2))
+                col_type = 'decimal'
+            else:
+                precision = scale = None
+            return col_name, col_type, None, None, precision, scale, True
+
+        return [_col_process(col['name'], col['type']) for col in self._columns]
 
     def execute(self, operation, parameters=None):
         """Prepare and execute a database operation (query or command).

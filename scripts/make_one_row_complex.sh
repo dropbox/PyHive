@@ -10,6 +10,7 @@ COLUMNS='
 `double` DOUBLE,
 `string` STRING,
 `timestamp` TIMESTAMP,
+`date` DATE,
 `binary` BINARY,
 `array` ARRAY<int>,
 `map` MAP<int, int>,
@@ -34,6 +35,7 @@ INSERT OVERWRITE TABLE one_row_complex SELECT
     0.25,
     'a string',
     0,
+    cast('1970-02-01' AS date),
     '123',
     array(1, 2),
     map(1, 2, 3, 4),
@@ -42,6 +44,7 @@ INSERT OVERWRITE TABLE one_row_complex SELECT
     0.1
 FROM one_row;
 INSERT OVERWRITE TABLE one_row_complex_null SELECT
+    null,
     null,
     null,
     null,
