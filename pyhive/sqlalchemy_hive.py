@@ -8,6 +8,7 @@ which is released under the MIT license.
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+import datetime
 import decimal
 
 import re
@@ -23,6 +24,9 @@ from sqlalchemy.sql.compiler import SQLCompiler
 
 from pyhive import hive
 from pyhive.common import UniversalSet
+
+from dateutil.parser import parse
+from decimal import Decimal
 
 
 class HiveStringTypeBase(types.TypeDecorator):
@@ -40,6 +44,22 @@ class HiveDate(HiveStringTypeBase):
     def process_result_value(self, value, dialect):
         return processors.str_to_date(value)
 
+    def result_processor(self, dialect, coltype):
+        def process(value):
+            if isinstance(value, datetime.datetime):
+                return value.date()
+            elif isinstance(value, datetime.date):
+                return value
+            elif value is not None:
+                return parse(value).date()
+            else:
+                return None
+
+        return process
+
+    def adapt(self, impltype, **kwargs):
+        return self.impl
+
 
 class HiveTimestamp(HiveStringTypeBase):
     """Translates timestamp strings to datetime objects"""
@@ -48,16 +68,44 @@ class HiveTimestamp(HiveStringTypeBase):
     def process_result_value(self, value, dialect):
         return processors.str_to_datetime(value)
 
+    def result_processor(self, dialect, coltype):
+        def process(value):
+            if isinstance(value, datetime.datetime):
+                return value
+            elif value is not None:
+                return parse(value)
+            else:
+                return None
+
+        return process
+
+    def adapt(self, impltype, **kwargs):
+        return self.impl
+
 
 class HiveDecimal(HiveStringTypeBase):
     """Translates strings to decimals"""
     impl = types.DECIMAL
 
     def process_result_value(self, value, dialect):
-        if value is None:
-            return None
-        else:
+        if value is not None:
             return decimal.Decimal(value)
+        else:
+            return None
+
+    def result_processor(self, dialect, coltype):
+        def process(value):
+            if isinstance(value, Decimal):
+                return value
+            elif value is not None:
+                return Decimal(value)
+            else:
+                return None
+
+        return process
+
+    def adapt(self, impltype, **kwargs):
+        return self.impl
 
 
 class HiveIdentifierPreparer(compiler.IdentifierPreparer):
@@ -195,11 +243,6 @@ class HiveDialect(default.DefaultDialect):
     returns_unicode_strings = True
     description_encoding = None
     supports_multivalues_insert = True
-    dbapi_type_map = {
-        'DATE_TYPE': HiveDate(),
-        'TIMESTAMP_TYPE': HiveTimestamp(),
-        'DECIMAL_TYPE': HiveDecimal(),
-    }
     type_compiler = HiveTypeCompiler
 
     @classmethod
@@ -215,7 +258,7 @@ class HiveDialect(default.DefaultDialect):
             'database': url.database or 'default',
         }
         kwargs.update(url.query)
-        return ([], kwargs)
+        return [], kwargs
 
     def get_schema_names(self, connection, **kw):
         # Equivalent to SHOW DATABASES
@@ -276,6 +319,7 @@ class HiveDialect(default.DefaultDialect):
             except KeyError:
                 util.warn("Did not recognize type '%s' of column '%s'" % (col_type, col_name))
                 coltype = types.NullType
+
             result.append({
                 'name': col_name,
                 'type': coltype,

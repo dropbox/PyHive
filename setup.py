@@ -40,6 +40,7 @@ setup(
     ],
     install_requires=[
         'future',
+        'python-dateutil',
     ],
     extras_require={
         'presto': ['requests>=1.0.0'],
@@ -52,7 +53,7 @@ setup(
         'pytest-cov',
         'requests>=1.0.0',
         'sasl>=0.2.1',
-        'sqlalchemy>=0.8.7',
+        'sqlalchemy>=0.12.0',
         'thrift>=0.10.0',
     ],
     cmdclass={'test': PyTest},
