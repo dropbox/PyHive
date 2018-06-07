@@ -104,7 +104,7 @@ class PrestoDialect(default.DefaultDialect):
             kwargs['schema'] = db_parts[1]
         else:
             raise ValueError("Unexpected database format {}".format(url.database))
-        return ([], kwargs)
+        return [], kwargs
 
     def get_schema_names(self, connection, **kw):
         return [row.Schema for row in connection.execute('SHOW SCHEMAS')]

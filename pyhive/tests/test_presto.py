@@ -130,6 +130,7 @@ class TestPresto(unittest.TestCase, DBAPITestCase):
 
         def fail(*args, **kwargs):
             self.fail("Should not need requests.get after done polling")  # pragma: no cover
+
         with mock.patch('requests.get', fail):
             self.assertEqual(cursor.fetchall(), [(1,)])
 

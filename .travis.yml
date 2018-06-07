@@ -7,17 +7,14 @@ matrix:
     # One build pulls latest versions dynamically
     - python: 3.6
       env: CDH=cdh5 CDH_VERSION=5 PRESTO=RELEASE SQLALCHEMY=sqlalchemy
-    # Others use pinned versions.
+    - python: 3.6
+      env: CDH=cdh5 CDH_VERSION=5.10.1 PRESTO=0.147 SQLALCHEMY=sqlalchemy==1.2.8
     - python: 3.5
-      env: CDH=cdh5 CDH_VERSION=5.10.1 PRESTO=0.147 SQLALCHEMY=sqlalchemy==1.0.12
+      env: CDH=cdh5 CDH_VERSION=5.10.1 PRESTO=0.147 SQLALCHEMY=sqlalchemy==1.2.8
     - python: 3.4
-      env: CDH=cdh5 CDH_VERSION=5.10.1 PRESTO=0.147 SQLALCHEMY=sqlalchemy==1.0.12
+      env: CDH=cdh5 CDH_VERSION=5.10.1 PRESTO=0.147 SQLALCHEMY=sqlalchemy==1.2.8
     - python: 2.7
-      env: CDH=cdh5 CDH_VERSION=5.10.1 PRESTO=0.147 SQLALCHEMY=sqlalchemy==1.0.12
-    # stale stuff we're still using / supporting
-    - python: 2.7
-      env: CDH=cdh5 CDH_VERSION=5.10.1 PRESTO=0.147 SQLALCHEMY=sqlalchemy==0.8.7
-  # exclude: python 3 against old libries
+      env: CDH=cdh5 CDH_VERSION=5.10.1 PRESTO=0.147 SQLALCHEMY=sqlalchemy==1.2.8
 install:
   - ./scripts/travis-install.sh
   - pip install codecov
