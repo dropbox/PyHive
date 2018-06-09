@@ -1,5 +1,5 @@
-.. image:: https://travis-ci.org/godatadriven/PyHive.svg?branch=master
-    :target: https://travis-ci.org/godatadriven/PyHive
+.. image:: https://travis-ci.org/dropbox/PyHive.svg?branch=master
+    :target: https://travis-ci.org/dropbox/PyHive
 
 ======
 PyHive
