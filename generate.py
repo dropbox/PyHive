@@ -23,7 +23,8 @@ here = path.abspath(path.dirname(__file__))
 PACKAGE = 'TCLIService'
 GENERATED = 'gen-py'
 
-HIVE_SERVER2_URL = 'https://raw.githubusercontent.com/apache/hive/branch-2.3/service-rpc/if/TCLIService.thrift'
+HIVE_SERVER2_URL = \
+    'https://raw.githubusercontent.com/apache/hive/branch-2.3/service-rpc/if/TCLIService.thrift'
 
 
 def save_url(url):
