@@ -1,5 +1,6 @@
 .. image:: https://travis-ci.org/dropbox/PyHive.svg?branch=master
     :target: https://travis-ci.org/dropbox/PyHive
+.. image:: https://img.shields.io/codecov/c/github/dropbox/PyHive.svg
 
 ======
 PyHive
