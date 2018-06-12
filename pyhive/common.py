@@ -8,7 +8,6 @@ from __future__ import unicode_literals
 from builtins import bytes
 from builtins import int
 from builtins import object
-from builtins import range
 from builtins import str
 from past.builtins import basestring
 from pyhive import exc
@@ -16,6 +15,7 @@ import abc
 import collections
 import time
 from future.utils import with_metaclass
+from itertools import islice
 
 
 class DBAPICursor(with_metaclass(abc.ABCMeta, object)):
@@ -124,14 +124,7 @@ class DBAPICursor(with_metaclass(abc.ABCMeta, object)):
         """
         if size is None:
             size = self.arraysize
-        result = []
-        for _ in range(size):
-            one = self.fetchone()
-            if one is None:
-                break
-            else:
-                result.append(one)
-        return result
+        return list(islice(iter(self.fetchone, None), size))
 
     def fetchall(self):
         """Fetch all (remaining) rows of a query result, returning them as a sequence of sequences
@@ -140,14 +133,7 @@ class DBAPICursor(with_metaclass(abc.ABCMeta, object)):
         An :py:class:`~pyhive.exc.Error` (or subclass) exception is raised if the previous call to
         :py:meth:`execute` did not produce any result set or no call was issued yet.
         """
-        result = []
-        while True:
-            one = self.fetchone()
-            if one is None:
-                break
-            else:
-                result.append(one)
-        return result
+        return list(iter(self.fetchone, None))
 
     @property
     def arraysize(self):

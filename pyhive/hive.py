@@ -7,6 +7,11 @@ Many docstrings in this file are based on the PEP, which is in the public domain
 
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+import datetime
+import re
+from decimal import Decimal
+
 from TCLIService import TCLIService
 from TCLIService import constants
 from TCLIService import ttypes
@@ -30,6 +35,31 @@ threadsafety = 2  # Threads may share the module and connections.
 paramstyle = 'pyformat'  # Python extended format codes, e.g. ...WHERE name=%(name)s
 
 _logger = logging.getLogger(__name__)
+
+_TIMESTAMP_PATTERN = re.compile(r'(\d+-\d+-\d+ \d+:\d+:\d+(\.\d{,6})?)')
+
+
+def _parse_timestamp(value):
+    if value:
+        match = _TIMESTAMP_PATTERN.match(value)
+        if match:
+            if match.group(2):
+                format = '%Y-%m-%d %H:%M:%S.%f'
+                # use the pattern to truncate the value
+                value = match.group()
+            else:
+                format = '%Y-%m-%d %H:%M:%S'
+            value = datetime.datetime.strptime(value, format)
+        else:
+            raise Exception(
+                'Cannot convert "{}" into a datetime'.format(value))
+    else:
+        value = None
+    return value
+
+
+TYPES_CONVERTER = {"DECIMAL_TYPE": Decimal,
+                   "TIMESTAMP_TYPE": _parse_timestamp}
 
 
 class HiveParamEscaper(common.ParamEscaper):
@@ -177,6 +207,14 @@ class Connection(object):
             self._transport.close()
             raise
 
+    def __enter__(self):
+        """Transport should already be opened by __init__"""
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Call close"""
+        self.close()
+
     def close(self):
         """Close the underlying session and Thrift transport"""
         req = ttypes.TCloseSessionReq(sessionHandle=self._sessionHandle)
@@ -215,7 +253,7 @@ class Cursor(common.DBAPICursor):
     def __init__(self, connection, arraysize=1000):
         self._operationHandle = None
         super(Cursor, self).__init__()
-        self.arraysize = arraysize
+        self._arraysize = arraysize
         self._connection = connection
 
     def _reset_state(self):
@@ -229,6 +267,19 @@ class Cursor(common.DBAPICursor):
                 _check_status(response)
             finally:
                 self._operationHandle = None
+
+    @property
+    def arraysize(self):
+        return self._arraysize
+
+    @arraysize.setter
+    def arraysize(self, value):
+        """Array size cannot be None, and should be an integer"""
+        default_arraysize = 1000
+        try:
+            self._arraysize = int(value) or default_arraysize
+        except TypeError:
+            self._arraysize = default_arraysize
 
     @property
     def description(self):
@@ -272,6 +323,12 @@ class Cursor(common.DBAPICursor):
                     None, None, None, None, True
                 ))
         return self._description
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()
 
     def close(self):
         """Close the operation handle"""
@@ -320,8 +377,10 @@ class Cursor(common.DBAPICursor):
         )
         response = self._connection.client.FetchResults(req)
         _check_status(response)
+        schema = self.description
         assert not response.results.rows, 'expected data in columnar format'
-        columns = map(_unwrap_column, response.results.columns)
+        columns = [_unwrap_column(col, col_schema[1]) for col, col_schema in
+                   zip(response.results.columns, schema)]
         new_data = list(zip(*columns))
         self._data += new_data
         # response.hasMoreRows seems to always be False, so we instead check the number of rows
@@ -402,7 +461,7 @@ for type_id in constants.PRIMITIVE_TYPES:
 #
 
 
-def _unwrap_column(col):
+def _unwrap_column(col, type_=None):
     """Return a list of raw values from a TColumn instance."""
     for attr, wrapper in iteritems(col.__dict__):
         if wrapper is not None:
@@ -414,6 +473,9 @@ def _unwrap_column(col):
                 for b in range(8):
                     if byte & (1 << b):
                         result[i * 8 + b] = None
+            converter = TYPES_CONVERTER.get(type_, None)
+            if converter and type_:
+                result = [converter(row) if row else row for row in result]
             return result
     raise DataError("Got empty column value {}".format(col))  # pragma: no cover
 

@@ -8,11 +8,13 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import contextlib
+import datetime
 import os
 import socket
 import subprocess
 import time
 import unittest
+from decimal import Decimal
 
 import mock
 import sasl
@@ -72,13 +74,13 @@ class TestHive(unittest.TestCase, DBAPITestCase):
             0.5,
             0.25,
             'a string',
-            '1970-01-01 00:00:00.0',
+            datetime.datetime(1970, 1, 1, 0, 0),
             b'123',
             '[1,2]',
             '{1:2,3:4}',
             '{"a":1,"b":2}',
             '{0:1}',
-            '0.1',
+            Decimal('0.1'),
         )]
         self.assertEqual(rows, expected)
         # catch unicode/str
@@ -159,7 +161,7 @@ class TestHive(unittest.TestCase, DBAPITestCase):
             subprocess.check_call(['sudo', 'cp', orig_ldap, des])
             _restart_hs2()
             with contextlib.closing(hive.connect(
-                host=_HOST, username='existing', auth='LDAP', password='testpw')
+                    host=_HOST, username='existing', auth='LDAP', password='testpw')
             ) as connection:
                 with contextlib.closing(connection.cursor()) as cursor:
                     cursor.execute('SELECT * FROM one_row')
@@ -209,6 +211,7 @@ class TestHive(unittest.TestCase, DBAPITestCase):
             sasl_client.setAttr('password', 'x')
             sasl_client.init()
             return sasl_client
+
         transport = thrift_sasl.TSaslClientTransport(sasl_factory, sasl_auth, socket)
         conn = hive.connect(thrift_transport=transport)
         with contextlib.closing(conn):
