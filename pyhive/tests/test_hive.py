@@ -167,7 +167,7 @@ class TestHive(unittest.TestCase, DBAPITestCase):
                     cursor.execute('SELECT * FROM one_row')
                     self.assertEqual(cursor.fetchall(), [(1,)])
 
-            self.assertRaisesRegexp(
+            self.assertRaisesRegex(
                 TTransportException, 'Error validating the login',
                 lambda: hive.connect(
                     host=_HOST, username='existing', auth='LDAP', password='wrong')
@@ -179,23 +179,23 @@ class TestHive(unittest.TestCase, DBAPITestCase):
 
     def test_invalid_ldap_config(self):
         """password should be set if and only if using LDAP"""
-        self.assertRaisesRegexp(ValueError, 'Password.*LDAP',
-                                lambda: hive.connect(_HOST, password=''))
-        self.assertRaisesRegexp(ValueError, 'Password.*LDAP',
-                                lambda: hive.connect(_HOST, auth='LDAP'))
+        self.assertRaisesRegex(ValueError, 'Password.*LDAP',
+                               lambda: hive.connect(_HOST, password=''))
+        self.assertRaisesRegex(ValueError, 'Password.*LDAP',
+                               lambda: hive.connect(_HOST, auth='LDAP'))
 
     def test_invalid_kerberos_config(self):
         """kerberos_service_name should be set if and only if using KERBEROS"""
-        self.assertRaisesRegexp(ValueError, 'kerberos_service_name.*KERBEROS',
-                                lambda: hive.connect(_HOST, kerberos_service_name=''))
-        self.assertRaisesRegexp(ValueError, 'kerberos_service_name.*KERBEROS',
-                                lambda: hive.connect(_HOST, auth='KERBEROS'))
+        self.assertRaisesRegex(ValueError, 'kerberos_service_name.*KERBEROS',
+                               lambda: hive.connect(_HOST, kerberos_service_name=''))
+        self.assertRaisesRegex(ValueError, 'kerberos_service_name.*KERBEROS',
+                               lambda: hive.connect(_HOST, auth='KERBEROS'))
 
     def test_invalid_transport(self):
         """transport and auth are incompatible"""
         socket = thrift.transport.TSocket.TSocket('localhost', 10000)
         transport = thrift.transport.TTransport.TBufferedTransport(socket)
-        self.assertRaisesRegexp(
+        self.assertRaisesRegex(
             ValueError, 'thrift_transport cannot be used with',
             lambda: hive.connect(_HOST, thrift_transport=transport)
         )
@@ -234,7 +234,7 @@ class TestHive(unittest.TestCase, DBAPITestCase):
                     cursor.execute('SELECT * FROM one_row')
                     self.assertEqual(cursor.fetchall(), [(1,)])
 
-            self.assertRaisesRegexp(
+            self.assertRaisesRegex(
                 TTransportException, 'Error validating the login',
                 lambda: hive.connect(
                     host=_HOST, username='the-user', auth='CUSTOM', password='wrong')
