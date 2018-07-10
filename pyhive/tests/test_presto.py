@@ -22,6 +22,18 @@ _HOST = 'localhost'
 _PORT = '8080'
 
 
+class DataTransformCursor(presto.Cursor):
+
+    def _transform_data(self, data):
+        raise ValueError(data)
+
+
+class DataTransformConnection(presto.Connection):
+
+    def cursor(self):
+        return DataTransformCursor(*self._args, **self._kwargs)
+
+
 class TestPresto(unittest.TestCase, DBAPITestCase):
     __test__ = True
 
@@ -216,3 +228,10 @@ class TestPresto(unittest.TestCase, DBAPITestCase):
             cursor = connection.cursor()
             cursor.execute('SELECT * FROM one_row')
             self.assertEqual(cursor.fetchall(), [(1,)])
+
+    def test_data_transform(self):
+        connection = DataTransformConnection(host=_HOST, port=_PORT, source=self.id())
+        with contextlib.closing(connection) as connection:
+            with contextlib.closing(connection.cursor()) as cursor:
+                cursor.execute('SELECT * FROM one_row')
+                self.assertRaises(ValueError, cursor.fetchall)
