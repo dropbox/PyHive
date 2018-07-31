@@ -39,6 +39,7 @@ _type_map = {
     'timestamp': types.TIMESTAMP,
     'date': types.DATE,
     'varbinary': types.VARBINARY,
+    'decimal': types.DECIMAL,
 }
 
 
@@ -144,9 +145,15 @@ class PrestoDialect(default.DefaultDialect):
         rows = self._get_table_columns(connection, table_name, schema)
         result = []
         for row in rows:
-            try:
-                coltype = _type_map[row.Type]
-            except KeyError:
+            coltype = _type_map.get(row.Type)
+            if row.Type.startswith('decimal'):
+                if all([c in row.Type for c in '(,)']):
+                    details = row.Type.split('(')[1].strip(')')
+                    precision, scale = details.split(',')
+                    coltype = types.DECIMAL(precision, scale)
+                else:
+                    coltype = types.DECIMAL
+            if not coltype:
                 util.warn("Did not recognize type '%s' of column '%s'" % (row.Type, row.Column))
                 coltype = types.NullType
             result.append({
