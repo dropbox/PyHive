@@ -39,6 +39,7 @@ _type_map = {
     'timestamp': types.TIMESTAMP,
     'date': types.DATE,
     'varbinary': types.VARBINARY,
+    'decimal': types.DECIMAL,
 }
 
 
@@ -140,18 +141,28 @@ class PrestoDialect(default.DefaultDialect):
         except exc.NoSuchTableError:
             return False
 
+    def _get_column_type(self, column):
+        """Get column type based on a column row"""
+        coltype = _type_map.get(column.Type)
+        if column.Type.startswith('decimal'):
+            if all([c in column.Type for c in '(,)']):
+                details = column.Type.split('(')[1].strip(')')
+                precision, scale = details.split(',')
+                return types.DECIMAL(precision, scale)
+            else:
+                return types.DECIMAL
+        if not coltype:
+            util.warn("Did not recognize type '%s' of column '%s'" % (column.Type, column.Column))
+            return types.NullType
+        return coltype
+
     def get_columns(self, connection, table_name, schema=None, **kw):
         rows = self._get_table_columns(connection, table_name, schema)
         result = []
         for row in rows:
-            try:
-                coltype = _type_map[row.Type]
-            except KeyError:
-                util.warn("Did not recognize type '%s' of column '%s'" % (row.Type, row.Column))
-                coltype = types.NullType
             result.append({
                 'name': row.Column,
-                'type': coltype,
+                'type': self._get_column_type(column=row),
                 # newer Presto no longer includes this column
                 'nullable': getattr(row, 'Null', True),
                 'default': None,

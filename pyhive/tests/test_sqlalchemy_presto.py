@@ -65,7 +65,7 @@ class TestSqlAlchemyPresto(unittest.TestCase, SqlAlchemyTestCase):
         self.assertIsInstance(one_row_complex.c.array.type, types.NullType)
         self.assertIsInstance(one_row_complex.c.map.type, types.NullType)
         self.assertIsInstance(one_row_complex.c.struct.type, types.NullType)
-        self.assertIsInstance(one_row_complex.c.decimal.type, types.NullType)
+        self.assertIsInstance(one_row_complex.c.decimal.type, types.DECIMAL)
 
     def test_url_default(self):
         engine = create_engine('presto://localhost:8080/hive')
