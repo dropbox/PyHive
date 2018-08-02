@@ -14,6 +14,8 @@ import json
 import re
 from collections import UserDict
 
+from pyhive import hive
+from pyhive.common import UniversalSet
 from sqlalchemy import (Integer, String, exc, literal, literal_column, null,
                         types, util)
 from sqlalchemy.databases import mysql
@@ -30,14 +32,13 @@ from sqlalchemy.sql.compiler import DDLCompiler, SQLCompiler
 from sqlalchemy.sql.dml import Insert as StandardInsert
 from sqlalchemy.sql.elements import (ColumnClause, _anonymous_label, _clone,
                                      _literal_as_binds)
-from sqlalchemy.sql.expression import ColumnElement, FunctionElement
+from sqlalchemy.sql.expression import (ClauseElement, ColumnElement,
+                                       Executable, FunctionElement,
+                                       _literal_as_text)
 from sqlalchemy.sql.functions import FunctionElement, GenericFunction
 from sqlalchemy.sql.selectable import _interpret_as_from
 from sqlalchemy.sql.sqltypes import Date, Indexable
 from sqlalchemy.types import TypeDecorator, UserDefinedType, to_instance
-
-from pyhive import hive
-from pyhive.common import UniversalSet
 
 # @compiles(dt.date)
 # def compile_lateral_view(date, compiler, **kwargs):
@@ -50,6 +51,24 @@ class Insert(StandardInsert):
     def overwrite(self):
         self._overwrite = True
         return self
+
+
+class Explain(Executable, ClauseElement):
+    def __init__(self, stmt, mode=None):
+        '''EXPLAIN [EXTENDED|DEPENDENCY|AUTHORIZATION|LOCKS|VECTORIZATION] query
+        '''
+        self.statement = stmt
+        self.mode = mode
+
+
+@compiles(Explain)
+def compile_explain(explain, compiler, **kwargs):
+    statement_str = compiler.process(explain.statement, **kwargs)
+    if explain.mode is None:
+        mode = ''
+    else:
+        mode = explain.mode
+    return (f'EXPLAIN {mode} {statement_str}')
 
 
 class HiveResultParseError(Exception):
