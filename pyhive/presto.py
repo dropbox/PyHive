@@ -103,13 +103,16 @@ class Cursor(common.DBAPICursor):
             May not be specified with ``requests_kwargs['auth']``.
         :param KerberosRemoteServiceName: string -- Presto coordinator Kerberos service name.
             This parameter is required for Kerberos authentiation.
-        :param KerberosPrincipal: string -- The principal to use when authenticating to the Presto coordinator.
-        :param KerberosConfigPath: string -- Kerberos configuration file. (default: /etc/krb5.conf)
+        :param KerberosPrincipal: string -- The principal to use when authenticating to
+            the Presto coordinator.
+        :param KerberosConfigPath: string -- Kerberos configuration file.
+            (default: /etc/krb5.conf)
         :param KerberosKeytabPath: string -- Kerberos keytab file.
         :param KerberosCredentialCachePath: string -- Kerberos credential cache.
-        :param KerberosUseCanonicalHostname: boolean -- Use the canonical hostname of the Presto coordinator for the
-            Kerberos service principal by first resolving the hostname to an IP address and then doing a reverse DNS
-            lookup for that IP address. This is enabled by default.
+        :param KerberosUseCanonicalHostname: boolean -- Use the canonical hostname of the
+            Presto coordinator for the Kerberos service principal by first resolving the
+            hostname to an IP address and then doing a reverse DNS lookup for that IP address.
+            This is enabled by default.
         :param requests_session: a ``requests.Session`` object for advanced usage. If absent, this
             class will use the default requests behavior of making a new session per HTTP request.
             Caller is responsible for closing session.
@@ -137,7 +140,8 @@ class Cursor(common.DBAPICursor):
 
         if KerberosRemoteServiceName is not None:
             hostname_override = None
-            if KerberosUseCanonicalHostname is not None and KerberosUseCanonicalHostname.lower() == 'false':
+            if KerberosUseCanonicalHostname is not None \
+                    and KerberosUseCanonicalHostname.lower() == 'false':
                 hostname_override = host
             if KerberosConfigPath is not None:
                 os.environ['KRB5_CONFIG'] = KerberosConfigPath
