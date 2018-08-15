@@ -99,7 +99,7 @@ class Connection(object):
 
     def __init__(self, host=None, port=None, username=None, database='default', auth=None,
                  configuration=None, kerberos_service_name=None, password=None,
-                 thrift_transport=None):
+                 thrift_transport=None, kerberos_kdc_host=None):
         """Connect to HiveServer2
 
         :param host: What host HiveServer2 runs on
@@ -163,7 +163,11 @@ class Connection(object):
 
                 def sasl_factory():
                     sasl_client = sasl.Client()
-                    sasl_client.setAttr('host', host)
+                    if kerberos_kdc_host is None:  # set kerberos kdc host
+                        sasl_client.setAttr('host', host)
+                    else:
+                        sasl_client.setAttr('host', kerberos_kdc_host)
+                        
                     if sasl_auth == 'GSSAPI':
                         sasl_client.setAttr('service', kerberos_service_name)
                     elif sasl_auth == 'PLAIN':
