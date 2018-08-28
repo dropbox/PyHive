@@ -45,6 +45,13 @@ DB-API (asynchronous)
 
     print cursor.fetchall()
 
+In Python 3.7 `async` became a keyword; you can use `async_` instead:
+
+.. code-block:: python
+
+    cursor.execute('SELECT * FROM my_awesome_data LIMIT 10', async_=True)
+
+
 SQLAlchemy
 ----------
 First install this package to register it with SQLAlchemy (see ``setup.py``).

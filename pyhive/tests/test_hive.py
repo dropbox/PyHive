@@ -88,7 +88,7 @@ class TestHive(unittest.TestCase, DBAPITestCase):
 
     @with_cursor
     def test_async(self, cursor):
-        cursor.execute('SELECT * FROM one_row', async=True)
+        cursor.execute('SELECT * FROM one_row', async_=True)
         unfinished_states = (
             ttypes.TOperationState.INITIALIZED_STATE,
             ttypes.TOperationState.RUNNING_STATE,
@@ -106,7 +106,7 @@ class TestHive(unittest.TestCase, DBAPITestCase):
         cursor.execute(
             "SELECT reflect('java.lang.Thread', 'sleep', 1000L * 1000L * 1000L) "
             "FROM one_row a JOIN one_row b",
-            async=True
+            async_=True
         )
         self.assertEqual(cursor.poll().operationState, ttypes.TOperationState.RUNNING_STATE)
         assert any('Stage' in line for line in cursor.fetch_logs())
