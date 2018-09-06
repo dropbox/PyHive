@@ -334,11 +334,19 @@ class Cursor(common.DBAPICursor):
         """Close the operation handle"""
         self._reset_state()
 
-    def execute(self, operation, parameters=None, async=False):
+    def execute(self, operation, parameters=None, **kwargs):
         """Prepare and execute a database operation (query or command).
 
         Return values are not defined.
         """
+        # backward compatibility with Python < 3.7
+        for kw in ['async', 'async_']:
+            if kw in kwargs:
+                async_ = kwargs[kw]
+                break
+        else:
+            async_ = False
+
         # Prepare statement
         if parameters is None:
             sql = operation
@@ -351,7 +359,7 @@ class Cursor(common.DBAPICursor):
         _logger.info('%s', sql)
 
         req = ttypes.TExecuteStatementReq(self._connection.sessionHandle,
-                                          sql, runAsync=async)
+                                          sql, runAsync=async_)
         _logger.debug(req)
         response = self._connection.client.ExecuteStatement(req)
         _check_status(response)
