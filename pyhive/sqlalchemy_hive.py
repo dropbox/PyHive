@@ -277,6 +277,16 @@ class explode(UDTF):
         super(explode, self).__init__(clause, **kw)
 
 
+class posexplode(UDTF):
+    name = 'posexplode'
+
+    def __init__(self, clause, *, names, **kw):
+        self.clause = _literal_as_binds(clause)
+        self.col_type_pairs = [(names[0], Integer),
+                               (names[1], clause.type.item_type)]
+        super(posexplode, self).__init__(clause, **kw)
+
+
 class parse_url_tuple(UDTF):
     name = 'parse_url_tuple'
 
@@ -1249,13 +1259,13 @@ class collect_list(GenericFunction):
         type_ = ARRAY(_literal_as_binds(col).type)
         super().__init__(col, type_=type_)
 
+
 class collect_set(GenericFunction):
     name = 'collect_set'
 
     def __init__(self, col):
         type_ = ARRAY(_literal_as_binds(col).type)
         super().__init__(col, type_=type_)
-
 
 
 class Map(GenericFunction):
