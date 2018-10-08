@@ -21,18 +21,21 @@ class SparkSqlDialect(sqlalchemy_hive.HiveDialect):
             rows = connection.execute('DESCRIBE {}'.format(full_table)).fetchall()
         except exc.OperationalError as e:
             # Does the table exist?
-            regex_fmt = r'TExecuteStatementResp.*NoSuchTableException.*Table or view \'{}\' not found'
+            regex_fmt = r'TExecuteStatementResp.*NoSuchTableException.*Table or view \'{}\'' \
+                        r' not found'
             regex = regex_fmt.format(re.escape(table_name))
             if re.search(regex, e.args[0]):
                 raise exc.NoSuchTableError(full_table)
             elif schema:
-                schema_regex_fmt = r'TExecuteStatementResp.*NoSuchDatabaseException.*Database \'{}\' not found'
+                schema_regex_fmt = r'TExecuteStatementResp.*NoSuchDatabaseException.*Database ' \
+                                   r'\'{}\' not found'
                 schema_regex = schema_regex_fmt.format(re.escape(schema))
                 if re.search(schema_regex, e.args[0]):
                     raise exc.NoSuchTableError(full_table)
             else:
                 # When a hive-only column exists in a table
-                hive_regex_fmt = r'org.apache.spark.SparkException: Cannot recognize hive type string'
+                hive_regex_fmt = r'org.apache.spark.SparkException: Cannot recognize hive type ' \
+                                 r'string'
                 if re.search(hive_regex_fmt, e.args[0]):
                     raise exc.UnreflectableTableError
                 else:
@@ -66,5 +69,3 @@ class SparkSqlDialect(sqlalchemy_hive.HiveDialect):
             return False
         except exc.UnreflectableTableError:
             return False
-
-
