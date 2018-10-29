@@ -61,6 +61,10 @@ class PrestoCompiler(SQLCompiler):
         if table is None:
             return sql
 
+        if isinstance(table, Alias):
+            return sql
+
+
         if "presto" not in table.dialect_options or "catalog" not in table.dialect_options["presto"]._non_defaults:
             return sql
 
