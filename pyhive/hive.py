@@ -203,8 +203,9 @@ class Connection(object):
                 self._transport = thrift.transport.THttpClient.THttpClient(
                     "http://{}:{}/{}".format(host, port, http_path)
                 )
-                credentials = base64.b64encode(username + ":" + password)
-                self._transport.setCustomHeaders({"Authorization": "Basic " + credentials})
+                credentials = base64.b64encode((username + ":" + password).encode('utf-8'))
+                self._transport.setCustomHeaders({"Authorization":
+                                                      "Basic " + credentials.decode('utf-8')})
             else:
                 raise NotImplementedError(
                     "Only NONE authentication is supported with http mode, got {}".format(auth)
