@@ -13,11 +13,14 @@ from sqlalchemy import exc
 from sqlalchemy import types
 from sqlalchemy import util
 from sqlalchemy import Table
+
 # TODO shouldn't use mysql type
 from sqlalchemy.databases import mysql
 from sqlalchemy.engine import default
 from sqlalchemy.sql import compiler
 from sqlalchemy.sql.compiler import SQLCompiler
+from sqlalchemy.sql.selectable import FromClause
+from sqlalchemy.sql.expression import Alias
 
 from pyhive import presto
 from pyhive.common import UniversalSet
@@ -57,13 +60,12 @@ class PrestoCompiler(SQLCompiler):
         sql = super(PrestoCompiler, self).visit_table(table, asfrom, iscrud, ashint, fromhints, use_schema, **kwargs)
         return self.__add_catalog(sql, table)
 
-    def __add_catalog(self, sql:str, table: Table) -> str:
+    def __add_catalog(self, sql:str, table: FromClause) -> str:
         if table is None:
             return sql
 
         if isinstance(table, Alias):
             return sql
-
 
         if "presto" not in table.dialect_options or "catalog" not in table.dialect_options["presto"]._non_defaults:
             return sql
