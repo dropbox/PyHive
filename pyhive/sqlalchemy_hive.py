@@ -300,6 +300,16 @@ class parse_url_tuple(UDTF):
         super(parse_url_tuple, self).__init__(url, *parts, **kw)
 
 
+class numeric_range(UDTF):
+    name = 'numeric_range'
+
+    def __init__(self, clause, name=None, *args, **kwargs):
+        if name is None:
+            name = 'range'
+        self.col_type_pairs = [(name, Integer())]
+        super(numeric_range, self).__init__(clause, *args, **kwargs)
+
+
 class LateralView(FromClause):
     __visit_name__ = 'lateral_view'
 
