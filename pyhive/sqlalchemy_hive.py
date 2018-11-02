@@ -303,9 +303,7 @@ class parse_url_tuple(UDTF):
 class numeric_range(UDTF):
     name = 'numeric_range'
 
-    def __init__(self, clause, name=None, *args, **kwargs):
-        if name is None:
-            name = 'range'
+    def __init__(self, clause, name, *args, **kwargs):
         self.col_type_pairs = [(name, Integer())]
         super(numeric_range, self).__init__(clause, *args, **kwargs)
 
