@@ -1250,10 +1250,23 @@ class collect_list(GenericFunction):
         super().__init__(col, type_=type_)
 
 
+class collect(GenericFunction):
+    '''
+    collect() from brickhouse
+    '''
+
+    name = 'collect'
+
+    def __init__(self, col):
+        type_ = ARRAY(_literal_as_binds(col).type)
+        super().__init__(col, type_=type_)
+
+
 class Map(GenericFunction):
     '''
     >>> func.map({1: 'B', 2: 'A'})
     '''
+
     name = 'map'
 
     def __init__(self, data, type_=None):
