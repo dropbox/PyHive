@@ -1262,6 +1262,14 @@ class collect(GenericFunction):
         super().__init__(col, type_=type_)
 
 
+class collect_set(GenericFunction):
+    name = 'collect_set'
+
+    def __init__(self, col):
+        type_ = ARRAY(_literal_as_binds(col).type)
+        super().__init__(col, type_=type_)
+
+
 class Map(GenericFunction):
     '''
     >>> func.map({1: 'B', 2: 'A'})
