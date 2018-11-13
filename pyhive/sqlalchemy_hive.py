@@ -129,6 +129,7 @@ _type_map = {
     'double': types.Float,
     'string': types.String,
     'varchar': types.String,
+    'char': types.String,
     'date': HiveDate,
     'timestamp': HiveTimestamp,
     'binary': types.String,
