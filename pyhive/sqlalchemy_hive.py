@@ -263,6 +263,14 @@ class inline(UDTF):
         self.col_type_pairs = struct_type.name_type_pairs
         UDTF.__init__(self, self.arr)
 
+class posexplode(UDTF):
+    name = 'posexplode'
+
+    def __init__(self, clause, *, names, **kw):
+        self.clause = _literal_as_binds(clause)
+        self.col_type_pairs = [(names[0], Integer),
+                               (names[1], clause.type.item_type)]
+        super(posexplode, self).__init__(clause, **kw)
 
 class explode(UDTF):
     name = 'explode'
