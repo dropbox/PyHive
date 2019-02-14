@@ -14,8 +14,6 @@ import json
 import re
 from collections import UserDict
 
-from pyhive import hive
-from pyhive.common import UniversalSet
 from sqlalchemy import (Integer, String, exc, literal, literal_column, null,
                         types, util)
 from sqlalchemy.databases import mysql
@@ -39,6 +37,9 @@ from sqlalchemy.sql.functions import FunctionElement, GenericFunction
 from sqlalchemy.sql.selectable import _interpret_as_from
 from sqlalchemy.sql.sqltypes import Date, Indexable
 from sqlalchemy.types import TypeDecorator, UserDefinedType, to_instance
+
+from pyhive import hive
+from pyhive.common import UniversalSet
 
 # @compiles(dt.date)
 # def compile_lateral_view(date, compiler, **kwargs):
@@ -588,6 +589,7 @@ class MAP(Indexable, UserDefinedType):
     hashable = False
 
     def __init__(self, key_type, value_type):
+
         # key_type should be primitive type
         self.key_type = (key_type()
                          if isinstance(key_type, type) else key_type)
@@ -1305,13 +1307,15 @@ class Map(GenericFunction):
     name = 'map'
 
     def __init__(self, data, type_=None):
-        key, value = next(iter(data.items()))
-        key_type = _literal_as_binds(value).type
-        value_type = _literal_as_binds(key).type
         kwargs = {}
         if type_ is not None:
             kwargs['type_'] = type_
         else:
+            if not data:
+                raise ValueError('')
+            key, value = next(iter(data.items()))
+            key_type = _literal_as_binds(value).type
+            value_type = _literal_as_binds(key).type
             kwargs['type_'] = MAP(key_type, value_type)
 
         args = []
