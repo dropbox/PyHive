@@ -80,7 +80,7 @@ class Cursor(common.DBAPICursor):
 
     def __init__(self, host, port='8080', username=None, catalog='hive',
                  schema='default', poll_interval=1, source='pyhive', session_props=None,
-                 protocol='http', password=None, requests_session=None, requests_kwargs=None):
+                 protocol='http', password=None, requests_session=None, requests_kwargs=None, additional_headers=None):
         """
         :param host: hostname to connect to, e.g. ``presto.example.com``
         :param port: int -- port, defaults to 8080
@@ -112,6 +112,7 @@ class Cursor(common.DBAPICursor):
         self._poll_interval = poll_interval
         self._source = source
         self._session_props = session_props if session_props is not None else {}
+        self._additional_headers = additional_headers if additional_headers is not None else {}
 
         if protocol not in ('http', 'https'):
             raise ValueError("Protocol must be http/https, was {!r}".format(protocol))
@@ -180,6 +181,8 @@ class Cursor(common.DBAPICursor):
             'X-Presto-Source': self._source,
             'X-Presto-User': self._username,
         }
+
+        headers.update(self._additional_headers)
 
         if self._session_props:
             headers['X-Presto-Session'] = ','.join(
