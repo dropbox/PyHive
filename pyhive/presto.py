@@ -82,10 +82,11 @@ class Cursor(common.DBAPICursor):
 
     def __init__(self, host, port='8080', username=None, catalog='hive',
                  schema='default', poll_interval=1, source='pyhive', session_props=None,
-                 protocol='http', password=None, KerberosRemoteServiceName=None,
-                 KerberosPrincipal=None, KerberosConfigPath=None, KerberosKeytabPath=None,
-                 KerberosCredentialCachePath=None, KerberosUseCanonicalHostname=None,
-                 requests_session=None, requests_kwargs=None):
+                 protocol='http', password=None, requests_session=None, requests_kwargs=None,
+                 KerberosRemoteServiceName=None, KerberosPrincipal=None,
+                 KerberosConfigPath=None, KerberosKeytabPath=None,
+                 KerberosCredentialCachePath=None, KerberosUseCanonicalHostname=None
+                 ):
         """
         :param host: hostname to connect to, e.g. ``presto.example.com``
         :param port: int -- port, defaults to 8080
@@ -101,6 +102,10 @@ class Cursor(common.DBAPICursor):
             Using BasicAuth, requires ``https``.
             Prefer ``requests_kwargs={'auth': HTTPBasicAuth(username, password)}``.
             May not be specified with ``requests_kwargs['auth']``.
+        :param requests_session: a ``requests.Session`` object for advanced usage. If absent, this
+            class will use the default requests behavior of making a new session per HTTP request.
+            Caller is responsible for closing session.
+        :param requests_kwargs: Additional ``**kwargs`` to pass to requests
         :param KerberosRemoteServiceName: string -- Presto coordinator Kerberos service name.
             This parameter is required for Kerberos authentiation.
         :param KerberosPrincipal: string -- The principal to use when authenticating to
@@ -113,10 +118,6 @@ class Cursor(common.DBAPICursor):
             Presto coordinator for the Kerberos service principal by first resolving the
             hostname to an IP address and then doing a reverse DNS lookup for that IP address.
             This is enabled by default.
-        :param requests_session: a ``requests.Session`` object for advanced usage. If absent, this
-            class will use the default requests behavior of making a new session per HTTP request.
-            Caller is responsible for closing session.
-        :param requests_kwargs: Additional ``**kwargs`` to pass to requests
         """
         super(Cursor, self).__init__(poll_interval)
         # Config
