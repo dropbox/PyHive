@@ -144,8 +144,12 @@ class PrestoDialect(default.DefaultDialect):
         rows = self._get_table_columns(connection, table_name, schema)
         result = []
         for row in rows:
+            row_type = row.Type
+            index = row_type.find("(")
+            if index != -1:
+                row_type = row_type[:index]
             try:
-                coltype = _type_map[row.Type]
+                coltype = _type_map[row_type]
             except KeyError:
                 util.warn("Did not recognize type '%s' of column '%s'" % (row.Type, row.Column))
                 coltype = types.NullType
