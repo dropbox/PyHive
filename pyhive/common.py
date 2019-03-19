@@ -9,6 +9,7 @@ from builtins import bytes
 from builtins import int
 from builtins import object
 from builtins import str
+import datetime
 from past.builtins import basestring
 from pyhive import exc
 import abc
@@ -209,6 +210,9 @@ class ParamEscaper(object):
         else:
             raise exc.ProgrammingError("Unsupported param format: {}".format(parameters))
 
+    def escape_datetime(self, item):
+        return "timestamp '{}'".format(item)
+
     def escape_number(self, item):
         return item
 
@@ -237,6 +241,8 @@ class ParamEscaper(object):
             return self.escape_string(item)
         elif isinstance(item, collections.Iterable):
             return self.escape_sequence(item)
+        elif isinstance(item, datetime.datetime):
+            return self.escape_datetime(item)
         else:
             raise exc.ProgrammingError("Unsupported object {}".format(item))
 
