@@ -202,6 +202,9 @@ class DBAPITypeObject(object):
 
 
 class ParamEscaper(object):
+
+    _DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S.%f"
+
     def escape_args(self, parameters):
         if isinstance(parameters, dict):
             return {k: self.escape_item(v) for k, v in parameters.items()}
@@ -211,7 +214,9 @@ class ParamEscaper(object):
             raise exc.ProgrammingError("Unsupported param format: {}".format(parameters))
 
     def escape_datetime(self, item):
-        return "timestamp '{}'".format(item)
+        datetime_string, micros = item.strftime(ParamEscaper._DATETIME_FORMAT).split(".")
+        datetime_string = "%s.%03d" % (datetime_string, int(micros) / 1000)
+        return "timestamp '%s'" % datetime_string
 
     def escape_number(self, item):
         return item

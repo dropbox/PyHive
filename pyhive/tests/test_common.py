@@ -37,5 +37,7 @@ class TestCommon(unittest.TestCase):
                          ("('你好','b','c')",))
 
         self.assertEqual(escaper.escape_args((datetime.datetime(2019, 3, 19, 14, 10, 50),)),
-                         ("timestamp '2019-03-19 14:10:50'",))
+                         ("timestamp '2019-03-19 14:10:50.000'",))
+        self.assertEqual(escaper.escape_args((datetime.datetime(2019, 3, 19, 14, 10, 50, 123456),)),
+                         ("timestamp '2019-03-19 14:10:50.123'",))
 
