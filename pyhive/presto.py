@@ -18,6 +18,8 @@ import getpass
 import logging
 import requests
 from requests.auth import HTTPBasicAuth
+from requests_kerberos import HTTPKerberosAuth, OPTIONAL
+import os
 
 try:  # Python 3
     import urllib.parse as urlparse
@@ -80,7 +82,10 @@ class Cursor(common.DBAPICursor):
 
     def __init__(self, host, port='8080', username=None, catalog='hive',
                  schema='default', poll_interval=1, source='pyhive', session_props=None,
-                 protocol='http', password=None, requests_session=None, requests_kwargs=None):
+                 protocol='http', password=None, requests_session=None, requests_kwargs=None,
+                 KerberosRemoteServiceName=None, KerberosPrincipal=None,
+                 KerberosConfigPath=None, KerberosKeytabPath=None,
+                 KerberosCredentialCachePath=None, KerberosUseCanonicalHostname=None):
         """
         :param host: hostname to connect to, e.g. ``presto.example.com``
         :param port: int -- port, defaults to 8080
@@ -100,6 +105,18 @@ class Cursor(common.DBAPICursor):
             class will use the default requests behavior of making a new session per HTTP request.
             Caller is responsible for closing session.
         :param requests_kwargs: Additional ``**kwargs`` to pass to requests
+        :param KerberosRemoteServiceName: string -- Presto coordinator Kerberos service name.
+            This parameter is required for Kerberos authentiation.
+        :param KerberosPrincipal: string -- The principal to use when authenticating to
+            the Presto coordinator.
+        :param KerberosConfigPath: string -- Kerberos configuration file.
+            (default: /etc/krb5.conf)
+        :param KerberosKeytabPath: string -- Kerberos keytab file.
+        :param KerberosCredentialCachePath: string -- Kerberos credential cache.
+        :param KerberosUseCanonicalHostname: boolean -- Use the canonical hostname of the
+            Presto coordinator for the Kerberos service principal by first resolving the
+            hostname to an IP address and then doing a reverse DNS lookup for that IP address.
+            This is enabled by default.
         """
         super(Cursor, self).__init__(poll_interval)
         # Config
@@ -120,15 +137,34 @@ class Cursor(common.DBAPICursor):
         self._requests_session = requests_session or requests
 
         requests_kwargs = dict(requests_kwargs) if requests_kwargs is not None else {}
-        if password is not None and 'auth' in requests_kwargs:
-            raise ValueError("Cannot use both password and requests_kwargs authentication")
-        for k in ('method', 'url', 'data', 'headers'):
-            if k in requests_kwargs:
-                raise ValueError("Cannot override requests argument {}".format(k))
-        if password is not None:
-            requests_kwargs['auth'] = HTTPBasicAuth(username, password)
-            if protocol != 'https':
-                raise ValueError("Protocol must be https when passing a password")
+
+        if KerberosRemoteServiceName is not None:
+            hostname_override = None
+            if KerberosUseCanonicalHostname is not None \
+                    and KerberosUseCanonicalHostname.lower() == 'false':
+                hostname_override = host
+            if KerberosConfigPath is not None:
+                os.environ['KRB5_CONFIG'] = KerberosConfigPath
+            if KerberosKeytabPath is not None:
+                os.environ['KRB5_CLIENT_KTNAME'] = KerberosKeytabPath
+            if KerberosCredentialCachePath is not None:
+                os.environ['KRB5CCNAME'] = KerberosCredentialCachePath
+
+            requests_kwargs['auth'] = HTTPKerberosAuth(mutual_authentication=OPTIONAL,
+                                                       principal=KerberosPrincipal,
+                                                       service=KerberosRemoteServiceName,
+                                                       hostname_override=hostname_override)
+
+        else:
+            if password is not None and 'auth' in requests_kwargs:
+                raise ValueError("Cannot use both password and requests_kwargs authentication")
+            for k in ('method', 'url', 'data', 'headers'):
+                if k in requests_kwargs:
+                    raise ValueError("Cannot override requests argument {}".format(k))
+            if password is not None:
+                requests_kwargs['auth'] = HTTPBasicAuth(username, password)
+                if protocol != 'https':
+                    raise ValueError("Protocol must be https when passing a password")
         self._requests_kwargs = requests_kwargs
 
         self._reset_state()

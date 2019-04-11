@@ -10,6 +10,7 @@ pytest-timeout==1.2.0
 
 # actual dependencies: let things break if a package changes
 requests>=1.0.0
+requests_kerberos>=0.12.0
 sasl>=0.2.1
 thrift>=0.10.0
 #thrift_sasl>=0.1.0
