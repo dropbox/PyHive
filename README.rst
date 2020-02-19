@@ -100,8 +100,8 @@ Requirements
 
 Install using
 
-- ``pip install pyhive[hive]`` for the Hive interface and
-- ``pip install pyhive[presto]`` for the Presto interface.
+- ``pip install 'pyhive[hive]'`` for the Hive interface and
+- ``pip install 'pyhive[presto]'`` for the Presto interface.
 
 PyHive works with
 
