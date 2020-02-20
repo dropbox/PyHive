@@ -145,6 +145,7 @@ class Cursor(common.DBAPICursor):
         self._poll_interval = poll_interval
         self._source = source
         self._session_props = session_props if session_props is not None else {}
+        self.last_query_id = None
 
         if protocol not in ('http', 'https'):
             raise ValueError("Protocol must be http/https, was {!r}".format(protocol))
@@ -334,6 +335,8 @@ class Cursor(common.DBAPICursor):
             self._state = self._STATE_FINISHED
         if 'error' in response_json:
             raise DatabaseError(response_json['error'])
+        if 'id' in response_json:
+            self.last_query_id = response_json['id']
 
 
 #
