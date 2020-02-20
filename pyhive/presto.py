@@ -18,7 +18,6 @@ import getpass
 import logging
 import requests
 from requests.auth import HTTPBasicAuth
-from requests_kerberos import HTTPKerberosAuth, OPTIONAL
 import os
 
 try:  # Python 3
@@ -139,6 +138,8 @@ class Cursor(common.DBAPICursor):
         requests_kwargs = dict(requests_kwargs) if requests_kwargs is not None else {}
 
         if KerberosRemoteServiceName is not None:
+            from requests_kerberos import HTTPKerberosAuth, OPTIONAL
+
             hostname_override = None
             if KerberosUseCanonicalHostname is not None \
                     and KerberosUseCanonicalHostname.lower() == 'false':
