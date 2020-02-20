@@ -36,6 +36,7 @@ class TestPresto(unittest.TestCase, DBAPITestCase):
     def test_description(self, cursor):
         cursor.execute('SELECT 1 AS foobar FROM one_row')
         self.assertEqual(cursor.description, [('foobar', 'integer', None, None, None, None, True)])
+        self.assertIsNotNone(cursor.last_query_id)
 
     @with_cursor
     def test_complex(self, cursor):
@@ -99,6 +100,7 @@ class TestPresto(unittest.TestCase, DBAPITestCase):
         self.assertIn(cursor.poll()['stats']['state'], (
             'STARTING', 'PLANNING', 'RUNNING', 'WAITING_FOR_RESOURCES', 'QUEUED'))
         cursor.cancel()
+        self.assertIsNotNone(cursor.last_query_id)
         self.assertIsNone(cursor.poll())
 
     def test_noops(self):
@@ -110,6 +112,7 @@ class TestPresto(unittest.TestCase, DBAPITestCase):
         self.assertEqual(cursor.rowcount, -1)
         cursor.setinputsizes([])
         cursor.setoutputsize(1, 'blah')
+        self.assertIsNone(cursor.last_query_id)
         connection.commit()
 
     @mock.patch('requests.post')
@@ -137,23 +140,39 @@ class TestPresto(unittest.TestCase, DBAPITestCase):
 
     @with_cursor
     def test_set_session(self, cursor):
+        id = None
+        self.assertIsNone(cursor.last_query_id)
         cursor.execute("SET SESSION query_max_run_time = '1234m'")
+        self.assertIsNotNone(cursor.last_query_id)
+        id = cursor.last_query_id
         cursor.fetchall()
+        self.assertEqual(id, cursor.last_query_id)
 
         cursor.execute('SHOW SESSION')
+        self.assertIsNotNone(cursor.last_query_id)
+        self.assertNotEqual(id, cursor.last_query_id)
+        id = cursor.last_query_id
         rows = [r for r in cursor.fetchall() if r[0] == 'query_max_run_time']
-        assert len(rows) == 1
+        self.assertEqual(len(rows), 1)
         session_prop = rows[0]
-        assert session_prop[1] == '1234m'
+        self.assertEqual(session_prop[1], '1234m')
+        self.assertEqual(id, cursor.last_query_id)
 
         cursor.execute('RESET SESSION query_max_run_time')
+        self.assertIsNotNone(cursor.last_query_id)
+        self.assertNotEqual(id, cursor.last_query_id)
+        id = cursor.last_query_id
         cursor.fetchall()
+        self.assertEqual(id, cursor.last_query_id)
 
         cursor.execute('SHOW SESSION')
+        self.assertIsNotNone(cursor.last_query_id)
+        self.assertNotEqual(id, cursor.last_query_id)
         rows = [r for r in cursor.fetchall() if r[0] == 'query_max_run_time']
-        assert len(rows) == 1
+        self.assertEqual(len(rows), 1)
         session_prop = rows[0]
-        assert session_prop[1] != '1234m'
+        self.assertNotEqual(session_prop[1], '1234m')
+        self.assertEqual(id, cursor.last_query_id)
 
     def test_set_session_in_constructor(self):
         conn = presto.connect(

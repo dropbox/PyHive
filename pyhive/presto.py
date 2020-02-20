@@ -320,6 +320,8 @@ class Cursor(common.DBAPICursor):
         assert self._state == self._STATE_RUNNING, "Should be running if processing response"
         self._nextUri = response_json.get('nextUri')
         self._columns = response_json.get('columns')
+        if 'id' in response_json:
+            self.last_query_id = response_json['id']
         if 'X-Presto-Clear-Session' in response.headers:
             propname = response.headers['X-Presto-Clear-Session']
             self._session_props.pop(propname, None)
@@ -335,8 +337,6 @@ class Cursor(common.DBAPICursor):
             self._state = self._STATE_FINISHED
         if 'error' in response_json:
             raise DatabaseError(response_json['error'])
-        if 'id' in response_json:
-            self.last_query_id = response_json['id']
 
 
 #
