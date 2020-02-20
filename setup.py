@@ -45,7 +45,7 @@ setup(
     extras_require={
         'presto': ['requests>=1.0.0'],
         'hive': ['sasl>=0.2.1', 'thrift>=0.10.0', 'thrift_sasl>=0.1.0'],
-        'sqlalchemy': ['sqlalchemy>=0.8.7,<=1.2.8'],
+        'sqlalchemy': ['sqlalchemy>=1.3.0'],
         'kerberos': ['requests_kerberos>=0.12.0'],
     },
     tests_require=[
@@ -55,7 +55,7 @@ setup(
         'requests>=1.0.0',
         'requests_kerberos>=0.12.0',
         'sasl>=0.2.1',
-        'sqlalchemy>=0.12.0,<=1.2.8',
+        'sqlalchemy>=1.3.0',
         'thrift>=0.10.0',
     ],
     cmdclass={'test': PyTest},

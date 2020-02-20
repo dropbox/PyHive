@@ -64,7 +64,8 @@ class SqlAlchemyTestCase(with_metaclass(abc.ABCMeta, object)):
         """When passed include_columns, reflecttable should filter out other columns"""
         one_row_complex = Table('one_row_complex', MetaData(bind=engine))
         engine.dialect.reflecttable(
-            connection, one_row_complex, include_columns=['int'], exclude_columns=[])
+            connection, one_row_complex, include_columns=['int'],
+            exclude_columns=[], resolve_fks=True)
         self.assertEqual(len(one_row_complex.c), 1)
         self.assertIsNotNone(one_row_complex.c.int)
         self.assertRaises(AttributeError, lambda: one_row_complex.c.tinyint)
@@ -86,14 +87,16 @@ class SqlAlchemyTestCase(with_metaclass(abc.ABCMeta, object)):
 
         many_rows = Table('many_rows', MetaData(bind=engine))
         engine.dialect.reflecttable(
-            connection, many_rows, include_columns=['a'], exclude_columns=[])
+            connection, many_rows, include_columns=['a'],
+            exclude_columns=[], resolve_fks=True)
         self.assertEqual(len(many_rows.c), 1)
         self.assertFalse(many_rows.c.a.index)
         self.assertFalse(many_rows.indexes)
 
         many_rows = Table('many_rows', MetaData(bind=engine))
         engine.dialect.reflecttable(
-            connection, many_rows, include_columns=['b'], exclude_columns=[])
+            connection, many_rows, include_columns=['b'],
+            exclude_columns=[], resolve_fks=True)
         self.assertEqual(len(many_rows.c), 1)
         self.assertEqual(repr(many_rows.indexes), repr({Index('partition', many_rows.c.b)}))
 
