@@ -168,6 +168,7 @@ class TestPresto(unittest.TestCase, DBAPITestCase):
         cursor.execute('SHOW SESSION')
         self.assertIsNotNone(cursor.last_query_id)
         self.assertNotEqual(id, cursor.last_query_id)
+        id = cursor.last_query_id
         rows = [r for r in cursor.fetchall() if r[0] == 'query_max_run_time']
         self.assertEqual(len(rows), 1)
         session_prop = rows[0]
