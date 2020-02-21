@@ -151,7 +151,7 @@ class TestSqlAlchemyHive(unittest.TestCase, SqlAlchemyTestCase):
             'NUMERIC', 'DECIMAL', 'TIMESTAMP', 'DATETIME', 'CLOB', 'BLOB',
             'BOOLEAN', 'SMALLINT', 'DATE', 'TIME',
             'String', 'Integer', 'SmallInteger',
-            'Numeric', 'Float', 'DateTime', 'Date', 'Time', 'Binary',
+            'Numeric', 'Float', 'DateTime', 'Date', 'Time', 'LargeBinary',
             'Boolean', 'Unicode', 'UnicodeText',
         ]
         cols = []

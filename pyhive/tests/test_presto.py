@@ -96,7 +96,8 @@ class TestPresto(unittest.TestCase, DBAPITestCase):
             "FROM many_rows a "
             "CROSS JOIN many_rows b "
         )
-        self.assertIn(cursor.poll()['stats']['state'], ('STARTING', 'PLANNING', 'RUNNING'))
+        self.assertIn(cursor.poll()['stats']['state'], (
+            'STARTING', 'PLANNING', 'RUNNING', 'WAITING_FOR_RESOURCES', 'QUEUED'))
         cursor.cancel()
         self.assertIsNone(cursor.poll())
 
@@ -202,7 +203,7 @@ class TestPresto(unittest.TestCase, DBAPITestCase):
     def test_requests_kwargs(self):
         connection = presto.connect(
             host=_HOST, port=_PORT, source=self.id(),
-            requests_kwargs={'proxies': {'http': 'localhost:99999'}},
+            requests_kwargs={'proxies': {'http': 'localhost:9999'}},
         )
         cursor = connection.cursor()
         self.assertRaises(requests.exceptions.ProxyError,
