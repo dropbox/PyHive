@@ -77,7 +77,7 @@ class PrestoCompiler(SQLCompiler):
             return sql
 
         catalog = table.dialect_options["presto"]._non_defaults["catalog"]
-        sql = f"\"{catalog}\".{sql}"
+        sql = "\"{catalog}\".{sql}".format(catalog=catalog, sql=sql)
         return sql
 
 
