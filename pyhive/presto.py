@@ -33,6 +33,7 @@ paramstyle = 'pyformat'  # Python extended format codes, e.g. ...WHERE name=%(na
 
 _logger = logging.getLogger(__name__)
 
+
 class PrestoParamEscaper(common.ParamEscaper):
     def escape_item(self, item):
         if isinstance(item, datetime.datetime):
@@ -48,7 +49,9 @@ class PrestoParamEscaper(common.ParamEscaper):
     def escape_datetime(self, item: datetime.datetime):
         return f"timestamp  '{item}'"
 
+
 _escaper = PrestoParamEscaper()
+
 
 def connect(*args, **kwargs):
     """Constructor for creating a connection to the database. See class :py:class:`Connection` for

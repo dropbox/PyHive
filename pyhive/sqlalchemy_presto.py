@@ -12,7 +12,6 @@ import re
 from sqlalchemy import exc
 from sqlalchemy import types
 from sqlalchemy import util
-from sqlalchemy import Table
 
 # TODO shouldn't use mysql type
 from sqlalchemy.databases import mysql
@@ -51,28 +50,35 @@ class PrestoCompiler(SQLCompiler):
         return 'length{}'.format(self.function_argspec(fn, **kw))
 
     def visit_column(self, column, add_to_result_map=None, include_table=True, **kwargs):
-        sql = super(PrestoCompiler, self).visit_column(column, add_to_result_map, include_table, **kwargs)
+        sql = super(PrestoCompiler, self).visit_column(
+            column, add_to_result_map, include_table, **kwargs
+        )
         table = column.table
         return self.__add_catalog(sql, table)
 
     def visit_table(self, table, asfrom=False, iscrud=False, ashint=False,
                     fromhints=None, use_schema=True, **kwargs):
-        sql = super(PrestoCompiler, self).visit_table(table, asfrom, iscrud, ashint, fromhints, use_schema, **kwargs)
+        sql = super(PrestoCompiler, self).visit_table(
+            table, asfrom, iscrud, ashint, fromhints, use_schema, **kwargs
+        )
         return self.__add_catalog(sql, table)
 
-    def __add_catalog(self, sql:str, table: FromClause) -> str:
+    def __add_catalog(self, sql: str, table: FromClause) -> str:
         if table is None:
             return sql
 
         if isinstance(table, Alias):
             return sql
 
-        if "presto" not in table.dialect_options or "catalog" not in table.dialect_options["presto"]._non_defaults:
+        if (
+            "presto" not in table.dialect_options
+            or "catalog" not in table.dialect_options["presto"]._non_defaults
+        ):
             return sql
 
         catalog = table.dialect_options["presto"]._non_defaults["catalog"]
         sql = f"\"{catalog}\".{sql}"
-        return sql    
+        return sql
 
 
 class PrestoTypeCompiler(compiler.GenericTypeCompiler):
