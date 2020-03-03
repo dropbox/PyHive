@@ -43,11 +43,11 @@ class PrestoParamEscaper(common.ParamEscaper):
         else:
             return super().escape_item(item)
 
-    def escape_date(self, item: datetime.date):
-        return f"date '{item}'"
+    def escape_date(self, item):
+        return "date '{}'".format(item)
 
-    def escape_datetime(self, item: datetime.datetime):
-        return f"timestamp  '{item}'"
+    def escape_datetime(self, item):
+        return "timestamp  '{}'".format(item)
 
 
 _escaper = PrestoParamEscaper()
