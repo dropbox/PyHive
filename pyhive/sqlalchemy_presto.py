@@ -18,7 +18,6 @@ from sqlalchemy.databases import mysql
 from sqlalchemy.engine import default
 from sqlalchemy.sql import compiler
 from sqlalchemy.sql.compiler import SQLCompiler
-from sqlalchemy.sql.selectable import FromClause
 from sqlalchemy.sql.expression import Alias
 
 from pyhive import presto
