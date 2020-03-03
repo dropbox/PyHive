@@ -63,7 +63,7 @@ class PrestoCompiler(SQLCompiler):
         )
         return self.__add_catalog(sql, table)
 
-    def __add_catalog(self, sql: str, table: FromClause) -> str:
+    def __add_catalog(self, sql, table):
         if table is None:
             return sql
 
