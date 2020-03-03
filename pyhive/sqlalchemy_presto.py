@@ -63,7 +63,7 @@ class PrestoCompiler(SQLCompiler):
         )
         return self.__add_catalog(sql, table)
 
-    def __add_catalog(self, sql: str, table: FromClause) -> str:
+    def __add_catalog(self, sql, table):
         if table is None:
             return sql
 
@@ -77,7 +77,7 @@ class PrestoCompiler(SQLCompiler):
             return sql
 
         catalog = table.dialect_options["presto"]._non_defaults["catalog"]
-        sql = f"\"{catalog}\".{sql}"
+        sql = "\"{catalog}\".{sql}".format(catalog=catalog, sql=sql)
         return sql
 
 
