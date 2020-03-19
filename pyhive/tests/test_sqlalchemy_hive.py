@@ -212,3 +212,7 @@ class TestSqlAlchemyHive(unittest.TestCase, SqlAlchemyTestCase):
         result = table.select().execute().fetchall()
         expected = [(1,), (2,)]
         self.assertEqual(result, expected)
+
+    @with_engine_connection
+    def test_supports_san_rowcount(self, engine, connection):
+        self.assertFalse(engine.dialect.supports_sane_rowcount_returning)

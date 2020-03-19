@@ -246,6 +246,7 @@ class HiveDialect(default.DefaultDialect):
     description_encoding = None
     supports_multivalues_insert = True
     type_compiler = HiveTypeCompiler
+    supports_sane_rowcount = False
 
     @classmethod
     def dbapi(cls):
