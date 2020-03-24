@@ -19,6 +19,10 @@ matrix:
       env: CDH=cdh5 CDH_VERSION=5.10.1 PRESTO=0.147
     - python: 2.7
       env: CDH=cdh5 CDH_VERSION=5.10.1 PRESTO=0.147
+  addons:
+    apt:
+      packages:
+        - oracle-java8-installer
 install:
   - ./scripts/travis-install.sh
   - pip install codecov
