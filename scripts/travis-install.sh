@@ -65,8 +65,6 @@ cp -r $(dirname $0)/travis-conf/presto presto-server/etc
 #
 # Python
 #
-
-pip install $SQLALCHEMY
 pip install -e .
 pip install -r dev_requirements.txt
 
