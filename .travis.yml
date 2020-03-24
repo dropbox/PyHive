@@ -1,6 +1,6 @@
 sudo: required
 language: python
-dist: trusty
+dist: xenial
 matrix:
   include:
     # https://docs.python.org/devguide/#status-of-python-branches
