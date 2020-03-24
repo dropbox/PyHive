@@ -7,7 +7,8 @@ deb-src https://archive.cloudera.com/${CDH}/ubuntu/${DISTRIB_CODENAME}/amd64/cdh
 sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 327574EE02A818DD
 sudo apt-get -q update
 
-sudo apt-get -q install -y python-dev g++ libsasl2-dev maven
+sudo apt-get -q install -y oracle-java8-installer python-dev g++ libsasl2-dev maven
+sudo update-java-alternatives -s java-8-oracle
 
 #
 # LDAP
