@@ -1,6 +1,6 @@
 sudo: required
 language: python
-dist: trusty
+dist: xenial
 matrix:
   include:
     # https://docs.python.org/devguide/#status-of-python-branches
@@ -12,13 +12,17 @@ matrix:
     - python: 3.6
       env: CDH=cdh5 CDH_VERSION=5 PRESTO=RELEASE
     - python: 3.6
-      env: CDH=cdh5 CDH_VERSION=5.10.1 PRESTO=0.147
+      env: CDH=cdh5 CDH_VERSION=5.11 PRESTO=0.147
     - python: 3.5
-      env: CDH=cdh5 CDH_VERSION=5.10.1 PRESTO=0.147
+      env: CDH=cdh5 CDH_VERSION=5.11 PRESTO=0.147
     - python: 3.4
-      env: CDH=cdh5 CDH_VERSION=5.10.1 PRESTO=0.147
+      env: CDH=cdh5 CDH_VERSION=5.11 PRESTO=0.147
     - python: 2.7
-      env: CDH=cdh5 CDH_VERSION=5.10.1 PRESTO=0.147
+      env: CDH=cdh5 CDH_VERSION=5.11 PRESTO=0.147
+  addons:
+    apt:
+      packages:
+        - oracle-java8-installer
 install:
   - ./scripts/travis-install.sh
   - pip install codecov
