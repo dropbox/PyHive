@@ -159,7 +159,8 @@ class Connection(object):
                     # KERBEROS mode in hive.server2.authentication is GSSAPI in sasl library
                     sasl_auth = 'GSSAPI'
                 elif auth == 'DELEGATION-TOKEN':
-                    # 'auth=delegationToken' in Hive jdbc connection string is DIGEST-MD5 in sasl library
+                    # 'auth=delegationToken' in Hive jdbc connection string is DIGEST-MD5
+                    # in sasl library
                     sasl_auth = 'DIGEST-MD5'
                 else:
                     sasl_auth = 'PLAIN'
