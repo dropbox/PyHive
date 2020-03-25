@@ -105,6 +105,8 @@ class Connection(object):
         :param host: What host HiveServer2 runs on
         :param port: What port HiveServer2 runs on. Defaults to 10000.
         :param auth: The value of hive.server2.authentication used by HiveServer2.
+            For Kerberos mode auth='KERBEROS' uses the cached Kerberos ticket-granting ticket
+            and auth='DELEGATION-TOKEN' uses username and password from a Hadoop delegation token.
             Defaults to ``NONE``.
         :param configuration: A dictionary of Hive settings (functionally same as the `set` command)
         :param kerberos_service_name: Use with auth='KERBEROS' only
@@ -119,8 +121,8 @@ class Connection(object):
         username = username or getpass.getuser()
         configuration = configuration or {}
 
-        if (password is not None) != (auth in ('LDAP', 'CUSTOM')):
-            raise ValueError("Password should be set if and only if in LDAP or CUSTOM mode; "
+        if (password is not None) != (auth in ('LDAP', 'CUSTOM', 'DELEGATION-TOKEN')):
+            raise ValueError("Password should be set if and only if in LDAP, CUSTOM or DELEGATION-TOKEN mode; "
                              "Remove password or use one of those modes")
         if (kerberos_service_name is not None) != (auth == 'KERBEROS'):
             raise ValueError("kerberos_service_name should be set if and only if in KERBEROS mode")
@@ -147,7 +149,7 @@ class Connection(object):
             if auth == 'NOSASL':
                 # NOSASL corresponds to hive.server2.authentication=NOSASL in hive-site.xml
                 self._transport = thrift.transport.TTransport.TBufferedTransport(socket)
-            elif auth in ('LDAP', 'KERBEROS', 'NONE', 'CUSTOM'):
+            elif auth in ('LDAP', 'KERBEROS', 'DELEGATION-TOKEN', 'NONE', 'CUSTOM'):
                 # Defer import so package dependency is optional
                 import sasl
                 import thrift_sasl
@@ -155,6 +157,10 @@ class Connection(object):
                 if auth == 'KERBEROS':
                     # KERBEROS mode in hive.server2.authentication is GSSAPI in sasl library
                     sasl_auth = 'GSSAPI'
+                elif auth == 'DELEGATION-TOKEN':
+                    # 'auth=delegationToken' in Hive jdbc connection string is DIGEST-MD5 in sasl library
+                    # https://github.com/apache/hive/blob/master/beeline/src/test/org/apache/hive/beeline/ProxyAuthTest.java#L137
+                    sasl_auth = 'DIGEST-MD5'
                 else:
                     sasl_auth = 'PLAIN'
                     if password is None:
@@ -169,6 +175,11 @@ class Connection(object):
                     elif sasl_auth == 'PLAIN':
                         sasl_client.setAttr('username', username)
                         sasl_client.setAttr('password', password)
+                    elif sasl_auth == 'DIGEST-MD5':
+                        sasl_client.setAttr('service', 'null')
+                        sasl_client.setAttr('host', 'default')
+                        sasl_client.setAttr('username', username)
+                        sasl_client.setAttr('password', password)
                     else:
                         raise AssertionError
                     sasl_client.init()
@@ -179,7 +190,7 @@ class Connection(object):
                 # https://cwiki.apache.org/confluence/display/Hive/Setting+Up+HiveServer2#SettingUpHiveServer2-Configuration
                 # PAM currently left to end user via thrift_transport option.
                 raise NotImplementedError(
-                    "Only NONE, NOSASL, LDAP, KERBEROS, CUSTOM "
+                    "Only NONE, NOSASL, LDAP, KERBEROS, DELEGATION-TOKEN, CUSTOM "
                     "authentication are supported, got {}".format(auth))
 
         protocol = thrift.protocol.TBinaryProtocol.TBinaryProtocol(self._transport)
