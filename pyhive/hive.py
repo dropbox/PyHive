@@ -106,7 +106,7 @@ class Connection(object):
         :param port: What port HiveServer2 runs on. Defaults to 10000.
         :param auth: The value of hive.server2.authentication used by HiveServer2.
             For Kerberos mode: auth='KERBEROS' uses the cached Kerberos ticket-granting ticket
-            and auth='DELEGATION-TOKEN' uses username and password from the Hadoop delegation token.
+            and auth='DELEGATION-TOKEN' uses the username and password from the Hadoop delegation token.
             Defaults to ``NONE``.
         :param configuration: A dictionary of Hive settings (functionally same as the `set` command)
         :param kerberos_service_name: Use with auth='KERBEROS' only
