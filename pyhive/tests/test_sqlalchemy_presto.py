@@ -85,3 +85,17 @@ class TestSqlAlchemyPresto(unittest.TestCase, SqlAlchemyTestCase):
         self.assertIn('"current_timestamp"', query)
         self.assertNotIn('`select`', query)
         self.assertNotIn('`current_timestamp`', query)
+
+    @with_engine_connection
+    def test_insert_multi_values(self, engine, connection):
+        table = Table('insert_multivalue_test', MetaData(bind=engine),
+                      Column('a', types.Integer),
+                      Column('b', types.String),
+                      schema='pyhive_test_database')
+        table.drop(checkfirst=True)
+        table.create()
+        connection.execute(table.insert([{'a': 1, 'b': 'row_1'}, {'a': 2, 'b': 'row_2'}]))
+
+        result = table.select().execute().fetchall()
+        expected = [(1,), (2,)]
+        self.assertEqual(result, expected)
