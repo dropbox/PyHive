@@ -91,7 +91,7 @@ class TestSqlAlchemyPresto(unittest.TestCase, SqlAlchemyTestCase):
         # engine = create_engine('presto://localhost:8080/hive')
         # try:
         #     with contextlib.closing(engine.connect()) as connection:
-        one_row = Table('one_row', MetaData(bind=engine), autoload=True)
+        table = Table('one_row', MetaData(bind=engine), autoload=True)
         # table = Table('insert_multivalue_test', MetaData(bind=engine),
                     # Column('a', types.Integer),
                     # Column('b', types.String),
