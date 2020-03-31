@@ -88,14 +88,19 @@ class TestSqlAlchemyPresto(unittest.TestCase, SqlAlchemyTestCase):
 
     @with_engine_connection
     def test_insert_multi_values(self, engine, connection):
-        table = Table('insert_multivalue_test', MetaData(bind=engine),
-                      Column('a', types.Integer),
-                      Column('b', types.String),
-                      schema='pyhive_test_database')
-        table.drop(checkfirst=True)
-        table.create()
-        connection.execute(table.insert([{'a': 1, 'b': 'row_1'}, {'a': 2, 'b': 'row_2'}]))
+        engine = create_engine('presto://localhost:8080/hive')
+        try:
+            with contextlib.closing(engine.connect()) as connection:
+                table = Table('insert_multivalue_test', MetaData(bind=engine),
+                            Column('a', types.Integer),
+                            Column('b', types.String),
+                            schema='pyhive_test_database')
+                table.drop(checkfirst=True)
+                table.create()
+                connection.execute(table.insert([{'a': 1, 'b': 'row_1'}, {'a': 2, 'b': 'row_2'}]))
 
-        result = table.select().execute().fetchall()
-        expected = [(1,), (2,)]
-        self.assertEqual(result, expected)
+                result = table.select().execute().fetchall()
+                expected = [(1,'row_1'), (2,'row_2')]
+                self.assertEqual(result, expected)
+        finally:
+            pass
