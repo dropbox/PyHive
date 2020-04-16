@@ -79,7 +79,7 @@ class Cursor(common.DBAPICursor):
     visible by other cursors or connections.
     """
 
-    def __init__(self, host, port='8080', username=None, principle_username=None, catalog='hive',
+    def __init__(self, host, port='8080', username=None, principal_username=None, catalog='hive',
                  schema='default', poll_interval=1, source='pyhive', session_props=None,
                  protocol='http', password=None, requests_session=None, requests_kwargs=None,
                  KerberosRemoteServiceName=None, KerberosPrincipal=None,
@@ -89,7 +89,7 @@ class Cursor(common.DBAPICursor):
         :param host: hostname to connect to, e.g. ``presto.example.com``
         :param port: int -- port, defaults to 8080
         :param username: string -- defaults to system user name
-        :param principle_username: string -- defaults to ``username`` argument if it exists,
+        :param principal_username: string -- defaults to ``username`` argument if it exists,
             else defaults to system user name
         :param catalog: string -- defaults to ``hive``
         :param schema: string -- defaults to ``default``
@@ -126,19 +126,19 @@ class Cursor(common.DBAPICursor):
         """
         Presto User Impersonation: https://docs.starburstdata.com/latest/security/impersonation.html
 
-        User impersonation allows the execution of queries in Presto based on principle_username
+        User impersonation allows the execution of queries in Presto based on principal_username
         argument, instead of executing the query as the account which authenticated against Presto.
         (Usually a service account)
 
         Allows for a service account to authenticate with Presto, and then leverage the
-        principle_username as the user Presto will execute the query as. This is required by
+        principal_username as the user Presto will execute the query as. This is required by
         applications that leverage authentication methods like SAML, where the application has a
         username, but not a password to still leverage user specific Presto Resource Groups and
         Authorization rules that would not be applied when only using a shared service account.
         This also allows auditing of who is executing a query in these environments, instead of
         having all queryes run by the shared service account.
         """
-        self._username = principle_username or username or getpass.getuser()
+        self._username = principal_username or username or getpass.getuser()
         self._catalog = catalog
         self._schema = schema
         self._arraysize = 1
