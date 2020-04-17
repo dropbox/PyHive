@@ -9,6 +9,7 @@ from builtins import bytes
 from builtins import int
 from builtins import object
 from builtins import str
+import datetime
 from past.builtins import basestring
 from pyhive import exc
 import abc
@@ -201,6 +202,9 @@ class DBAPITypeObject(object):
 
 
 class ParamEscaper(object):
+
+    _DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S.%f"
+
     def escape_args(self, parameters):
         if isinstance(parameters, dict):
             return {k: self.escape_item(v) for k, v in parameters.items()}
@@ -208,6 +212,11 @@ class ParamEscaper(object):
             return tuple(self.escape_item(x) for x in parameters)
         else:
             raise exc.ProgrammingError("Unsupported param format: {}".format(parameters))
+
+    def escape_datetime(self, item):
+        datetime_string, micros = item.strftime(ParamEscaper._DATETIME_FORMAT).split(".")
+        datetime_string = "%s.%03d" % (datetime_string, int(micros) / 1000)
+        return "timestamp '%s'" % datetime_string
 
     def escape_number(self, item):
         return item
@@ -237,6 +246,8 @@ class ParamEscaper(object):
             return self.escape_string(item)
         elif isinstance(item, collections.Iterable):
             return self.escape_sequence(item)
+        elif isinstance(item, datetime.datetime):
+            return self.escape_datetime(item)
         else:
             raise exc.ProgrammingError("Unsupported object {}".format(item))
 

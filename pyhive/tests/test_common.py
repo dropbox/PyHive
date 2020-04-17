@@ -1,6 +1,7 @@
 # encoding: utf-8
 from __future__ import absolute_import
 from __future__ import unicode_literals
+import datetime
 from pyhive import common
 
 import unittest
@@ -34,3 +35,9 @@ class TestCommon(unittest.TestCase):
                          ("('a','b','c')",))
         self.assertEqual(escaper.escape_args((['你好', 'b', 'c'],)),
                          ("('你好','b','c')",))
+
+        self.assertEqual(escaper.escape_args((datetime.datetime(2019, 3, 19, 14, 10, 50),)),
+                         ("timestamp '2019-03-19 14:10:50.000'",))
+        self.assertEqual(escaper.escape_args((datetime.datetime(2019, 3, 19, 14, 10, 50, 123456),)),
+                         ("timestamp '2019-03-19 14:10:50.123'",))
+
