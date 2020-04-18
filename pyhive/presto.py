@@ -38,7 +38,7 @@ _logger = logging.getLogger(__name__)
 class PrestoParamEscaper(common.ParamEscaper):
     def escape_datetime(self, item, format):
         _type = "timestamp" if isinstance(item, datetime.datetime) else "date"
-        formatted = super(PrestoParamEscaper, self).escape_datetime(item, format)
+        formatted = super(PrestoParamEscaper, self).escape_datetime(item, format, 3)
         return "{} {}".format(_type, formatted)
 
 

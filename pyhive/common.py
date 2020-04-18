@@ -233,8 +233,9 @@ class ParamEscaper(object):
         l = map(str, map(self.escape_item, item))
         return '(' + ','.join(l) + ')'
 
-    def escape_datetime(self, item, format):
-        formatted = item.strftime(format)
+    def escape_datetime(self, item, format, cutoff=0):
+        dt_str = item.strftime(format)
+        formatted = dt_str[:-cutoff] if cutoff and format.endswith(".%f") else dt_str
         return "'{}'".format(formatted)
 
     def escape_item(self, item):

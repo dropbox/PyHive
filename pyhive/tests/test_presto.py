@@ -39,7 +39,7 @@ class TestPresto(unittest.TestCase, DBAPITestCase):
         self.assertEqual(escaper.escape_args((datetime.date(2020, 4, 17),)),
                          ("date '2020-04-17'",))
         self.assertEqual(escaper.escape_args((datetime.datetime(2020, 4, 17, 12, 0, 0, 123456),)),
-                         ("timestamp '2020-04-17 12:00:00.123456'",))
+                         ("timestamp '2020-04-17 12:00:00.123'",))
 
     @with_cursor
     def test_description(self, cursor):
