@@ -14,7 +14,7 @@ class PrestoRowProcessor:
 
         return self.root_cell_processors == other.root_cell_processors
 
-    def process_row(self, row_raw_data: list):
+    def process_row(self, row_raw_data):
         if len(row_raw_data) != len(self.root_cell_processors):
             raise DataError(
                 "Expected {} columns while row values count is {}. "

@@ -2,7 +2,7 @@ from pyhive.presto_data_process.cell_processor import PrestoCellProcessor
 
 
 class PrestoArrayProcessor(PrestoCellProcessor):
-    def __init__(self, array_values_cell_processor: PrestoCellProcessor):
+    def __init__(self, array_values_cell_processor):
         self.array_values_cell_processor = array_values_cell_processor
 
     def __eq__(self, other):

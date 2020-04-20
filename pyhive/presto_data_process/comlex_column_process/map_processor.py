@@ -2,7 +2,7 @@ from pyhive.presto_data_process.cell_processor import PrestoCellProcessor
 
 
 class PrestoMapProcessor(PrestoCellProcessor):
-    def __init__(self, map_values_cell_processor: PrestoCellProcessor):
+    def __init__(self, map_values_cell_processor):
         self.map_values_cell_processor = map_values_cell_processor
 
     def __eq__(self, other):
