@@ -1,7 +1,9 @@
-from abc import ABC, abstractmethod
+from abc import ABCMeta, abstractmethod
 
 
-class PrestoComplexCellProcessorBuilder(ABC):
+class PrestoComplexCellProcessorBuilder:
+    __metaclass__ = ABCMeta
+
     @abstractmethod
     def build_cell_processor(self, column_type_signature, inner_column_processors):
         pass
