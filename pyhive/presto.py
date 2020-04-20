@@ -11,6 +11,7 @@ from __future__ import unicode_literals
 from builtins import object
 from pyhive import common
 from pyhive.common import DBAPITypeObject
+from pyhive.presto_data_process.row_processor_builder import PrestoRowProcessorBuilder
 # Make all exceptions visible in this module per DB-API
 from pyhive.exc import *  # noqa
 import base64
@@ -82,6 +83,7 @@ class Cursor(common.DBAPICursor):
     def __init__(self, host, port='8080', username=None, principal_username=None, catalog='hive',
                  schema='default', poll_interval=1, source='pyhive', session_props=None,
                  protocol='http', password=None, requests_session=None, requests_kwargs=None,
+                 process_complex_columns=False,
                  KerberosRemoteServiceName=None, KerberosPrincipal=None,
                  KerberosConfigPath=None, KerberosKeytabPath=None,
                  KerberosCredentialCachePath=None, KerberosUseCanonicalHostname=None):
@@ -106,6 +108,9 @@ class Cursor(common.DBAPICursor):
             class will use the default requests behavior of making a new session per HTTP request.
             Caller is responsible for closing session.
         :param requests_kwargs: Additional ``**kwargs`` to pass to requests
+        :param process_complex_columns: boolean -- determine whether to perform deep processes of complex columns,
+            enabling it will cause structs (known in presto as ROW data type) to appear as dictionary.
+            Also inner varbinary values will be casted from base64 encoded string to bytes.
         :param KerberosRemoteServiceName: string -- Presto coordinator Kerberos service name.
             This parameter is required for Kerberos authentiation.
         :param KerberosPrincipal: string -- The principal to use when authenticating to
@@ -185,6 +190,10 @@ class Cursor(common.DBAPICursor):
                 if protocol != 'https':
                     raise ValueError("Protocol must be https when passing a password")
         self._requests_kwargs = requests_kwargs
+        self._process_complex_columns = process_complex_columns
+
+        if self._process_complex_columns:
+            self._row_processor_builder = PrestoRowProcessorBuilder()
 
         self._reset_state()
 
@@ -331,12 +340,22 @@ class Cursor(common.DBAPICursor):
         if 'data' in response_json:
             assert self._columns
             new_data = response_json['data']
-            self._decode_binary(new_data)
-            self._data += map(tuple, new_data)
+
+            self.process_new_data(new_data)
         if 'nextUri' not in response_json:
             self._state = self._STATE_FINISHED
         if 'error' in response_json:
             raise DatabaseError(response_json['error'])
+
+    def process_new_data(self, new_data):
+        if self._process_complex_columns:
+            row_processor = self._row_processor_builder.build_row_processor(self._columns)
+
+            self._data += map(row_processor.process_row, new_data)
+        else:
+            self._decode_binary(new_data)
+
+            self._data += map(tuple, new_data)
 
 
 #
