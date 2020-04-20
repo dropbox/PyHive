@@ -1,10 +1,8 @@
-import typing
-from pyhive.presto_data_process.cell_processor import PrestoCellProcessor
 from pyhive.exc import DataError
 
 
 class PrestoRowProcessor:
-    def __init__(self, root_cell_processors: typing.List[PrestoCellProcessor]):
+    def __init__(self, root_cell_processors):
         self.root_cell_processors = root_cell_processors
 
     def __eq__(self, other):

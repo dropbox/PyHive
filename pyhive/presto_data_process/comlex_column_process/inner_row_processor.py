@@ -1,11 +1,8 @@
-import typing
 from pyhive.presto_data_process.cell_processor import PrestoCellProcessor
 
 
 class PrestoInnerRowProcessor(PrestoCellProcessor):
-    def __init__(self,
-                 inner_column_names: typing.List[str],
-                 inner_columns_processors: typing.List[PrestoCellProcessor]):
+    def __init__(self, inner_column_names, inner_columns_processors):
         self.inner_column_names = inner_column_names
         self.inner_columns_processors = inner_columns_processors
 
