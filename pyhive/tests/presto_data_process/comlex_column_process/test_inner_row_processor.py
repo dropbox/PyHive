@@ -1,7 +1,8 @@
 from unittest import TestCase
 from mock import MagicMock
 from pyhive.presto_data_process.cell_processor import PrestoCellProcessor
-from pyhive.presto_data_process.comlex_column_process.inner_row_processor import PrestoInnerRowProcessor
+from pyhive.presto_data_process.comlex_column_process.inner_row_processor import \
+    PrestoInnerRowProcessor
 
 
 class TestPrestoInnerRowProcessor(TestCase):
@@ -10,7 +11,8 @@ class TestPrestoInnerRowProcessor(TestCase):
             PrestoInnerRowProcessor([], []).process_raw_cell(None)
         )
 
-    def test_given_inner_row_cell_when_process_cell_should_return_the_expected_processed_inner_row(self):
+    def test_given_inner_row_cell_when_process_cell_should_return_the_expected_processed_inner_row(
+            self):
         mocked_value_cell_processor = MagicMock(
             spec=PrestoCellProcessor,
             process_raw_cell=lambda v: 2 * v

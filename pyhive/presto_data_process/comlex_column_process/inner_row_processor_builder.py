@@ -1,6 +1,7 @@
 from pyhive.presto_data_process.comlex_column_process.complex_cell_processor_builder import \
     PrestoComplexCellProcessorBuilder
-from pyhive.presto_data_process.comlex_column_process.inner_row_processor import PrestoInnerRowProcessor
+from pyhive.presto_data_process.comlex_column_process.inner_row_processor import \
+    PrestoInnerRowProcessor
 
 
 class PrestoInnerRowProcessorBuilder(PrestoComplexCellProcessorBuilder):

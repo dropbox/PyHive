@@ -108,9 +108,10 @@ class Cursor(common.DBAPICursor):
             class will use the default requests behavior of making a new session per HTTP request.
             Caller is responsible for closing session.
         :param requests_kwargs: Additional ``**kwargs`` to pass to requests
-        :param process_complex_columns: boolean -- determine whether to perform deep processes of complex columns,
-            enabling it will cause structs (known in presto as ROW data type) to appear as dictionary.
-            Also inner varbinary values will be casted from base64 encoded string to bytes.
+        :param process_complex_columns: boolean -- determine whether to perform deep processes
+            of complex columns, enabling it will cause structs (known in presto as ROW data type)
+            to appear as dictionary. Also inner varbinary values will be casted
+            from base64 encoded string to bytes.
         :param KerberosRemoteServiceName: string -- Presto coordinator Kerberos service name.
             This parameter is required for Kerberos authentiation.
         :param KerberosPrincipal: string -- The principal to use when authenticating to

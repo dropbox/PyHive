@@ -1,6 +1,7 @@
 from unittest import TestCase
 from mock import MagicMock
-from pyhive.presto_data_process.comlex_column_process.map_processor_builder import PrestoMapProcessorBuilder
+from pyhive.presto_data_process.comlex_column_process.map_processor_builder import \
+    PrestoMapProcessorBuilder
 from pyhive.presto_data_process.comlex_column_process.map_processor import PrestoMapProcessor
 from pyhive.presto_data_process.cell_processor import PrestoCellProcessor
 
@@ -68,5 +69,8 @@ class TestPrestoMapProcessorBuilder(TestCase):
 
         self.assertEqual(
             expected_presto_map_processor,
-            presto_map_processor_builder.build_cell_processor(self.map_type_signature, [mocked_cell_processor])
+            presto_map_processor_builder.build_cell_processor(
+                self.map_type_signature,
+                [mocked_cell_processor]
+            )
         )

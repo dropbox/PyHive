@@ -5,7 +5,8 @@ from pyhive.presto_data_process.default_cell_processor import PrestoDefaultCellP
 from pyhive.presto_data_process.column_process.varbinary_processor import PrestoVarbinaryProcessor
 from pyhive.presto_data_process.comlex_column_process.array_processor import PrestoArrayProcessor
 from pyhive.presto_data_process.comlex_column_process.map_processor import PrestoMapProcessor
-from pyhive.presto_data_process.comlex_column_process.inner_row_processor import PrestoInnerRowProcessor
+from pyhive.presto_data_process.comlex_column_process.inner_row_processor import \
+    PrestoInnerRowProcessor
 
 
 class TestPrestoRowProcessorBuilder(TestCase):
@@ -13,7 +14,10 @@ class TestPrestoRowProcessorBuilder(TestCase):
         columns = [
             {
                 "name": "some_field",
-                "type": "row(v1 integer, v2 row(v3 integer, v4 integer), array(row(integer)), b1 varbinary)",
+                "type": "row(v1 integer, "
+                        "v2 row(v3 integer, v4 integer), "
+                        "array(row(integer)), "
+                        "b1 varbinary)",
                 "typeSignature": {
                     "rawType": "row",
                     "arguments": [

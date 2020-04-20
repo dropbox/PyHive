@@ -20,7 +20,9 @@ class PrestoRowProcessor:
         if len(row_raw_data) != len(self.root_cell_processors):
             raise DataError(
                 "Expected {} columns while row values count is {}. "
-                "Row data: {}".format(len(self.root_cell_processors), len(row_raw_data), str(row_raw_data)))
+                "Row data: {}".format(len(self.root_cell_processors),
+                                      len(row_raw_data),
+                                      str(row_raw_data)))
 
         return tuple(
             root_cell_processor.process_raw_cell(row_raw_data[column_index])
