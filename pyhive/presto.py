@@ -17,6 +17,7 @@ import base64
 import getpass
 import logging
 import requests
+import datetime
 from requests.auth import HTTPBasicAuth
 import os
 
@@ -32,7 +33,25 @@ threadsafety = 2  # Threads may share the module and connections.
 paramstyle = 'pyformat'  # Python extended format codes, e.g. ...WHERE name=%(name)s
 
 _logger = logging.getLogger(__name__)
-_escaper = common.ParamEscaper()
+
+
+class PrestoParamEscaper(common.ParamEscaper):
+    def escape_item(self, item):
+        if isinstance(item, datetime.datetime):
+            return self.escape_datetime(item)
+        elif isinstance(item, datetime.date):
+            return self.escape_date(item)
+        else:
+            return super(PrestoParamEscaper, self).escape_item(item)
+
+    def escape_date(self, item):
+        return "date '{}'".format(item)
+
+    def escape_datetime(self, item):
+        return "timestamp  '{}'".format(item)
+
+
+_escaper = PrestoParamEscaper()
 
 
 def connect(*args, **kwargs):
