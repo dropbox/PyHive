@@ -1,7 +1,8 @@
 from unittest import TestCase
 from pyhive.presto_data_process.row_processor_builder import PrestoRowProcessorBuilder
 from pyhive.presto_data_process.row_processor import PrestoRowProcessor
-from pyhive.presto_data_process.column_process.default_cell_processor import PrestoDefaultCellProcessor
+from pyhive.presto_data_process.column_process.default_cell_processor import \
+    PrestoDefaultCellProcessor
 from pyhive.presto_data_process.column_process.varbinary_processor import PrestoVarbinaryProcessor
 from pyhive.presto_data_process.comlex_column_process.array_processor import PrestoArrayProcessor
 from pyhive.presto_data_process.comlex_column_process.map_processor import PrestoMapProcessor

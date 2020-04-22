@@ -5,7 +5,8 @@ from pyhive.presto_data_process.comlex_column_process.map_processor_builder impo
     PrestoMapProcessorBuilder
 from pyhive.presto_data_process.comlex_column_process.inner_row_processor_builder import \
     PrestoInnerRowProcessorBuilder
-from pyhive.presto_data_process.column_process.default_cell_processor import PrestoDefaultCellProcessor
+from pyhive.presto_data_process.column_process.default_cell_processor import \
+    PrestoDefaultCellProcessor
 from pyhive.presto_data_process.row_processor import PrestoRowProcessor
 
 
