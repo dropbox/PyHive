@@ -3,6 +3,14 @@ from pyhive.presto_data_process.column_process.varbinary_processor import Presto
 
 
 class TestPrestoVarbinaryProcessor(TestCase):
+    def test_given_none_when_equals_should_return_false(self):
+        self.assertNotEqual(None, PrestoVarbinaryProcessor())
+        self.assertNotEqual(PrestoVarbinaryProcessor(), None)
+
+    def test_given_dictionary_when_equals_should_return_false(self):
+        self.assertNotEqual({}, PrestoVarbinaryProcessor())
+        self.assertNotEqual(PrestoVarbinaryProcessor(), {})
+
     def test_given_none_cell_when_process_cell_should_return_none(self):
         self.assertIsNone(PrestoVarbinaryProcessor().process_raw_cell(None))
 

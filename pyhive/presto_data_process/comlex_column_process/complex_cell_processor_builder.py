@@ -6,8 +6,8 @@ class PrestoComplexCellProcessorBuilder:
 
     @abstractmethod
     def build_cell_processor(self, column_type_signature, inner_column_processors):
-        pass
+        raise NotImplementedError()
 
     @abstractmethod
     def extract_inner_type_signatures(self, column_type_signature):
-        pass
+        raise NotImplementedError()

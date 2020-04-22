@@ -6,4 +6,4 @@ class PrestoCellProcessor:
 
     @abstractmethod
     def process_raw_cell(self, raw_cell):
-        pass
+        raise NotImplementedError()

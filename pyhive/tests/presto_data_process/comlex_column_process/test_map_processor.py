@@ -5,6 +5,14 @@ from pyhive.presto_data_process.comlex_column_process.map_processor import Prest
 
 
 class TestPrestoMapProcessor(TestCase):
+    def test_given_none_when_equals_should_return_false(self):
+        self.assertNotEqual(None, PrestoMapProcessor(None))
+        self.assertNotEqual(PrestoMapProcessor(None), None)
+
+    def test_given_dictionary_when_equals_should_return_false(self):
+        self.assertNotEqual({}, PrestoMapProcessor(None))
+        self.assertNotEqual(PrestoMapProcessor(None), {})
+
     def test_given_none_cell_when_process_cell_should_return_none(self):
         mocked_cell_processor = MagicMock(
             spec=PrestoCellProcessor

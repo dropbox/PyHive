@@ -6,6 +6,14 @@ from pyhive.presto_data_process.comlex_column_process.inner_row_processor import
 
 
 class TestPrestoInnerRowProcessor(TestCase):
+    def test_given_none_when_equals_should_return_false(self):
+        self.assertNotEqual(None, PrestoInnerRowProcessor(None, None))
+        self.assertNotEqual(PrestoInnerRowProcessor(None, None), None)
+
+    def test_given_dictionary_when_equals_should_return_false(self):
+        self.assertNotEqual({}, PrestoInnerRowProcessor(None, None))
+        self.assertNotEqual(PrestoInnerRowProcessor(None, None), {})
+
     def test_given_none_cell_when_process_cell_should_return_none(self):
         self.assertIsNone(
             PrestoInnerRowProcessor([], []).process_raw_cell(None)
