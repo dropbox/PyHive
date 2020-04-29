@@ -17,6 +17,7 @@ from pyhive.tests.dbapi_test_case import DBAPITestCase
 from pyhive.tests.dbapi_test_case import with_cursor
 import mock
 import unittest
+import datetime
 
 _HOST = 'localhost'
 _PORT = '8080'
@@ -31,6 +32,14 @@ class TestPresto(unittest.TestCase, DBAPITestCase):
     def test_bad_protocol(self):
         self.assertRaisesRegexp(ValueError, 'Protocol must be',
                                 lambda: presto.connect('localhost', protocol='nonsense').cursor())
+
+    def test_escape_args(self):
+        escaper = presto.PrestoParamEscaper()
+
+        self.assertEqual(escaper.escape_args((datetime.date(2020, 4, 17),)),
+                         ("date '2020-04-17'",))
+        self.assertEqual(escaper.escape_args((datetime.datetime(2020, 4, 17, 12, 0, 0, 123456),)),
+                         ("timestamp '2020-04-17 12:00:00.123'",))
 
     @with_cursor
     def test_description(self, cursor):

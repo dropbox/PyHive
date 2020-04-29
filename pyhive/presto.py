@@ -15,6 +15,7 @@ from pyhive.common import DBAPITypeObject
 from pyhive.exc import *  # noqa
 import base64
 import getpass
+import datetime
 import logging
 import requests
 from requests.auth import HTTPBasicAuth
@@ -32,7 +33,16 @@ threadsafety = 2  # Threads may share the module and connections.
 paramstyle = 'pyformat'  # Python extended format codes, e.g. ...WHERE name=%(name)s
 
 _logger = logging.getLogger(__name__)
-_escaper = common.ParamEscaper()
+
+
+class PrestoParamEscaper(common.ParamEscaper):
+    def escape_datetime(self, item, format):
+        _type = "timestamp" if isinstance(item, datetime.datetime) else "date"
+        formatted = super(PrestoParamEscaper, self).escape_datetime(item, format, 3)
+        return "{} {}".format(_type, formatted)
+
+
+_escaper = PrestoParamEscaper()
 
 
 def connect(*args, **kwargs):
