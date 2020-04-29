@@ -248,9 +248,9 @@ class ParamEscaper(object):
         elif isinstance(item, collections.Iterable):
             return self.escape_sequence(item)
         elif isinstance(item, datetime.datetime):
-            return self.escape_datetime(item, ParamEscaper._DATETIME_FORMAT)
+            return self.escape_datetime(item, self._DATETIME_FORMAT)
         elif isinstance(item, datetime.date):
-            return self.escape_datetime(item, ParamEscaper._DATE_FORMAT)
+            return self.escape_datetime(item, self._DATE_FORMAT)
         else:
             raise exc.ProgrammingError("Unsupported object {}".format(item))
 
