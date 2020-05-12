@@ -200,6 +200,16 @@ class TestHive(unittest.TestCase, DBAPITestCase):
             lambda: hive.connect(_HOST, thrift_transport=transport)
         )
 
+    def test_invalid_http_auth(self):
+        thrift_transport_protocol = 'http'
+        auth = 'LDAP'
+        self.assertRaisesRegexp(
+            NotImplementedError,
+            "Only NONE, NOSASL, BASIC and KERBEROS authentication are supported "
+            "when using HTTP transport, got {}".format(auth),
+            lambda: hive.connect(thrift_transport_protocol=thrift_transport_protocol, auth=auth)
+        )
+
     def test_custom_transport(self):
         socket = thrift.transport.TSocket.TSocket('localhost', 10000)
         sasl_auth = 'PLAIN'
@@ -244,9 +254,108 @@ class TestHive(unittest.TestCase, DBAPITestCase):
             subprocess.check_call(['sudo', 'cp', orig_none, des])
             _restart_hs2()
 
+    def test_thrift_http_auth_none(self):
+        rootdir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+        orig_http = os.path.join(rootdir, 'scripts', 'travis-conf', 'hive',
+                                 'hive-site-http-none.xml')
+        orig_none = os.path.join(rootdir, 'scripts', 'travis-conf', 'hive', 'hive-site.xml')
+        des = os.path.join('/', 'etc', 'hive', 'conf', 'hive-site.xml')
+        try:
+            subprocess.check_call(['sudo', 'cp', orig_http, des])
+            _restart_hs2(10001)
 
-def _restart_hs2():
+            with contextlib.closing(hive.connect(
+                    host=_HOST, username='the-user', thrift_transport_protocol='http',
+                    auth='NONE', http_path='/')
+            ) as connection:
+                with contextlib.closing(connection.cursor()) as cursor:
+                    cursor.execute('SELECT * FROM one_row')
+                    self.assertEqual(cursor.fetchall(), [(1,)])
+
+            with contextlib.closing(hive.connect(
+                    host=_HOST, thrift_transport_protocol='http')
+            ) as connection:
+                with contextlib.closing(connection.cursor()) as cursor:
+                    cursor.execute('SELECT * FROM one_row')
+                    self.assertEqual(cursor.fetchall(), [(1,)])
+
+        finally:
+            subprocess.check_call(['sudo', 'cp', orig_none, des])
+            _restart_hs2()
+
+    def test_thrift_http_auth_none_with_path(self):
+        rootdir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+        orig_http = os.path.join(rootdir, 'scripts', 'travis-conf', 'hive',
+                                 'hive-site-http-none-path.xml')
+        orig_none = os.path.join(rootdir, 'scripts', 'travis-conf', 'hive', 'hive-site.xml')
+        des = os.path.join('/', 'etc', 'hive', 'conf', 'hive-site.xml')
+        try:
+            subprocess.check_call(['sudo', 'cp', orig_http, des])
+            _restart_hs2(10001)
+
+            with contextlib.closing(hive.connect(
+                    host=_HOST, username='the-user', thrift_transport_protocol='http',
+                    http_path="/servicepath", auth='NONE')
+            ) as connection:
+                with contextlib.closing(connection.cursor()) as cursor:
+                    cursor.execute('SELECT * FROM one_row')
+                    self.assertEqual(cursor.fetchall(), [(1,)])
+
+        finally:
+            subprocess.check_call(['sudo', 'cp', orig_none, des])
+            _restart_hs2()
+
+    def test_thrift_http_auth_nosasl(self):
+        rootdir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+        orig_http = os.path.join(rootdir, 'scripts', 'travis-conf', 'hive',
+                                 'hive-site-http-nosasl.xml')
+        orig_none = os.path.join(rootdir, 'scripts', 'travis-conf', 'hive', 'hive-site.xml')
+        des = os.path.join('/', 'etc', 'hive', 'conf', 'hive-site.xml')
+        try:
+            subprocess.check_call(['sudo', 'cp', orig_http, des])
+            _restart_hs2(10001)
+
+            with contextlib.closing(hive.connect(
+                    host=_HOST, username='the-user', thrift_transport_protocol='http',
+                    auth='NOSASL')
+            ) as connection:
+                with contextlib.closing(connection.cursor()) as cursor:
+                    cursor.execute('SELECT * FROM one_row')
+                    self.assertEqual(cursor.fetchall(), [(1,)])
+
+        finally:
+            subprocess.check_call(['sudo', 'cp', orig_none, des])
+            _restart_hs2()
+
+    @mock.patch('pyhive.hive.TCookieHttpClient')
+    def test_thrift_http_auth_kerberos(self, mock_tcookiehttpclient):
+        from pyhive.hive import Connection
+        import kerberos
+
+        dummy_ctx = "ctx"
+        kerberos.authGSSClientInit = mock.MagicMock(return_value=(None, dummy_ctx))
+
+        mock_clean = mock.create_autospec(lambda *args, **kwargs: None)
+        kerberos.authGSSClientClean = mock_clean
+
+        mock_step = mock.create_autospec(lambda *args, **kwargs: None)
+        kerberos.authGSSClientStep = mock_step
+
+        kerberos.authGSSClientResponse = mock.create_autospec(
+            lambda ctx: self.assertEqual(ctx, dummy_ctx), return_value="auth_header_value")
+
+        mock_tcookiehttpclient.setCustomHeaders = mock.create_autospec(
+            lambda __, headers: self.assertEqual(headers['Authorization'],
+                                                 'Negotiate auth_header_value'))
+
+        Connection.create_http_transport(_HOST, None, None, None, None, "hive", "KERBEROS")
+
+        mock_clean.assert_called_once_with(dummy_ctx, '')
+        mock_step.assert_called_once_with(dummy_ctx, '')
+
+
+def _restart_hs2(port=10000):
     subprocess.check_call(['sudo', 'service', 'hive-server2', 'restart'])
     with contextlib.closing(socket.socket()) as s:
-        while s.connect_ex(('localhost', 10000)) != 0:
+        while s.connect_ex((_HOST, port)) != 0:
             time.sleep(1)
