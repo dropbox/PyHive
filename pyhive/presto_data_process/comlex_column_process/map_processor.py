@@ -29,7 +29,7 @@ class PrestoMapProcessor(PrestoCellProcessor):
             return False
 
         return self.map_values_cell_processor == other.map_values_cell_processor \
-               and self._parse_key == other._parse_key
+            and self._parse_key == other._parse_key
 
     def process_raw_cell(self, raw_cell):
         if raw_cell is None:

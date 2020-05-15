@@ -26,7 +26,6 @@ try:  # Python 3
 except ImportError:  # Python 2
     import urlparse
 
-
 # PEP 249 module globals
 apilevel = '2.0'
 threadsafety = 2  # Threads may share the module and connections.
@@ -224,7 +223,7 @@ class Cursor(common.DBAPICursor):
         # Sleep until we're done or we got the columns
         self._fetch_while(
             lambda: self._columns is None and
-            self._state not in (self._STATE_NONE, self._STATE_FINISHED)
+                    self._state not in (self._STATE_NONE, self._STATE_FINISHED)
         )
         if self._columns is None:
             return None
@@ -342,17 +341,23 @@ class Cursor(common.DBAPICursor):
             assert self._columns
             new_data = response_json['data']
 
-            self.process_new_data(new_data)
+            self._process_new_data(new_data)
         if 'nextUri' not in response_json:
             self._state = self._STATE_FINISHED
         if 'error' in response_json:
             raise DatabaseError(response_json['error'])
 
-    def process_new_data(self, new_data):
+    def _process_new_data(self, new_data):
         if self._process_complex_columns:
             row_processor = self._row_processor_builder.build_row_processor(self._columns)
 
-            self._data += map(row_processor.process_row, new_data)
+            try:
+                self._data += map(row_processor.process_row, new_data)
+            except Exception as exc:
+                _logger.exception("Failed to process row with columns: {}"
+                                  .format(str(self._columns)))
+
+                raise exc
         else:
             self._decode_binary(new_data)
 

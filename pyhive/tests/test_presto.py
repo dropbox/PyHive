@@ -43,7 +43,8 @@ class TestPresto(unittest.TestCase, DBAPITestCase):
     __test__ = True
 
     def connect(self, process_complex_columns=False):
-        return presto.connect(host=_HOST, port=_PORT, source=self.id(), process_complex_columns=process_complex_columns)
+        return presto.connect(host=_HOST, port=_PORT, source=self.id(),
+                              process_complex_columns=process_complex_columns)
 
     def test_bad_protocol(self):
         self.assertRaisesRegexp(ValueError, 'Protocol must be',
