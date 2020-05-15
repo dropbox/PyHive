@@ -8,6 +8,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import contextlib
+import functools
 import os
 import requests
 
@@ -22,11 +23,27 @@ _HOST = 'localhost'
 _PORT = '8080'
 
 
+def with_complex_processing_cursor(fn):
+    """Pass a cursor to the given function and handle cleanup.
+        The cursor will be configured to process complex rows deeply.
+
+        The cursor is taken from ``self.connect(process_complex_columns=True)``.
+        """
+
+    @functools.wraps(fn)
+    def wrapped_fn(self, *args, **kwargs):
+        with contextlib.closing(self.connect(process_complex_columns=True)) as connection:
+            with contextlib.closing(connection.cursor()) as cursor:
+                fn(self, cursor, *args, **kwargs)
+
+    return wrapped_fn
+
+
 class TestPresto(unittest.TestCase, DBAPITestCase):
     __test__ = True
 
-    def connect(self):
-        return presto.connect(host=_HOST, port=_PORT, source=self.id())
+    def connect(self, process_complex_columns=False):
+        return presto.connect(host=_HOST, port=_PORT, source=self.id(), process_complex_columns=process_complex_columns)
 
     def test_bad_protocol(self):
         self.assertRaisesRegexp(ValueError, 'Protocol must be',
@@ -89,6 +106,55 @@ class TestPresto(unittest.TestCase, DBAPITestCase):
         self.assertEqual(rows, expected)
         # catch unicode/str
         self.assertEqual(list(map(type, rows[0])), list(map(type, expected[0])))
+
+    @with_complex_processing_cursor
+    def test_complex_processing_cursor(self, cursor):
+        cursor.execute('SELECT * FROM one_row_deep_complex')
+        fetched_rows = cursor.fetchall()
+
+        expected_rows = [(
+            {
+                'inner_int1': 2,
+                'inner_int2': 3,
+                'inner_int_array': [4, 5],
+                'inner_row1': {
+                    'inner_inner_varbinary': b'binarydata',
+                    'inner_inner_string': 'some string'
+                }
+            },
+            {
+                'key1': {
+                    'double_attribute': 2.2,
+                    'integer_attribute': 60,
+                    'map_attribute': {
+                        602: ['string1', 'string2'],
+                        21: ['other string', 'another string']
+                    }
+                },
+                'key2': {
+                    'double_attribute': 42.15,
+                    'integer_attribute': 6060,
+                    'map_attribute': {
+                        14: ['11string1', 'somestring'],
+                        22: ['other string', 'another string']
+                    }
+                }
+            },
+            [
+                {
+                    'int1': 42,
+                    'double1': 24.5,
+                    'string1': 'lalala'
+                },
+                {
+                    'int1': 421,
+                    'double1': 244.25,
+                    'string1': 'bababa'
+                }
+            ]
+        )]
+
+        self.assertEqual(fetched_rows, expected_rows)
 
     @with_cursor
     def test_cancel(self, cursor):
