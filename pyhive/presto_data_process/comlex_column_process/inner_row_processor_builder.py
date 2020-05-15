@@ -18,6 +18,10 @@ class PrestoInnerRowProcessorBuilder(PrestoComplexCellProcessorBuilder):
         )
 
     def extract_inner_type_signatures(self, column_type_signature):
+        # In older versions of presto typeArguments contains objects equivalent to typeSignatures
+        if "typeArguments" in column_type_signature:
+            return column_type_signature.get("typeArguments")
+
         return list(
             inner_column.get("typeSignature")
             for inner_column in extract_inner_column_elements(column_type_signature)

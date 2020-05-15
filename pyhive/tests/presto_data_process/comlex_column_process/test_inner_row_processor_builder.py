@@ -131,3 +131,120 @@ class TestPrestoMapProcessorBuilder(TestCase):
                 inner_row_type_signature_with_no_inner_column_names,
                 mocked_cell_processors)
         )
+
+    def test_given_old_type_signature_should_extract_expected_type_signatures(self):
+        old_type_signature = {
+            'rawType': 'row',
+            'typeArguments': [
+                {
+                    'rawType': 'integer',
+                    'typeArguments': [],
+                    'literalArguments': [],
+                    'arguments': []
+                },
+                {
+                    'rawType': 'integer',
+                    'typeArguments': [],
+                    'literalArguments': [],
+                    'arguments': []
+                },
+                {
+                    'rawType': 'array',
+                    'typeArguments': [
+                        {
+                            'rawType': 'integer',
+                            'typeArguments': [],
+                            'literalArguments': [],
+                            'arguments': []
+                        }
+                    ],
+                    'literalArguments': [],
+                    'arguments': [{
+                        'kind': 'TYPE_SIGNATURE',
+                        'value': {
+                            'rawType': 'integer',
+                            'typeArguments': [],
+                            'literalArguments': [],
+                            'arguments': []
+                        }
+                    }
+                    ]
+                }
+            ],
+            'literalArguments': [
+                'inner_int1',
+                'inner_int2',
+                'inner_int_array'
+            ],
+            'arguments': [
+                {
+                    'kind': 'NAMED_TYPE_SIGNATURE',
+                    'value': {
+                        'fieldName': {
+                            'name': 'inner_int1',
+                            'delimited': False
+                        },
+                        'typeSignature': 'integer'}
+                }, {
+                    'kind': 'NAMED_TYPE_SIGNATURE',
+                    'value': {
+                        'fieldName': {
+                            'name': 'inner_int2',
+                            'delimited': False
+                        },
+                        'typeSignature': 'integer'}
+                }, {
+                    'kind': 'NAMED_TYPE_SIGNATURE',
+                    'value': {
+                        'fieldName': {
+                            'name': 'inner_int_array',
+                            'delimited': False
+                        },
+                        'typeSignature': 'array(integer)'}
+                }
+            ]
+        }
+
+        presto_inner_row_processor_builder = PrestoInnerRowProcessorBuilder()
+
+        expected_type_signatures = [
+            {
+                'rawType': 'integer',
+                'typeArguments': [],
+                'literalArguments': [],
+                'arguments': []
+            },
+            {
+                'rawType': 'integer',
+                'typeArguments': [],
+                'literalArguments': [],
+                'arguments': []
+            },
+            {
+                'rawType': 'array',
+                'typeArguments': [
+                    {
+                        'rawType': 'integer',
+                        'typeArguments': [],
+                        'literalArguments': [],
+                        'arguments': []
+                    }
+                ],
+                'literalArguments': [],
+                'arguments': [{
+                    'kind': 'TYPE_SIGNATURE',
+                    'value': {
+                        'rawType': 'integer',
+                        'typeArguments': [],
+                        'literalArguments': [],
+                        'arguments': []
+                    }
+                }
+                ]
+            }
+        ]
+
+        self.assertEqual(
+            expected_type_signatures,
+            presto_inner_row_processor_builder.extract_inner_type_signatures(old_type_signature)
+        )

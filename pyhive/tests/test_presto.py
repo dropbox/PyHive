@@ -155,7 +155,7 @@ class TestPresto(unittest.TestCase, DBAPITestCase):
             ]
         )]
 
-        self.assertEqual(fetched_rows, expected_rows)
+        self.assertEqual(expected_rows, fetched_rows)
 
     @with_cursor
     def test_cancel(self, cursor):
