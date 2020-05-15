@@ -223,7 +223,7 @@ class Cursor(common.DBAPICursor):
         # Sleep until we're done or we got the columns
         self._fetch_while(
             lambda: self._columns is None and
-                    self._state not in (self._STATE_NONE, self._STATE_FINISHED)
+            self._state not in (self._STATE_NONE, self._STATE_FINISHED)
         )
         if self._columns is None:
             return None
@@ -351,13 +351,7 @@ class Cursor(common.DBAPICursor):
         if self._process_complex_columns:
             row_processor = self._row_processor_builder.build_row_processor(self._columns)
 
-            try:
-                self._data += map(row_processor.process_row, new_data)
-            except Exception as exc:
-                _logger.exception("Failed to process row with columns: {}"
-                                  .format(str(self._columns)))
-
-                raise exc
+            self._data += map(row_processor.process_row, new_data)
         else:
             self._decode_binary(new_data)
 
