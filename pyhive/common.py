@@ -19,6 +19,10 @@ from future.utils import with_metaclass
 from itertools import islice
 import re
 
+MATCH_INSERT_SQL = re.compile(
+            r"\s*((?:INSERT)\b.+\bVALUES?\s*)(\(\s*(?:%s|%\(.+\)s)\s*(?:,\s*(?:%s|%\(.+\)s)\s*)*\))",
+            re.IGNORECASE | re.DOTALL)
+
 
 class DBAPICursor(with_metaclass(abc.ABCMeta, object)):
     """Base class for some common DB-API logic"""
@@ -86,26 +90,12 @@ class DBAPICursor(with_metaclass(abc.ABCMeta, object)):
 
         Return values are not defined.
         """
-        from .hive import _escaper
-        match_insert_sql = re.compile(
-            r"\s*((?:INSERT)\b.+\bVALUES?\s*)(\(\s*(?:%s|%\(.+\)s)\s*(?:,\s*(?:%s|%\(.+\)s)\s*)*\))",
-            re.IGNORECASE | re.DOTALL)
-        match = match_insert_sql.match(operation)
-        if match:
-            part1, part2 = match.group(1), match.group(2).rstrip()
-            values = []
-            for parameter in seq_of_parameters:
-                record = part2 % _escaper.escape_args(parameter)
-                values.append(record)
-            sql = part1 + ",".join(values)
-            self.execute(sql)
-        else:
-            for parameters in seq_of_parameters[:-1]:
-                self.execute(operation, parameters)
-                while self._state != self._STATE_FINISHED:
-                    self._fetch_more()
-            if seq_of_parameters:
-                self.execute(operation, seq_of_parameters[-1])
+        for parameters in seq_of_parameters[:-1]:
+            self.execute(operation, parameters)
+            while self._state != self._STATE_FINISHED:
+                self._fetch_more()
+        if seq_of_parameters:
+            self.execute(operation, seq_of_parameters[-1])
 
     def fetchone(self):
         """Fetch the next row of a query result set, returning a single sequence, or ``None`` when

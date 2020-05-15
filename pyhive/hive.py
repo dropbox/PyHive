@@ -365,6 +365,26 @@ class Cursor(common.DBAPICursor):
         _check_status(response)
         self._operationHandle = response.operationHandle
 
+    def executemany(self, operation, seq_of_parameters):
+        """Prepare a database operation (query or command) and then execute it against all parameter
+        sequences or mappings found in the sequence ``seq_of_parameters``.
+
+        Only the final result set is retained.
+
+        Return values are not defined.
+        """
+        match = common.MATCH_INSERT_SQL.match(operation)
+        if match:
+            part1, part2 = match.group(1), match.group(2).rstrip()
+            values = []
+            for parameter in seq_of_parameters:
+                record = part2 % _escaper.escape_args(parameter)
+                values.append(record)
+            sql = part1 + ",".join(values)
+            self.execute(sql)
+        else:
+            return super(Cursor, self).executemany(operation, seq_of_parameters)
+
     def cancel(self):
         req = ttypes.TCancelOperationReq(
             operationHandle=self._operationHandle,
