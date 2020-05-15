@@ -177,7 +177,8 @@ class TestPrestoRowProcessorBuilder(TestCase):
                 ),
                 PrestoVarbinaryProcessor(),
                 PrestoMapProcessor(
-                    PrestoDefaultCellProcessor()
+                    PrestoDefaultCellProcessor(),
+                    'varchar'
                 )
             ]
         )

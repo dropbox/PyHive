@@ -62,7 +62,8 @@ class TestPrestoMapProcessorBuilder(TestCase):
             spec=PrestoCellProcessor
         )
         expected_presto_map_processor = PrestoMapProcessor(
-            map_values_cell_processor=mocked_cell_processor
+            map_values_cell_processor=mocked_cell_processor,
+            key_primitive_type='varchar'
         )
 
         presto_map_processor_builder = PrestoMapProcessorBuilder()
