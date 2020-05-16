@@ -1,8 +1,8 @@
 from unittest import TestCase
 from mock import MagicMock
-from pyhive.presto_data_process.comlex_column_process.map_processor_builder import \
+from pyhive.presto_data_process.complex_column_process.map_processor_builder import \
     PrestoMapProcessorBuilder
-from pyhive.presto_data_process.comlex_column_process.map_processor import PrestoMapProcessor
+from pyhive.presto_data_process.complex_column_process.map_processor import PrestoMapProcessor
 from pyhive.presto_data_process.cell_processor import PrestoCellProcessor
 
 

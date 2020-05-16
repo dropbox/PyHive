@@ -1,9 +1,9 @@
 from pyhive.presto_data_process.column_process.varbinary_processor import PrestoVarbinaryProcessor
-from pyhive.presto_data_process.comlex_column_process.array_processor_builder import \
+from pyhive.presto_data_process.complex_column_process.array_processor_builder import \
     PrestoArrayProcessorBuilder
-from pyhive.presto_data_process.comlex_column_process.map_processor_builder import \
+from pyhive.presto_data_process.complex_column_process.map_processor_builder import \
     PrestoMapProcessorBuilder
-from pyhive.presto_data_process.comlex_column_process.inner_row_processor_builder import \
+from pyhive.presto_data_process.complex_column_process.inner_row_processor_builder import \
     PrestoInnerRowProcessorBuilder
 from pyhive.presto_data_process.column_process.default_cell_processor import \
     PrestoDefaultCellProcessor

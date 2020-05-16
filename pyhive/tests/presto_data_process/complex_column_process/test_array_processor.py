@@ -1,7 +1,7 @@
 from unittest import TestCase
 from mock import MagicMock
 from pyhive.presto_data_process.cell_processor import PrestoCellProcessor
-from pyhive.presto_data_process.comlex_column_process.array_processor import PrestoArrayProcessor
+from pyhive.presto_data_process.complex_column_process.array_processor import PrestoArrayProcessor
 
 
 class TestPrestoArrayProcessor(TestCase):

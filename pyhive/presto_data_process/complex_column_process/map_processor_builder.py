@@ -1,6 +1,6 @@
-from pyhive.presto_data_process.comlex_column_process.complex_cell_processor_builder import \
+from pyhive.presto_data_process.complex_column_process.complex_cell_processor_builder import \
     PrestoComplexCellProcessorBuilder
-from pyhive.presto_data_process.comlex_column_process.map_processor import PrestoMapProcessor
+from pyhive.presto_data_process.complex_column_process.map_processor import PrestoMapProcessor
 
 
 class PrestoMapProcessorBuilder(PrestoComplexCellProcessorBuilder):
