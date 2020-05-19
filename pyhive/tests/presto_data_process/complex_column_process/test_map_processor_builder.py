@@ -1,9 +1,7 @@
 from unittest import TestCase
-from mock import MagicMock
+from mock import MagicMock, patch
 from pyhive.presto_data_process.complex_column_process.map_processor_builder import \
-    PrestoMapProcessorBuilder
-from pyhive.presto_data_process.complex_column_process.map_processor import PrestoMapProcessor
-from pyhive.presto_data_process.cell_processor import PrestoCellProcessor
+    build_map_processor, extract_inner_type_signatures
 
 
 class TestPrestoMapProcessorBuilder(TestCase):
@@ -49,29 +47,22 @@ class TestPrestoMapProcessorBuilder(TestCase):
             ]
         }]
 
-        presto_map_processor_builder = PrestoMapProcessorBuilder()
-
         self.assertEqual(
             expected_inner_types_signatures,
-            presto_map_processor_builder.extract_inner_type_signatures(self.map_type_signature)
+            extract_inner_type_signatures(self.map_type_signature)
         )
 
+    @patch("pyhive.presto_data_process.complex_column_process.map_processor_builder."
+           "new_map_process_function")
     def test_when_build_cell_processor_should_return_map_processor_with_match_value_processor(
-            self):
-        mocked_cell_processor = MagicMock(
-            spec=PrestoCellProcessor
-        )
-        expected_presto_map_processor = PrestoMapProcessor(
-            map_values_cell_processor=mocked_cell_processor,
-            key_primitive_type='varchar'
+            self, mocked_new_process_function):
+        mocked_cell_processor = MagicMock()
+
+        process_row = build_map_processor(self.map_type_signature, [mocked_cell_processor])
+
+        mocked_new_process_function.assert_called_once_with(
+            mocked_cell_processor,
+            'varchar'
         )
 
-        presto_map_processor_builder = PrestoMapProcessorBuilder()
-
-        self.assertEqual(
-            expected_presto_map_processor,
-            presto_map_processor_builder.build_cell_processor(
-                self.map_type_signature,
-                [mocked_cell_processor]
-            )
-        )
+        self.assertTrue(callable(process_row))

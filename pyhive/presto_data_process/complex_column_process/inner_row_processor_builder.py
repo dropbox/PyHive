@@ -1,27 +1,25 @@
-from pyhive.presto_data_process.complex_column_process.complex_cell_processor_builder import \
-    PrestoComplexCellProcessorBuilder
 from pyhive.presto_data_process.complex_column_process.inner_row_processor import \
-    PrestoInnerRowProcessor
+    new_inner_row_process_function
 
 
-class PrestoInnerRowProcessorBuilder(PrestoComplexCellProcessorBuilder):
-    def build_cell_processor(self, column_type_signature, inner_column_processors):
-        inner_columns_names = _extract_inner_column_names(column_type_signature)
+def build_inner_row_processor(column_type_signature, inner_column_processors):
+    inner_columns_names = _extract_inner_column_names(column_type_signature)
 
-        return PrestoInnerRowProcessor(
-            inner_columns_names,
-            inner_column_processors
-        )
+    return new_inner_row_process_function(
+        inner_columns_names,
+        inner_column_processors
+    )
 
-    def extract_inner_type_signatures(self, column_type_signature):
-        # In older versions of presto typeArguments contains objects equivalent to typeSignatures
-        if "typeArguments" in column_type_signature:
-            return column_type_signature.get("typeArguments")
 
-        return list(
-            inner_column.get("typeSignature")
-            for inner_column in _extract_inner_column_elements(column_type_signature)
-        )
+def extract_inner_type_signatures(column_type_signature):
+    # In older versions of presto typeArguments contains objects equivalent to typeSignatures
+    if "typeArguments" in column_type_signature:
+        return column_type_signature.get("typeArguments")
+
+    return list(
+        inner_column.get("typeSignature")
+        for inner_column in _extract_inner_column_elements(column_type_signature)
+    )
 
 
 def _extract_inner_column_names(column_type_signature):

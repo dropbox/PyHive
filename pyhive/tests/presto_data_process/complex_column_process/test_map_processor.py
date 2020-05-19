@@ -1,32 +1,20 @@
 from unittest import TestCase
 from mock import MagicMock
-from pyhive.presto_data_process.cell_processor import PrestoCellProcessor
-from pyhive.presto_data_process.complex_column_process.map_processor import PrestoMapProcessor
+from pyhive.presto_data_process.complex_column_process.map_processor import \
+    new_map_process_function
 
 
 class TestPrestoMapProcessor(TestCase):
-    def test_given_none_when_equals_should_return_false(self):
-        self.assertNotEqual(None, PrestoMapProcessor(None, None))
-        self.assertNotEqual(PrestoMapProcessor(None, None), None)
-
-    def test_given_dictionary_when_equals_should_return_false(self):
-        self.assertNotEqual({}, PrestoMapProcessor(None, None))
-        self.assertNotEqual(PrestoMapProcessor(None, None), {})
-
     def test_given_none_cell_when_process_cell_should_return_none(self):
-        mocked_cell_processor = MagicMock(
-            spec=PrestoCellProcessor
-        )
+        mocked_cell_processor = MagicMock()
 
         self.assertIsNone(
-            PrestoMapProcessor(mocked_cell_processor, 'varchar').process_raw_cell(None)
+            new_map_process_function(mocked_cell_processor, 'varchar')(None)
         )
 
     def test_given_map_cell_when_process_cell_should_return_the_expected_processed_map(self):
-        mocked_value_cell_processor = MagicMock(
-            spec=PrestoCellProcessor,
-            process_raw_cell=lambda v: 2 * v
-        )
+        def mocked_value_cell_processor(v):
+            return v * 2
 
         raw_map_cell = {
             "someKey1": 2,
@@ -39,11 +27,11 @@ class TestPrestoMapProcessor(TestCase):
             "key3": 8
         }
 
-        presto_map_processor = PrestoMapProcessor(mocked_value_cell_processor, 'varchar')
+        process_raw_cell = new_map_process_function(mocked_value_cell_processor, 'varchar')
 
         self.assertEqual(
             expected_processed_map,
-            presto_map_processor.process_raw_cell(raw_map_cell)
+            process_raw_cell(raw_map_cell)
         )
 
     def test_given_integer_keys_should_return_casted_keys(self):
@@ -98,14 +86,12 @@ class TestPrestoMapProcessor(TestCase):
 
     def _test_given_map_cell_with_primitive_type_key(
             self, raw_map_cell, expected_processed_map, primitive_type):
-        mocked_value_cell_processor = MagicMock(
-            spec=PrestoCellProcessor,
-            process_raw_cell=lambda v: v
-        )
+        def mocked_value_cell_processor(v):
+            return v
 
-        presto_map_processor = PrestoMapProcessor(mocked_value_cell_processor, primitive_type)
+        process_raw_cell = new_map_process_function(mocked_value_cell_processor, primitive_type)
 
         self.assertEqual(
             expected_processed_map,
-            presto_map_processor.process_raw_cell(raw_map_cell)
+            process_raw_cell(raw_map_cell)
         )

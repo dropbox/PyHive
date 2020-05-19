@@ -1,9 +1,7 @@
 from unittest import TestCase
-from mock import MagicMock
+from mock import MagicMock, patch
 from pyhive.presto_data_process.complex_column_process.array_processor_builder import \
-    PrestoArrayProcessorBuilder
-from pyhive.presto_data_process.complex_column_process.array_processor import PrestoArrayProcessor
-from pyhive.presto_data_process.cell_processor import PrestoCellProcessor
+    build_array_processor, extract_inner_type_signatures
 
 
 class TestPrestoArrayProcessorBuilder(TestCase):
@@ -27,28 +25,21 @@ class TestPrestoArrayProcessorBuilder(TestCase):
             "arguments": []
         }]
 
-        presto_array_processor_builder = PrestoArrayProcessorBuilder()
-
         self.assertEqual(
             expected_inner_types_signatures,
-            presto_array_processor_builder.extract_inner_type_signatures(self.array_type_signature)
+            extract_inner_type_signatures(self.array_type_signature)
         )
 
+    @patch("pyhive.presto_data_process.complex_column_process.array_processor_builder"
+           ".new_process_raw_cell_function")
     def test_when_build_cell_processor_should_return_array_processor_with_match_value_processor(
-            self):
-        mocked_cell_processor = MagicMock(
-            spec=PrestoCellProcessor
-        )
-        expected_presto_array_processor = PrestoArrayProcessor(
-            array_values_cell_processor=mocked_cell_processor
-        )
+            self, mocked_new_process_function):
+        mocked_cell_processor = MagicMock()
 
-        presto_array_processor_builder = PrestoArrayProcessorBuilder()
+        processor = build_array_processor(
+            self.array_type_signature, [mocked_cell_processor])
 
-        self.assertEqual(
-            expected_presto_array_processor,
-            presto_array_processor_builder.build_cell_processor(
-                self.array_type_signature,
-                [mocked_cell_processor]
-            )
+        mocked_new_process_function.assert_called_once_with(
+            mocked_cell_processor
         )
+        self.assertTrue(callable(processor))

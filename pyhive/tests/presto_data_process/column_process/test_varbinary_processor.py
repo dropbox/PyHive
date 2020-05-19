@@ -1,18 +1,11 @@
 from unittest import TestCase
-from pyhive.presto_data_process.column_process.varbinary_processor import PrestoVarbinaryProcessor
+from pyhive.presto_data_process.column_process.varbinary_processor import \
+    process_raw_cell
 
 
 class TestPrestoVarbinaryProcessor(TestCase):
-    def test_given_none_when_equals_should_return_false(self):
-        self.assertNotEqual(None, PrestoVarbinaryProcessor())
-        self.assertNotEqual(PrestoVarbinaryProcessor(), None)
-
-    def test_given_dictionary_when_equals_should_return_false(self):
-        self.assertNotEqual({}, PrestoVarbinaryProcessor())
-        self.assertNotEqual(PrestoVarbinaryProcessor(), {})
-
     def test_given_none_cell_when_process_cell_should_return_none(self):
-        self.assertIsNone(PrestoVarbinaryProcessor().process_raw_cell(None))
+        self.assertIsNone(process_raw_cell(None))
 
     def test_given_varbinary_cell_as_base64_string_should_return_bytes(self):
         base64_encoded_cell = "ZWg/"
@@ -20,5 +13,5 @@ class TestPrestoVarbinaryProcessor(TestCase):
 
         self.assertEqual(
             expected_bytes,
-            PrestoVarbinaryProcessor().process_raw_cell(base64_encoded_cell)
+            process_raw_cell(base64_encoded_cell)
         )

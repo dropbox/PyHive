@@ -1,34 +1,23 @@
 from unittest import TestCase
 from mock import MagicMock
-from pyhive.presto_data_process.cell_processor import PrestoCellProcessor
 from pyhive.presto_data_process.complex_column_process.inner_row_processor import \
-    PrestoInnerRowProcessor
+    new_inner_row_process_function
 
 
 class TestPrestoInnerRowProcessor(TestCase):
-    def test_given_none_when_equals_should_return_false(self):
-        self.assertNotEqual(None, PrestoInnerRowProcessor(None, None))
-        self.assertNotEqual(PrestoInnerRowProcessor(None, None), None)
-
-    def test_given_dictionary_when_equals_should_return_false(self):
-        self.assertNotEqual({}, PrestoInnerRowProcessor(None, None))
-        self.assertNotEqual(PrestoInnerRowProcessor(None, None), {})
-
     def test_given_none_cell_when_process_cell_should_return_none(self):
         self.assertIsNone(
-            PrestoInnerRowProcessor([], []).process_raw_cell(None)
+            new_inner_row_process_function([], [])(None)
         )
 
     def test_given_inner_row_cell_when_process_cell_should_return_the_expected_processed_inner_row(
             self):
-        mocked_value_cell_processor = MagicMock(
-            spec=PrestoCellProcessor,
-            process_raw_cell=lambda v: 2 * v
-        )
+        def mocked_value_cell_processor(v):
+            return v * 2
 
         inner_row_map_cell = [2, "ofek", 3]
 
-        presto_inner_row_processor = PrestoInnerRowProcessor(
+        process_raw_cell = new_inner_row_process_function(
             inner_column_names=["count_of_something", "name_of_someone", "another_integer"],
             inner_columns_processors=[mocked_value_cell_processor, mocked_value_cell_processor,
                                       mocked_value_cell_processor]
@@ -42,5 +31,5 @@ class TestPrestoInnerRowProcessor(TestCase):
 
         self.assertEqual(
             expected_processed_row_cell,
-            presto_inner_row_processor.process_raw_cell(inner_row_map_cell)
+            process_raw_cell(inner_row_map_cell)
         )

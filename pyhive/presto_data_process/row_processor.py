@@ -23,6 +23,6 @@ class PrestoRowProcessor:
                                       str(row_raw_data)))
 
         return tuple(
-            root_cell_processor.process_raw_cell(row_raw_data[column_index])
-            for column_index, root_cell_processor in enumerate(self.root_cell_processors)
+            process_raw_cell(row_raw_data[column_index])
+            for column_index, process_raw_cell in enumerate(self.root_cell_processors)
         )

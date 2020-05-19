@@ -1,10 +1,7 @@
 from unittest import TestCase
-from mock import MagicMock
+from mock import MagicMock, patch
 from pyhive.presto_data_process.complex_column_process.inner_row_processor_builder import \
-    PrestoInnerRowProcessorBuilder
-from pyhive.presto_data_process.complex_column_process.inner_row_processor import \
-    PrestoInnerRowProcessor
-from pyhive.presto_data_process.cell_processor import PrestoCellProcessor
+    extract_inner_type_signatures, build_inner_row_processor
 
 
 class TestPrestoMapProcessorBuilder(TestCase):
@@ -123,40 +120,35 @@ class TestPrestoMapProcessorBuilder(TestCase):
             }
         ]
 
-        presto_inner_row_processor_builder = PrestoInnerRowProcessorBuilder()
-
         self.assertEqual(
             expected_inner_type_signatures,
-            presto_inner_row_processor_builder.extract_inner_type_signatures(
+            extract_inner_type_signatures(
                 self._inner_row_type_signature)
         )
 
+    @patch("pyhive.presto_data_process.complex_column_process.inner_row_processor_builder."
+           "new_inner_row_process_function")
     def test_when_build_cell_processor_should_return_expected_inner_row_processor(
-            self):
+            self, mocked_new_process_function):
         mocked_cell_processors = [
-            MagicMock(
-                spec=PrestoCellProcessor
-            ),
-            MagicMock(
-                spec=PrestoCellProcessor
-            )
+            MagicMock(),
+            MagicMock()
         ]
 
-        expected_presto_inner_row_processor = PrestoInnerRowProcessor(
-            inner_columns_processors=mocked_cell_processors,
-            inner_column_names=["v3", "v4"]
+        process_cell = build_inner_row_processor(self._inner_row_type_signature,
+                                                 mocked_cell_processors)
+
+        mocked_new_process_function.assert_called_once_with(
+            ["v3", "v4"],
+            mocked_cell_processors
         )
 
-        presto_inner_row_processor_builder = PrestoInnerRowProcessorBuilder()
+        self.assertTrue(callable(process_cell))
 
-        self.assertEqual(
-            expected_presto_inner_row_processor,
-            presto_inner_row_processor_builder.build_cell_processor(self._inner_row_type_signature,
-                                                                    mocked_cell_processors)
-        )
-
+    @patch("pyhive.presto_data_process.complex_column_process.inner_row_processor_builder."
+           "new_inner_row_process_function")
     def test_given_missing_inner_column_names_should_return_processor_with_generated_field_names(
-            self):
+            self, mocked_new_process_function):
         inner_row_type_signature_with_no_inner_column_names = {
             "rawType": "row",
             "arguments": [
@@ -182,31 +174,23 @@ class TestPrestoMapProcessorBuilder(TestCase):
         }
 
         mocked_cell_processors = [
-            MagicMock(
-                spec=PrestoCellProcessor
-            ),
-            MagicMock(
-                spec=PrestoCellProcessor
-            )
+            MagicMock(),
+            MagicMock()
         ]
 
-        expected_presto_inner_row_processor = PrestoInnerRowProcessor(
-            inner_columns_processors=mocked_cell_processors,
-            inner_column_names=["field0", "field1"]
+        process_cell = build_inner_row_processor(
+            inner_row_type_signature_with_no_inner_column_names,
+            mocked_cell_processors
         )
 
-        presto_inner_row_processor_builder = PrestoInnerRowProcessorBuilder()
-
-        self.assertEqual(
-            expected_presto_inner_row_processor,
-            presto_inner_row_processor_builder.build_cell_processor(
-                inner_row_type_signature_with_no_inner_column_names,
-                mocked_cell_processors)
+        mocked_new_process_function.assert_called_once_with(
+            ["field0", "field1"],
+            mocked_cell_processors
         )
+
+        self.assertTrue(callable(process_cell))
 
     def test_given_old_type_signature_should_extract_expected_type_signatures(self):
-        presto_inner_row_processor_builder = PrestoInnerRowProcessorBuilder()
-
         expected_type_signatures = [
             {
                 'rawType': 'integer',
@@ -246,39 +230,37 @@ class TestPrestoMapProcessorBuilder(TestCase):
 
         self.assertEqual(
             expected_type_signatures,
-            presto_inner_row_processor_builder.extract_inner_type_signatures(
+            extract_inner_type_signatures(
                 self._old_type_signature
             )
         )
 
-    def test_given_old_type_signature_should_build_expected_processor(self):
+    @patch("pyhive.presto_data_process.complex_column_process.inner_row_processor_builder."
+           "new_inner_row_process_function")
+    def test_given_old_type_signature_should_build_expected_processor(
+            self, mocked_new_process_function):
         mocked_cell_processors = [
-            MagicMock(
-                spec=PrestoCellProcessor
-            ),
-            MagicMock(
-                spec=PrestoCellProcessor
-            ),
-            MagicMock(
-                spec=PrestoCellProcessor
-            )
+            MagicMock(),
+            MagicMock(),
+            MagicMock()
         ]
 
-        expected_inner_row_processor = PrestoInnerRowProcessor(
-            inner_columns_processors=mocked_cell_processors,
-            inner_column_names=['inner_int1', 'inner_int2', 'inner_int_array']
+        process_cell = build_inner_row_processor(
+            self._old_type_signature,
+            mocked_cell_processors
         )
 
-        processor_builder = PrestoInnerRowProcessorBuilder()
-
-        self.assertEqual(
-            expected_inner_row_processor,
-            processor_builder.build_cell_processor(
-                self._old_type_signature,
-                mocked_cell_processors)
+        mocked_new_process_function.assert_called_once_with(
+            ['inner_int1', 'inner_int2', 'inner_int_array'],
+            mocked_cell_processors
         )
 
-    def test_given_old_type_signature_with_nameless_columns_should_return_expected_processor(self):
+        self.assertTrue(callable(process_cell))
+
+    @patch("pyhive.presto_data_process.complex_column_process.inner_row_processor_builder."
+           "new_inner_row_process_function")
+    def test_given_old_type_signature_with_nameless_columns_should_return_expected_processor(
+            self, mocked_new_process_function):
         _old_type_signature_with_nameless_columns = {
             'rawType': 'row',
             'typeArguments': [
@@ -352,27 +334,19 @@ class TestPrestoMapProcessorBuilder(TestCase):
         }
 
         mocked_cell_processors = [
-            MagicMock(
-                spec=PrestoCellProcessor
-            ),
-            MagicMock(
-                spec=PrestoCellProcessor
-            ),
-            MagicMock(
-                spec=PrestoCellProcessor
-            )
+            MagicMock(),
+            MagicMock(),
+            MagicMock()
         ]
 
-        expected_inner_row_processor = PrestoInnerRowProcessor(
-            inner_columns_processors=mocked_cell_processors,
-            inner_column_names=['field0', 'field1', 'field2']
+        process_cell = build_inner_row_processor(
+            _old_type_signature_with_nameless_columns,
+            mocked_cell_processors
         )
 
-        processor_builder = PrestoInnerRowProcessorBuilder()
-
-        self.assertEqual(
-            expected_inner_row_processor,
-            processor_builder.build_cell_processor(
-                _old_type_signature_with_nameless_columns,
-                mocked_cell_processors)
+        mocked_new_process_function.assert_called_once_with(
+            ['field0', 'field1', 'field2'],
+            mocked_cell_processors
         )
+
+        self.assertTrue(callable(process_cell))
