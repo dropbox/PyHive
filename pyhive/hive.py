@@ -37,6 +37,9 @@ paramstyle = 'pyformat'  # Python extended format codes, e.g. ...WHERE name=%(na
 _logger = logging.getLogger(__name__)
 
 _TIMESTAMP_PATTERN = re.compile(r'(\d+-\d+-\d+ \d+:\d+:\d+(\.\d{,6})?)')
+_MATCH_INSERT_SQL = re.compile(
+    r"\s*((?:INSERT)\b.+\bVALUES?\s*)(\(\s*(?:%s|%\(.+\)s)\s*(?:,\s*(?:%s|%\(.+\)s)\s*)*\))",
+    re.IGNORECASE | re.DOTALL)
 
 
 def _parse_timestamp(value):
@@ -373,7 +376,7 @@ class Cursor(common.DBAPICursor):
 
         Return values are not defined.
         """
-        match = common.MATCH_INSERT_SQL.match(operation)
+        match = _MATCH_INSERT_SQL.match(operation)
         if match:
             part1, part2 = match.group(1), match.group(2).rstrip()
             values = []

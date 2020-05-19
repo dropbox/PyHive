@@ -97,14 +97,6 @@ class DBAPITestCase(with_metaclass(abc.ABCMeta, object)):
         self.assertRaises(exc.ProgrammingError, cursor.fetchone)
 
     @with_cursor
-    def test_executemany_batch_insert(self, cursor):
-        records = [("one", 1)]*10
-        cursor.execute("create temporary table test_executemany_batch_insert (foo string, bar int)")
-        cursor.executemany("INSERT INTO TABLE test_executemany_batch_insert VALUES (%s, %s)", records)
-        cursor.execute('SELECT * FROM test_executemany_batch_insert')
-        self.assertEqual(cursor.fetchall(), records)
-
-    @with_cursor
     def test_fetchone_no_data(self, cursor):
         self.assertRaises(exc.ProgrammingError, cursor.fetchone)
 

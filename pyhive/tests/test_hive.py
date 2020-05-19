@@ -38,6 +38,14 @@ class TestHive(unittest.TestCase, DBAPITestCase):
         return hive.connect(host=_HOST, configuration={'mapred.job.tracker': 'local'})
 
     @with_cursor
+    def test_executemany_batch_insert(self, cursor):
+        records = [("one", 1)] * 10
+        cursor.execute("create temporary table t_batch_insert (foo string, bar int)")
+        cursor.executemany("INSERT INTO t_batch_insert VALUES (%s, %s)", records)
+        cursor.execute('SELECT * FROM t_batch_insert')
+        self.assertEqual(cursor.fetchall(), records)
+
+    @with_cursor
     def test_description(self, cursor):
         cursor.execute('SELECT * FROM one_row')
 
