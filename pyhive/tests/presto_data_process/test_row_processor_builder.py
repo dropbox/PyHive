@@ -1,6 +1,6 @@
 from unittest import TestCase
 from mock import patch, MagicMock
-from pyhive.presto_data_process.row_processor_builder import PrestoRowProcessorBuilder
+from pyhive.presto_data_process.row_processor_builder import build_row_processor
 from pyhive.presto_data_process.row_processor import PrestoRowProcessor
 from pyhive.presto_data_process.column_process.default_cell_processor import process_raw_cell \
     as process_default_cell
@@ -176,8 +176,7 @@ class TestPrestoRowProcessorBuilder(TestCase):
             ]
         )
 
-        presto_row_processor_builder = PrestoRowProcessorBuilder()
-        built_row_processor = presto_row_processor_builder.build_row_processor(columns)
+        built_row_processor = build_row_processor(columns)
 
         mocked_new_process_inner_row.assert_any_call(
             ["v1", "v2", "field2", "b1"],
