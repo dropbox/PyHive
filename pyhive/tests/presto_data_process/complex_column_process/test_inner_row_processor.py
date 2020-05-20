@@ -1,5 +1,4 @@
 from unittest import TestCase
-from mock import MagicMock
 from pyhive.presto_data_process.complex_column_process.inner_row_processor import \
     new_inner_row_process_function
 
