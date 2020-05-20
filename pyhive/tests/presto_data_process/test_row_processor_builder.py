@@ -1,5 +1,5 @@
 from unittest import TestCase
-from unittest.mock import patch, MagicMock
+from mock import patch, MagicMock
 from pyhive.presto_data_process.row_processor_builder import PrestoRowProcessorBuilder
 from pyhive.presto_data_process.row_processor import PrestoRowProcessor
 from pyhive.presto_data_process.column_process.default_cell_processor import process_raw_cell \
