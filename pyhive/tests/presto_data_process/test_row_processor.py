@@ -4,6 +4,14 @@ from pyhive.presto_data_process.row_processor import PrestoRowProcessor
 
 
 class TestPrestoRowProcessor(TestCase):
+    def test_given_none_when_equal_should_return_false(self):
+        self.assertNotEqual(None, PrestoRowProcessor(None))
+        self.assertNotEqual(PrestoRowProcessor(None), None)
+
+    def test_given_list_when_equal_should_return_false(self):
+        self.assertNotEqual([], PrestoRowProcessor(None))
+        self.assertNotEqual(PrestoRowProcessor(None), [])
+
     def test_given_raw_row_with_few_columns_when_process_row_should_return_processed_tuple(self):
         raw_row_data = [2, 44, 'ofek', 0.25]
 
