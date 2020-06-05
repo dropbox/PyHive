@@ -113,9 +113,8 @@ class PrestoDialect(default.DefaultDialect):
         return [row.Schema for row in connection.execute('SHOW SCHEMAS')]
 
     def _get_table_columns(self, connection, table_name, schema):
-        full_table = self.identifier_preparer.quote_identifier(table_name)
-        if schema:
-            full_table = self.identifier_preparer.quote_identifier(schema) + '.' + full_table
+        full_table = _full_table_name(table_name, schema)
+
         try:
             return connection.execute('SHOW COLUMNS FROM {}'.format(full_table))
         except (presto.DatabaseError, exc.DatabaseError) as e:
@@ -215,11 +214,14 @@ class PrestoDialect(default.DefaultDialect):
         # requests gives back Unicode strings
         return True
 
-    def get_table_options(self, connection, table_name, schema, **kw):
+    def _full_table_name(table_name, schema):
         full_table = self.identifier_preparer.quote_identifier(table_name)
         if schema:
             full_table = self.identifier_preparer.quote_identifier(schema) + '.' + full_table
+        return full_table
 
+    def get_table_options(self, connection, table_name, schema, **kw):
+        full_table = _full_table_name(table_name, schema)
         table_def = connection.execute('SHOW CREATE TABLE {}'.format(full_table)).first()[0]
         opts = re.search(r"WITH \(([^)]*)", table_def).group(1).strip().split('\n,')
         opts = [re.search(r"(\w*)\s=\s(.*)$", o.strip()).groups() for o in opts]
