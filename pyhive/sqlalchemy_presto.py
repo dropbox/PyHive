@@ -214,3 +214,13 @@ class PrestoDialect(default.DefaultDialect):
     def _check_unicode_description(self, connection):
         # requests gives back Unicode strings
         return True
+
+    def get_table_options(self, connection, table_name, schema, **kw):
+        full_table = self.identifier_preparer.quote_identifier(table_name)
+        if schema:
+            full_table = self.identifier_preparer.quote_identifier(schema) + '.' + full_table
+
+        table_def = connection.execute('SHOW CREATE TABLE {}'.format(full_table)).first()[0]
+        opts = re.search(r"WITH \(([^)]*)", table_def).group(1).strip().split('\n,')
+        opts = [re.search(r"(\w*)\s=\s(.*)$", o.strip()).groups() for o in opts]
+        return { "presto_" + o[0]: o[1] for o in opts}
