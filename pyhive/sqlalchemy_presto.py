@@ -145,8 +145,12 @@ class PrestoDialect(default.DefaultDialect):
         rows = self._get_table_columns(connection, table_name, schema)
         result = []
         for row in rows:
+            # Take out the more detailed type information
+            # e.g. 'map<int,int>' -> 'map'
+            #      'decimal(10,1)' -> decimal
+            col_type = re.search(r'^\w+', row.Type).group(0)
             try:
-                coltype = _type_map[row.Type]
+                col_type = _type_map[col_type]
             except KeyError:
                 util.warn("Did not recognize type '%s' of column '%s'" % (row.Type, row.Column))
                 coltype = types.NullType
