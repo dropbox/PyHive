@@ -39,6 +39,8 @@ _type_map = {
     'timestamp': types.TIMESTAMP,
     'date': types.DATE,
     'varbinary': types.VARBINARY,
+    'decimal': types.Numeric,
+    'char': types.CHAR
 }
 
 
@@ -145,18 +147,21 @@ class PrestoDialect(default.DefaultDialect):
         rows = self._get_table_columns(connection, table_name, schema)
         result = []
         for row in rows:
-            # Take out the more detailed type information
-            # e.g. 'map<int,int>' -> 'map'
-            #      'decimal(10,1)' -> decimal
-            col_type = re.search(r'^\w+', row.Type).group(0)
+            match = re.search(r'(\b[^()]+)(\((.*)\))?', row.Type)
+            col_type = match.group(1)
+
+            if (col_type in {"varchar", "char", "decimal"}) and match.group(3):
+                args = (int(a) for a in match.group(3).split(","))
+            else:
+                args = ()
             try:
-                col_type = _type_map[col_type]
+                col_type = _type_map[col_type](*args)
             except KeyError:
                 util.warn("Did not recognize type '%s' of column '%s'" % (row.Type, row.Column))
-                coltype = types.NullType
+                col_type = types.NullType
             result.append({
                 'name': row.Column,
-                'type': coltype,
+                'type': col_type,
                 # newer Presto no longer includes this column
                 'nullable': getattr(row, 'Null', True),
                 'default': None,
