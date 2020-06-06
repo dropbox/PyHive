@@ -226,3 +226,12 @@ class PrestoDialect(default.DefaultDialect):
         opts = re.search(r"WITH \(([^)]*)", table_def).group(1).strip().split(',\n')
         opts = [re.search(r"(\w*)\s=\s(.*)$", o.strip()).groups() for o in opts]
         return {"presto_with": dict(opts)}
+
+    def post_create_table(self, table):
+        with_options = table.dialect_options['presto']['with']
+        return "\n WITH (%s)" % (
+            ", ".join(
+                [ "%s = %s" % opt for opt in with_options.items()]
+            )
+        )
+
