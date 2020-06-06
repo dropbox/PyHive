@@ -223,6 +223,6 @@ class PrestoDialect(default.DefaultDialect):
     def get_table_options(self, connection, table_name, schema, **kw):
         full_table = self._full_table_name(table_name, schema)
         table_def = connection.execute('SHOW CREATE TABLE {}'.format(full_table)).first()[0]
-        opts = re.search(r"WITH \(([^)]*)", table_def).group(1).strip().split('\n,')
--       opts = [re.search(r"(\w*)\s=\s(.*)$", o.strip()).groups() for o in opts]
-        return { "presto_" + o[0]: o[1] for o in opts}
+        opts = re.search(r"WITH \(([^)]*)", table_def).group(1).strip().split(',\n')
+        opts = [re.search(r"(\w*)\s=\s(.*)$", o.strip()).groups() for o in opts]
+        return {"presto_with": dict(opts)}
