@@ -228,10 +228,12 @@ class PrestoDialect(default.DefaultDialect):
         return {"presto_with": dict(opts)}
 
     def post_create_table(self, table):
-        with_options = table.dialect_options['presto']['with']
-        return "\n WITH (%s)" % (
-            ", ".join(
-                [ "%s = %s" % opt for opt in with_options.items()]
+        if 'with' in = table.dialect_options['presto']:
+            with_options = table.dialect_options['presto']['with']
+            return "\n WITH (%s)" % (
+                ", ".join(
+                    [ "%s = %s" % opt for opt in with_options.items()]
+                )
             )
-        )
-
+        else:
+            return ""
