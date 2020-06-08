@@ -69,12 +69,26 @@ class PrestoTypeCompiler(compiler.GenericTypeCompiler):
             return 'VARCHAR'
 
 
+class PrestoDDLCompiler(compiler.DDLCompiler):
+
+    def post_create_table(self, table):
+        if 'with' in table.dialect_options['presto']:
+            with_options = table.dialect_options['presto']['with']
+            return "\n WITH (%s)" % (
+                ", ".join(
+                    [ "%s = %s" % opt for opt in with_options.items()]
+                )
+            )
+        else:
+            return ""
+
 class PrestoDialect(default.DefaultDialect):
     name = 'presto'
     driver = 'rest'
     paramstyle = 'pyformat'
     preparer = PrestoIdentifierPreparer
     statement_compiler = PrestoCompiler
+    ddl_compiler = PrestoDDLCompiler
     supports_alter = False
     supports_pk_autoincrement = False
     supports_default_values = False
@@ -226,14 +240,3 @@ class PrestoDialect(default.DefaultDialect):
         opts = re.search(r"WITH \(([^)]*)", table_def).group(1).strip().split(',\n')
         opts = [re.search(r"(\w*)\s=\s(.*)$", o.strip()).groups() for o in opts]
         return {"presto_with": dict(opts)}
-
-    def post_create_table(self, table):
-        if 'with' in table.dialect_options['presto']:
-            with_options = table.dialect_options['presto']['with']
-            return "\n WITH (%s)" % (
-                ", ".join(
-                    [ "%s = %s" % opt for opt in with_options.items()]
-                )
-            )
-        else:
-            return ""
