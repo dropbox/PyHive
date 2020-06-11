@@ -203,6 +203,15 @@ class HiveTypeCompiler(compiler.GenericTypeCompiler):
     def visit_DATETIME(self, type_):
         return 'TIMESTAMP'
 
+class HiveDDLCompiler(compiler.DDLCompiler):
+
+    def visit_primary_key_constraint(self, constraint):
+        return ""
+
+    def visit_create_index(self, index):
+        return None
+
+
 
 class HiveExecutionContext(default.DefaultExecutionContext):
     """This is pretty much the same as SQLiteExecutionContext to work around the same issue.
@@ -233,6 +242,7 @@ class HiveDialect(default.DefaultDialect):
     execution_ctx_cls = HiveExecutionContext
     preparer = HiveIdentifierPreparer
     statement_compiler = HiveCompiler
+    ddl_compiler = HiveDDLCompiler
     supports_views = True
     supports_alter = True
     supports_pk_autoincrement = False
