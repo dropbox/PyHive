@@ -71,6 +71,9 @@ class PrestoTypeCompiler(compiler.GenericTypeCompiler):
 
 class PrestoDDLCompiler(compiler.DDLCompiler):
 
+    def visit_primary_key_constraint(self, table):
+        return ""
+
     def post_create_table(self, table):
         if 'with' in table.dialect_options['presto']:
             with_options = table.dialect_options['presto']['with']
