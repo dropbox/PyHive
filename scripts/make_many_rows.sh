@@ -3,7 +3,7 @@
 temp_file=/tmp/pyhive_test_data_many_rows.tsv
 seq 0 9999 > $temp_file
 
-hive -e "
+/opt/hive/bin/beeline -u jdbc:hive2://localhost:10000 -e "
 DROP TABLE IF EXISTS many_rows;
 CREATE TABLE many_rows (
     a INT

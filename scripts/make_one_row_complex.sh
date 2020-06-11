@@ -18,7 +18,7 @@ COLUMNS='
 `decimal` DECIMAL(10, 1)
 '
 
-hive -e "
+/opt/hive/bin/beeline -u jdbc:hive2://localhost:10000 -e "
 set mapred.job.tracker=local;
 DROP TABLE IF EXISTS one_row_complex;
 DROP TABLE IF EXISTS one_row_complex_null;
