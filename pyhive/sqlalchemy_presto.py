@@ -79,7 +79,7 @@ class PrestoDDLCompiler(compiler.DDLCompiler):
             with_options = table.dialect_options['presto']['with']
             return "\n WITH (%s)" % (
                 ", ".join(
-                    [ "%s = %s" % opt for opt in with_options.items()]
+                    ["%s = %s" % opt for opt in with_options.items()]
                 )
             )
         else:
