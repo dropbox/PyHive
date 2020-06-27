@@ -200,6 +200,38 @@ class TestHive(unittest.TestCase, DBAPITestCase):
             lambda: hive.connect(_HOST, thrift_transport=transport)
         )
 
+    def test_invalid_binary_auth(self):
+        invalid_binary_auth = 'invalid'
+        self.assertRaisesRegexp(
+            NotImplementedError,
+            'Only NONE, NOSASL, LDAP, KERBEROS, CUSTOM authentication are supported, '
+            'got {}'.format(invalid_binary_auth),
+            lambda: hive.connect(host=_HOST, auth=invalid_binary_auth)
+        )
+
+    def test_invalid_transport_protocol(self):
+        invalid_transport = 'invalid'
+        self.assertRaisesRegexp(
+            ValueError,
+            'Invalid thrift_transport_protocol: {}'.format(invalid_transport),
+            lambda: hive.connect(host=_HOST, thrift_transport_protocol=invalid_transport)
+        )
+
+    def test_invalid_http_basic_auth(self):
+        self.assertRaisesRegexp(
+            ValueError,
+            'BASIC authentication requires password.',
+            lambda: hive.connect(host=_HOST, thrift_transport_protocol='http',
+                                 auth='BASIC')
+        )
+
+        self.assertRaisesRegexp(
+            ValueError,
+            'BASIC authentication requires password.',
+            lambda: hive.connect(host=_HOST, thrift_transport_protocol='http',
+                                 auth='BASIC', username='username')
+        )
+
     def test_invalid_http_auth(self):
         thrift_transport_protocol = 'http'
         auth = 'LDAP'
@@ -249,6 +281,25 @@ class TestHive(unittest.TestCase, DBAPITestCase):
                 lambda: hive.connect(
                     host=_HOST, username='the-user', auth='CUSTOM', password='wrong')
             )
+
+        finally:
+            subprocess.check_call(['sudo', 'cp', orig_none, des])
+            _restart_hs2()
+
+    def test_thrift_nosasl(self):
+        rootdir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+        orig_ldap = os.path.join(rootdir, 'scripts', 'travis-conf', 'hive', 'hive-site-nosasl.xml')
+        orig_none = os.path.join(rootdir, 'scripts', 'travis-conf', 'hive', 'hive-site.xml')
+        des = os.path.join('/', 'etc', 'hive', 'conf', 'hive-site.xml')
+        try:
+            subprocess.check_call(['sudo', 'cp', orig_ldap, des])
+            _restart_hs2()
+            with contextlib.closing(hive.connect(
+                    host=_HOST, auth='NOSASL')
+            ) as connection:
+                with contextlib.closing(connection.cursor()) as cursor:
+                    cursor.execute('SELECT * FROM one_row')
+                    self.assertEqual(cursor.fetchall(), [(1,)])
 
         finally:
             subprocess.check_call(['sudo', 'cp', orig_none, des])

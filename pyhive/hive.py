@@ -221,8 +221,8 @@ class Connection(object):
                 {'Authorization': 'Negotiate {}'.format(auth_header)})
 
         elif auth in ('BASIC', 'NOSASL', 'NONE'):
-            if auth == 'BASIC' and (username is None or password is None):
-                raise ValueError("BASIC authentication require username and password.")
+            if auth == 'BASIC' and password is None:
+                raise ValueError("BASIC authentication requires password.")
 
             auth_credentials = '{}:{}'.format(username, password)\
                 .encode('UTF-8')
