@@ -11,7 +11,7 @@ from __future__ import unicode_literals
 from builtins import object
 from pyhive import common
 from pyhive.common import DBAPITypeObject
-from pyhive.presto_data_process.row_processor_builder import build_row_processor
+from presto_types_parser import build_row_parser
 # Make all exceptions visible in this module per DB-API
 from pyhive.exc import *  # noqa
 import base64
@@ -346,9 +346,9 @@ class Cursor(common.DBAPICursor):
 
     def _process_new_data(self, new_data):
         if self._process_complex_columns:
-            row_processor = build_row_processor(self._columns)
+            row_parser = build_row_parser(self._columns)
 
-            self._data += map(row_processor.process_row, new_data)
+            self._data += map(row_parser.process_row, new_data)
         else:
             self._decode_binary(new_data)
 
