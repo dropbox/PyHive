@@ -9,6 +9,7 @@ pytest-random==0.2
 pytest-timeout==1.2.0
 
 # actual dependencies: let things break if a package changes
+presto-types-parser>=0.0.2
 requests>=1.0.0
 requests_kerberos>=0.12.0
 sasl>=0.2.1
