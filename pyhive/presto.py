@@ -264,7 +264,7 @@ class Cursor(common.DBAPICursor):
         url = urlparse.urlunparse((
             self._protocol,
             '{}:{}'.format(self._host, self._port), '/v1/statement', None, None, None))
-        _logger.info('%s', sql)
+        _logger.debug('%s', sql)
         _logger.debug("Headers: %s", headers)
         response = self._requests_session.post(
             url, data=sql.encode('utf-8'), headers=headers, **self._requests_kwargs)
