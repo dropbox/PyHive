@@ -66,6 +66,7 @@ setup(
         'sqlalchemy.dialects': [
             'hive = pyhive.sqlalchemy_hive:HiveDialect',
             'presto = pyhive.sqlalchemy_presto:PrestoDialect',
+            'sparksql = pyhive.sqlalchemy_sparksql:SparkSqlDialect',
         ],
     }
 )
