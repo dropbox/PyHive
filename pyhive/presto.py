@@ -192,8 +192,6 @@ class Cursor(common.DBAPICursor):
                     raise ValueError("Cannot override requests argument {}".format(k))
             if password is not None:
                 requests_kwargs['auth'] = HTTPBasicAuth(username, password)
-                if protocol != 'https':
-                    raise ValueError("Protocol must be https when passing a password")
         self._requests_kwargs = requests_kwargs
 
         self._reset_state()
