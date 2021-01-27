@@ -10,6 +10,10 @@ PyHive is a collection of Python `DB-API <http://www.python.org/dev/peps/pep-024
 `SQLAlchemy <http://www.sqlalchemy.org/>`_ interfaces for `Presto <http://prestodb.io/>`_ and
 `Hive <http://hive.apache.org/>`_.
 
+Local pack package
+===
+python setup.py bdist_wheel
+
 Usage
 =====
 
