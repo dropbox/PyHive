@@ -1,6 +1,5 @@
 sudo: required
 language: python
-dist: bionic
 matrix:
   include:
     # https://docs.python.org/devguide/#status-of-python-branches
