@@ -44,6 +44,7 @@ setup(
     ],
     extras_require={
         'presto': ['requests>=1.0.0'],
+        'trino': ['requests>=1.0.0'],
         'hive': ['sasl>=0.2.1', 'thrift>=0.10.0', 'thrift_sasl>=0.1.0'],
         'sqlalchemy': ['sqlalchemy>=1.3.0'],
         'kerberos': ['requests_kerberos>=0.12.0'],
@@ -66,6 +67,7 @@ setup(
         'sqlalchemy.dialects': [
             'hive = pyhive.sqlalchemy_hive:HiveDialect',
             'presto = pyhive.sqlalchemy_presto:PrestoDialect',
+            'trino = pyhive.sqlalchemy_trino:TrinoDialect',
         ],
     }
 )
