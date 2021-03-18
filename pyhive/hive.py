@@ -28,6 +28,8 @@ import sys
 import thrift.protocol.TBinaryProtocol
 import thrift.transport.TSocket
 import thrift.transport.TTransport
+import thrift.transport.THttpClient
+import re
 
 # PEP 249 module globals
 apilevel = '2.0'
@@ -98,8 +100,8 @@ class Connection(object):
     """Wraps a Thrift session"""
 
     def __init__(self, host=None, port=None, username=None, database='default', auth=None,
-                 configuration=None, kerberos_service_name=None, password=None,
-                 thrift_transport=None):
+                 configuration=None, kerberos_service_name=None, password=None, path='cliservice',
+                 cafile=None, cert_file=None, key_file=None, thrift_transport=None):
         """Connect to HiveServer2
 
         :param host: What host HiveServer2 runs on
@@ -109,6 +111,10 @@ class Connection(object):
         :param configuration: A dictionary of Hive settings (functionally same as the `set` command)
         :param kerberos_service_name: Use with auth='KERBEROS' only
         :param password: Use with auth='LDAP' or auth='CUSTOM' only
+        :param path: Thrift over HTTPS service endpoint. Default value is cliservice
+        :param cafile: The CA certificate file to verify the peer (Hive Server 2)
+        :param cert_file: Client certificate for mTLS
+        :param key_file: Client private key for mTLS
         :param thrift_transport: A ``TTransportBase`` for custom advanced usage.
             Incompatible with host, port, auth, kerberos_service_name, and password.
 
@@ -174,6 +180,22 @@ class Connection(object):
                     sasl_client.init()
                     return sasl_client
                 self._transport = thrift_sasl.TSaslClientTransport(sasl_factory, sasl_auth, socket)
+            elif auth == 'CERTIFICATE':
+                has_incompatible_arg = (
+                        host is None
+                        or port is None
+                        or path is None
+                        or cafile is None
+                        or cert_file is None
+                        or key_file is None
+                )
+                if has_incompatible_arg:
+                    raise ValueError("CERTIFICATE (Thrift over HTTPS) auth cannot be used without "
+                                     "host/port/path/cafile/cert_file/key_file")
+                path = re.sub(r'^[/]*', '', path)
+                uri = 'https://' + host + ':' + str(port) + '/' + path
+                self._transport = thrift.transport.THttpClient.THttpClient(uri_or_host=uri, cafile=cafile, cert_file=cert_file, key_file=key_file)
+
             else:
                 # All HS2 config options:
                 # https://cwiki.apache.org/confluence/display/Hive/Setting+Up+HiveServer2#SettingUpHiveServer2-Configuration
