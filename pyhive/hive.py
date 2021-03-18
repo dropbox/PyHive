@@ -25,9 +25,11 @@ from future.utils import iteritems
 import getpass
 import logging
 import sys
+import base64
 import thrift.protocol.TBinaryProtocol
 import thrift.transport.TSocket
 import thrift.transport.TTransport
+import thrift.transport.THttpClient
 
 # PEP 249 module globals
 apilevel = '2.0'
@@ -99,7 +101,7 @@ class Connection(object):
 
     def __init__(self, host=None, port=None, username=None, database='default', auth=None,
                  configuration=None, kerberos_service_name=None, password=None,
-                 thrift_transport=None):
+                 thrift_transport=None, transport_mode=None, http_path=None):
         """Connect to HiveServer2
 
         :param host: What host HiveServer2 runs on
@@ -110,6 +112,8 @@ class Connection(object):
         :param kerberos_service_name: Use with auth='KERBEROS' only
         :param password: Use with auth='LDAP' or auth='CUSTOM' only
         :param thrift_transport: A ``TTransportBase`` for custom advanced usage.
+        :param transport_mode: should be binary or http
+        :param http_path: path if the transport_mode is set to http
             Incompatible with host, port, auth, kerberos_service_name, and password.
 
         The way to support LDAP and GSSAPI is originated from cloudera/Impyla:
@@ -131,18 +135,28 @@ class Connection(object):
                 or auth is not None
                 or kerberos_service_name is not None
                 or password is not None
+                or transport_mode is not None
+                or http_path is not None
             )
             if has_incompatible_arg:
                 raise ValueError("thrift_transport cannot be used with "
-                                 "host/port/auth/kerberos_service_name/password")
+                                 "host/port/auth/kerberos_service_name/"
+                                 "password/transport_mode/http_path")
+        if http_path is not None and transport_mode != "http":
+            raise ValueError("http_path should only be used with transport_mode set to http")
+
+        if port is None:
+            port = 10000
+        if auth is None:
+            auth = 'NONE'
+        if transport_mode is None:
+            transport_mode = "binary"
+        if transport_mode == "http" and http_path is None:
+            http_path = "cliservice"
 
         if thrift_transport is not None:
             self._transport = thrift_transport
-        else:
-            if port is None:
-                port = 10000
-            if auth is None:
-                auth = 'NONE'
+        elif transport_mode == "binary":
             socket = thrift.transport.TSocket.TSocket(host, port)
             if auth == 'NOSASL':
                 # NOSASL corresponds to hive.server2.authentication=NOSASL in hive-site.xml
@@ -181,6 +195,26 @@ class Connection(object):
                 raise NotImplementedError(
                     "Only NONE, NOSASL, LDAP, KERBEROS, CUSTOM "
                     "authentication are supported, got {}".format(auth))
+
+        elif transport_mode == "http":
+            if auth == "NONE":
+                if password is None:
+                    password = 'x'
+                self._transport = thrift.transport.THttpClient.THttpClient(
+                    "http://{}:{}/{}".format(host, port, http_path)
+                )
+                credentials = base64.b64encode((username + ":" + password).encode('utf-8'))
+                self._transport.setCustomHeaders({"Authorization":
+                                                      "Basic " + credentials.decode('utf-8')})
+            else:
+                raise NotImplementedError(
+                    "Only NONE authentication is supported with http mode, got {}".format(auth)
+                )
+        else:
+            raise NotImplementedError(
+                "Only binary, http are supported for the transport mode, "
+                "got {}".format(transport_mode)
+            )
 
         protocol = thrift.protocol.TBinaryProtocol.TBinaryProtocol(self._transport)
         self._client = TCLIService.Client(protocol)
