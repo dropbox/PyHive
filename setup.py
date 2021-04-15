@@ -66,6 +66,8 @@ setup(
     entry_points={
         'sqlalchemy.dialects': [
             'hive = pyhive.sqlalchemy_hive:HiveDialect',
+            "hive.http = pyhive.sqlalchemy_hive:HiveHTTPDialect",
+            "hive.https = pyhive.sqlalchemy_hive:HiveHTTPSDialect",
             'presto = pyhive.sqlalchemy_presto:PrestoDialect',
             'trino = pyhive.sqlalchemy_trino:TrinoDialect',
         ],
