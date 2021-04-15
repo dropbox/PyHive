@@ -138,11 +138,13 @@ class Connection(object):
         https://github.com/cloudera/impyla/blob/255b07ed973d47a3395214ed92d35ec0615ebf62
         /impala/_thrift_api.py#L152-L160
         """
-        if scheme == "https" and thrift_transport is None:
-            ssl_context = create_default_context()
-            ssl_context.check_hostname = check_hostname == "true"
-            ssl_cert = ssl_cert or "none"
-            ssl_context.verify_mode = ssl_cert_parameter_map.get(ssl_cert, CERT_NONE)
+        if scheme in ("https", "http") and thrift_transport is None:
+            ssl_context = None
+            if scheme == "https":
+                ssl_context = create_default_context()
+                ssl_context.check_hostname = check_hostname == "true"
+                ssl_cert = ssl_cert or "none"
+                ssl_context.verify_mode = ssl_cert_parameter_map.get(ssl_cert, CERT_NONE)
             thrift_transport = thrift.transport.THttpClient.THttpClient(
                 uri_or_host=f"{scheme}://{host}:{port}/cliservice/",
                 ssl_context=ssl_context,
