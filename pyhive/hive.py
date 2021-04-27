@@ -262,7 +262,9 @@ class Connection(object):
     def _set_authorization_header(transport, username=None, password=None):
         username = username or "user"
         password = password or "pass"
-        auth_credentials = "{username}:{password}".format(username=username, password=password).encode("UTF-8")
+        auth_credentials = "{username}:{password}".format(
+            username=username, password=password
+        ).encode("UTF-8")
         auth_credentials_base64 = base64.standard_b64encode(auth_credentials).decode(
             "UTF-8"
         )
