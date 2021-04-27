@@ -70,6 +70,11 @@ First install this package to register it with SQLAlchemy (see ``setup.py``).
     logs = Table('my_awesome_data', MetaData(bind=engine), autoload=True)
     print select([func.count('*')], from_obj=logs).scalar()
 
+    # Hive + HTTPS + LDAP or basic Auth
+    engine = create_engine('hive+https://username:password@localhost:10000/')
+    logs = Table('my_awesome_data', MetaData(bind=engine), autoload=True)
+    print select([func.count('*')], from_obj=logs).scalar()
+
 Note: query generation functionality is not exhaustive or fully tested, but there should be no
 problem with raw SQL.
 
