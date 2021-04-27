@@ -139,6 +139,7 @@ class Connection(object):
         /impala/_thrift_api.py#L152-L160
         """
         if scheme in ("https", "http") and thrift_transport is None:
+            port = port or 1000
             ssl_context = None
             if scheme == "https":
                 ssl_context = create_default_context()
@@ -146,7 +147,9 @@ class Connection(object):
                 ssl_cert = ssl_cert or "none"
                 ssl_context.verify_mode = ssl_cert_parameter_map.get(ssl_cert, CERT_NONE)
             thrift_transport = thrift.transport.THttpClient.THttpClient(
-                uri_or_host=f"{scheme}://{host}:{port}/cliservice/",
+                uri_or_host="{scheme}://{host}:{port}/cliservice/".format(
+                    scheme=scheme, host=host, port=port
+                ),
                 ssl_context=ssl_context,
             )
 
@@ -259,26 +262,40 @@ class Connection(object):
     def _set_authorization_header(transport, username=None, password=None):
         username = username or "user"
         password = password or "pass"
-        auth_credentials = f"{username}:{password}".encode("UTF-8")
+        auth_credentials = "{username}:{password}".format(
+            username=username, password=password
+        ).encode("UTF-8")
         auth_credentials_base64 = base64.standard_b64encode(auth_credentials).decode(
             "UTF-8"
         )
         transport.setCustomHeaders(
-            {"Authorization": f"Basic {auth_credentials_base64}"}
+            {
+                "Authorization": "Basic {auth_credentials_base64}".format(
+                    auth_credentials_base64=auth_credentials_base64
+                )
+            }
         )
 
     @staticmethod
-    def _set_kerberos_header(transport, kerberos_service_name, host) -> None:
+    def _set_kerberos_header(transport, kerberos_service_name, host):
         import kerberos
 
         __, krb_context = kerberos.authGSSClientInit(
-            service=f"{kerberos_service_name}@{host}"
+            service="{kerberos_service_name}@{host}".format(
+                kerberos_service_name=kerberos_service_name, host=host
+            )
         )
         kerberos.authGSSClientClean(krb_context, "")
         kerberos.authGSSClientStep(krb_context, "")
         auth_header = kerberos.authGSSClientResponse(krb_context)
 
-        transport.setCustomHeaders({"Authorization": f"Negotiate {auth_header}"})
+        transport.setCustomHeaders(
+            {
+                "Authorization": "Negotiate {auth_header}".format(
+                    auth_header=auth_header
+                )
+            }
+        )
 
     def __enter__(self):
         """Transport should already be opened by __init__"""
