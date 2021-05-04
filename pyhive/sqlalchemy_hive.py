@@ -310,7 +310,7 @@ class HiveDialect(default.DefaultDialect):
         # Filter out empty rows and comment
         rows = [row for row in rows if row[0] and row[0] != '# col_name']
         result = []
-        for (col_name, col_type, _comment) in rows:
+        for (col_name, col_type, comment) in rows:
             if col_name == '# Partition Information':
                 break
             # Take out the more detailed type information
@@ -328,6 +328,7 @@ class HiveDialect(default.DefaultDialect):
                 'type': coltype,
                 'nullable': True,
                 'default': None,
+                'comment': comment,
             })
         return result
 
