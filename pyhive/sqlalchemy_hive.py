@@ -272,7 +272,7 @@ class HiveDialect(default.DefaultDialect):
         # This allows reflection to not crash at the cost of being inaccurate
         return self.get_table_names(connection, schema, **kw)
 
-    def _get_table_columns(self, connection, table_name, schema):
+    def _get_table_columns(self, connection, table_name, schema, extended=False):
         full_table = table_name
         if schema:
             full_table = schema + '.' + table_name
@@ -280,7 +280,8 @@ class HiveDialect(default.DefaultDialect):
         # Using DESCRIBE works but is uglier.
         try:
             # This needs the table name to be unescaped (no backticks).
-            rows = connection.execute('DESCRIBE {}'.format(full_table)).fetchall()
+            extended = " FORMATTED" if extended else ""
+            rows = connection.execute('DESCRIBE{} {}'.format(extended, full_table)).fetchall()
         except exc.OperationalError as e:
             # Does the table exist?
             regex_fmt = r'TExecuteStatementResp.*SemanticException.*Table not found {}'
@@ -363,6 +364,31 @@ class HiveDialect(default.DefaultDialect):
         if schema:
             query += ' IN ' + self.identifier_preparer.quote_identifier(schema)
         return [row[0] for row in connection.execute(query)]
+    
+    def get_table_comment(self, connection, table_name, schema=None, **kw):
+        rows = self._get_table_columns(connection, table_name, schema, extended=True)
+
+        # Select out the rows in the detailed table info.
+        in_detailed_info = False
+        detailed_table_info = []
+        for row in rows:
+            col_name = row[0]
+            if col_name.strip() == '# Detailed Table Information':
+                in_detailed_info = True
+            elif col_name.startswith('# '):
+                in_detailed_info = False
+            elif in_detailed_info:
+                detailed_table_info.append(row)
+        
+        in_table_parameters = False
+        comment = None
+        for (col_name, data_type, value) in detailed_table_info:
+            if col_name.strip() == 'Table Parameters:':
+                in_table_parameters = True
+            elif in_table_parameters and data_type is not None and data_type.strip() == 'comment':
+                comment = value
+
+        return {'text': comment}
 
     def do_rollback(self, dbapi_connection):
         # No transactions for Hive
