@@ -12,12 +12,15 @@ from builtins import str
 from past.builtins import basestring
 from pyhive import exc
 import abc
-import collections
 import time
 import datetime
 from future.utils import with_metaclass
 from itertools import islice
-
+try:
+    from collections.abc import Iterable
+except ImportError:
+    from collections import Iterable
+from collections import deque
 
 class DBAPICursor(with_metaclass(abc.ABCMeta, object)):
     """Base class for some common DB-API logic"""
@@ -38,7 +41,7 @@ class DBAPICursor(with_metaclass(abc.ABCMeta, object)):
 
         # Internal helper state
         self._state = self._STATE_NONE
-        self._data = collections.deque()
+        self._data = deque()
         self._columns = None
 
     def _fetch_while(self, fn):
@@ -245,7 +248,7 @@ class ParamEscaper(object):
             return self.escape_number(item)
         elif isinstance(item, basestring):
             return self.escape_string(item)
-        elif isinstance(item, collections.Iterable):
+        elif isinstance(item, Iterable):
             return self.escape_sequence(item)
         elif isinstance(item, datetime.datetime):
             return self.escape_datetime(item, self._DATETIME_FORMAT)
