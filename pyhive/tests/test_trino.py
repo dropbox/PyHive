@@ -7,17 +7,10 @@ They also require a tables created by make_test_tables.sh.
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
-import contextlib
-import os
-import requests
-
-from pyhive import exc
 from pyhive import trino
-from pyhive.tests.dbapi_test_case import DBAPITestCase
-from pyhive.tests.dbapi_test_case import with_cursor
+from pyhive.tests.dbapi_test_case import with_cursor, with_complex_processing_cursor
 from pyhive.tests.test_presto import TestPresto
-import mock
-import unittest
+
 import datetime
 
 _HOST = 'localhost'
@@ -27,8 +20,9 @@ _PORT = '18080'
 class TestTrino(TestPresto):
     __test__ = True
 
-    def connect(self):
-        return trino.connect(host=_HOST, port=_PORT, source=self.id())
+    def connect(self, process_complex_columns=False):
+        return trino.connect(host=_HOST, port=_PORT, source=self.id(),
+                             process_complex_columns=False)
 
     def test_bad_protocol(self):
         self.assertRaisesRegexp(ValueError, 'Protocol must be',
@@ -94,3 +88,52 @@ class TestTrino(TestPresto):
         self.assertEqual(rows, expected)
         # catch unicode/str
         self.assertEqual(list(map(type, rows[0])), list(map(type, expected[0])))
+
+    @with_complex_processing_cursor
+    def test_complex_processing_cursor(self, cursor):
+        cursor.execute('SELECT * FROM one_row_deep_complex')
+        fetched_rows = cursor.fetchall()
+
+        expected_rows = [(
+            {
+                'inner_int1': 2,
+                'inner_int2': 3,
+                'inner_int_array': [4, 5],
+                'inner_row1': {
+                    'inner_inner_varbinary': b'binarydata',
+                    'inner_inner_string': 'some string'
+                }
+            },
+            {
+                'key1': {
+                    'double_attribute': 2.2,
+                    'integer_attribute': 60,
+                    'map_attribute': {
+                        602: ['string1', 'string2'],
+                        21: ['other string', 'another string']
+                    }
+                },
+                'key2': {
+                    'double_attribute': 42.15,
+                    'integer_attribute': 6060,
+                    'map_attribute': {
+                        14: ['11string1', 'somestring'],
+                        22: ['other string', 'another string']
+                    }
+                }
+            },
+            [
+                {
+                    'int1': 42,
+                    'double1': 24.5,
+                    'string1': 'lalala'
+                },
+                {
+                    'int1': 421,
+                    'double1': 244.25,
+                    'string1': 'bababa'
+                }
+            ]
+        )]
+
+        self.assertEqual(expected_rows, fetched_rows)
