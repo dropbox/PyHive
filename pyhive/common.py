@@ -14,6 +14,7 @@ from pyhive import exc
 import abc
 import collections
 import time
+import datetime
 from future.utils import with_metaclass
 from itertools import islice
 
@@ -201,6 +202,10 @@ class DBAPITypeObject(object):
 
 
 class ParamEscaper(object):
+    _DATE_FORMAT = "%Y-%m-%d"
+    _TIME_FORMAT = "%H:%M:%S.%f"
+    _DATETIME_FORMAT = "{} {}".format(_DATE_FORMAT, _TIME_FORMAT)
+
     def escape_args(self, parameters):
         if isinstance(parameters, dict):
             return {k: self.escape_item(v) for k, v in parameters.items()}
@@ -228,6 +233,11 @@ class ParamEscaper(object):
         l = map(str, map(self.escape_item, item))
         return '(' + ','.join(l) + ')'
 
+    def escape_datetime(self, item, format, cutoff=0):
+        dt_str = item.strftime(format)
+        formatted = dt_str[:-cutoff] if cutoff and format.endswith(".%f") else dt_str
+        return "'{}'".format(formatted)
+
     def escape_item(self, item):
         if item is None:
             return 'NULL'
@@ -237,6 +247,10 @@ class ParamEscaper(object):
             return self.escape_string(item)
         elif isinstance(item, collections.Iterable):
             return self.escape_sequence(item)
+        elif isinstance(item, datetime.datetime):
+            return self.escape_datetime(item, self._DATETIME_FORMAT)
+        elif isinstance(item, datetime.date):
+            return self.escape_datetime(item, self._DATE_FORMAT)
         else:
             raise exc.ProgrammingError("Unsupported object {}".format(item))
 

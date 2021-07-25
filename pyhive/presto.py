@@ -16,6 +16,7 @@ from presto_types_parser import build_row_parser
 from pyhive.exc import *  # noqa
 import base64
 import getpass
+import datetime
 import logging
 import requests
 from requests.auth import HTTPBasicAuth
@@ -32,7 +33,16 @@ threadsafety = 2  # Threads may share the module and connections.
 paramstyle = 'pyformat'  # Python extended format codes, e.g. ...WHERE name=%(name)s
 
 _logger = logging.getLogger(__name__)
-_escaper = common.ParamEscaper()
+
+
+class PrestoParamEscaper(common.ParamEscaper):
+    def escape_datetime(self, item, format):
+        _type = "timestamp" if isinstance(item, datetime.datetime) else "date"
+        formatted = super(PrestoParamEscaper, self).escape_datetime(item, format, 3)
+        return "{} {}".format(_type, formatted)
+
+
+_escaper = PrestoParamEscaper()
 
 
 def connect(*args, **kwargs):
@@ -94,7 +104,7 @@ class Cursor(common.DBAPICursor):
             else defaults to system user name
         :param catalog: string -- defaults to ``hive``
         :param schema: string -- defaults to ``default``
-        :param poll_interval: int -- how often to ask the Presto REST interface for a progress
+        :param poll_interval: float -- how often to ask the Presto REST interface for a progress
             update, defaults to a second
         :param source: string -- arbitrary identifier (shows up in the Presto monitoring page)
         :param protocol: string -- network protocol, valid options are ``http`` and ``https``.
