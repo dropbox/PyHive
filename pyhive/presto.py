@@ -18,6 +18,7 @@ import getpass
 import datetime
 import logging
 import requests
+import datetime
 from requests.auth import HTTPBasicAuth
 import os
 
@@ -40,6 +41,20 @@ class PrestoParamEscaper(common.ParamEscaper):
         _type = "timestamp" if isinstance(item, datetime.datetime) else "date"
         formatted = super(PrestoParamEscaper, self).escape_datetime(item, format, 3)
         return "{} {}".format(_type, formatted)
+
+    def escape_item(self, item):
+        if isinstance(item, datetime.datetime):
+            return self.escape_datetime(item)
+        elif isinstance(item, datetime.date):
+            return self.escape_date(item)
+        else:
+            return super(PrestoParamEscaper, self).escape_item(item)
+
+    def escape_date(self, item):
+        return "date '{}'".format(item)
+
+    def escape_datetime(self, item):
+        return "timestamp  '{}'".format(item)
 
 
 _escaper = PrestoParamEscaper()
