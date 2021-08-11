@@ -234,7 +234,14 @@ class ParamEscaper(object):
         return '(' + ','.join(l) + ')'
 
     def escape_datetime(self, item, format, cutoff=0):
-        dt_str = item.strftime(format)
+        if format.startswith('%Y'):
+            # patch for #404
+            dt_str = '{:0>4}{}'.format(
+                item.strftime('%Y'),
+                item.strftime(format.lstrip('%Y'))
+            )
+        else:
+            dt_str = item.strftime(format)
         formatted = dt_str[:-cutoff] if cutoff and format.endswith(".%f") else dt_str
         return "'{}'".format(formatted)
 
