@@ -17,6 +17,7 @@ import time
 import datetime
 from future.utils import with_metaclass
 from itertools import islice
+from decimal import Decimal
 
 
 class DBAPICursor(with_metaclass(abc.ABCMeta, object)):
@@ -241,7 +242,7 @@ class ParamEscaper(object):
     def escape_item(self, item):
         if item is None:
             return 'NULL'
-        elif isinstance(item, (int, float)):
+        elif isinstance(item, (int, float, Decimal)):
             return self.escape_number(item)
         elif isinstance(item, basestring):
             return self.escape_string(item)
