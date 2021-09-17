@@ -48,7 +48,7 @@ def connect(*args, **kwargs):
 
 class Connection(PrestoConnection):
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        super(Connection, self).__init__(*args, **kwargs)
 
     def cursor(self):
         """Return a new :py:class:`Cursor` object using the connection."""
