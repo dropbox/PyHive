@@ -63,6 +63,23 @@ cp -r $(dirname $0)/travis-conf/presto presto-server/etc
 /usr/bin/python2.7 presto-server/bin/launcher.py start
 
 #
+# Trino
+#
+
+sudo apt-get -q install -y python # Use python2 for trino server
+
+mvn -q org.apache.maven.plugins:maven-dependency-plugin:3.0.0:copy \
+    -Dartifact=io.trino:trino-server:${TRINO}:tar.gz \
+    -DoutputDirectory=.
+tar -x -z -f trino-server-*.tar.gz
+rm -rf trino-server
+mv trino-server-*/ trino-server
+
+cp -r $(dirname $0)/travis-conf/trino trino-server/etc
+
+/usr/bin/python2.7 trino-server/bin/launcher.py start
+
+#
 # Python
 #
 
@@ -73,3 +90,7 @@ pip install -r dev_requirements.txt
 # Sleep so Presto has time to start up.
 # Otherwise we might get 'No nodes available to run query' or 'Presto server is still initializing'
 while ! grep -q 'SERVER STARTED' /tmp/presto/data/var/log/server.log; do sleep 1; done
+
+# Sleep so Trino has time to start up.
+# Otherwise we might get 'No nodes available to run query' or 'Presto server is still initializing'
+while ! grep -q 'SERVER STARTED' /tmp/trino/data/var/log/server.log; do sleep 1; done

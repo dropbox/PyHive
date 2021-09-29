@@ -103,7 +103,7 @@ class Cursor(common.DBAPICursor):
             else defaults to system user name
         :param catalog: string -- defaults to ``hive``
         :param schema: string -- defaults to ``default``
-        :param poll_interval: int -- how often to ask the Presto REST interface for a progress
+        :param poll_interval: float -- how often to ask the Presto REST interface for a progress
             update, defaults to a second
         :param source: string -- arbitrary identifier (shows up in the Presto monitoring page)
         :param protocol: string -- network protocol, valid options are ``http`` and ``https``.

@@ -17,7 +17,7 @@ DB-API
 ------
 .. code-block:: python
 
-    from pyhive import presto  # or import hive
+    from pyhive import presto  # or import hive or import trino
     cursor = presto.connect('localhost').cursor()
     cursor.execute('SELECT * FROM my_awesome_data LIMIT 10')
     print cursor.fetchone()
@@ -63,8 +63,15 @@ First install this package to register it with SQLAlchemy (see ``setup.py``).
     from sqlalchemy.schema import *
     # Presto
     engine = create_engine('presto://localhost:8080/hive/default')
+    # Trino
+    engine = create_engine('trino://localhost:8080/hive/default')
     # Hive
     engine = create_engine('hive://localhost:10000/default')
+    logs = Table('my_awesome_data', MetaData(bind=engine), autoload=True)
+    print select([func.count('*')], from_obj=logs).scalar()
+
+    # Hive + HTTPS + LDAP or basic Auth
+    engine = create_engine('hive+https://username:password@localhost:10000/')
     logs = Table('my_awesome_data', MetaData(bind=engine), autoload=True)
     print select([func.count('*')], from_obj=logs).scalar()
 
@@ -79,9 +86,15 @@ Passing session configuration
     # DB-API
     hive.connect('localhost', configuration={'hive.exec.reducers.max': '123'})
     presto.connect('localhost', session_props={'query_max_run_time': '1234m'})
+    trino.connect('localhost',  session_props={'query_max_run_time': '1234m'})
     # SQLAlchemy
     create_engine(
         'presto://user@host:443/hive',
+        connect_args={'protocol': 'https',
+                      'session_props': {'query_max_run_time': '1234m'}}
+    )
+    create_engine(
+        'trino://user@host:443/hive',
         connect_args={'protocol': 'https',
                       'session_props': {'query_max_run_time': '1234m'}}
     )
@@ -102,11 +115,13 @@ Install using
 
 - ``pip install 'pyhive[hive]'`` for the Hive interface and
 - ``pip install 'pyhive[presto]'`` for the Presto interface.
+- ``pip install 'pyhive[trino]'`` for the Trino interface
 
 PyHive works with
 
 - Python 2.7 / Python 3
 - For Presto: Presto install
+- For Trino: Trino install
 - For Hive: `HiveServer2 <https://cwiki.apache.org/confluence/display/Hive/Setting+up+HiveServer2>`_ daemon
 
 Changelog
