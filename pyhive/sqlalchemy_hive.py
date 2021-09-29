@@ -316,6 +316,8 @@ class HiveDialect(default.DefaultDialect):
             # Take out the more detailed type information
             # e.g. 'map<int,int>' -> 'map'
             #      'decimal(10,1)' -> decimal
+            if isinstance(col_type, str) != True:
+                break
             col_type = re.search(r'^\w+', col_type).group(0)
             try:
                 coltype = _type_map[col_type]
