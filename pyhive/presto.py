@@ -316,6 +316,11 @@ class Cursor(common.DBAPICursor):
                     if row[i] is not None:
                         row[i] = base64.b64decode(row[i])
 
+    def _transform_data(self, data):
+        """Given data returned from Presto's REST API this can be used in
+        subclasses to do more transfomations and other data processing."""
+        return data
+
     def _process_response(self, response):
         """Given the JSON response from Presto's REST API, update the internal state with the next
         URI and any data from the response
@@ -340,7 +345,7 @@ class Cursor(common.DBAPICursor):
             self._session_props[propname] = propval
         if 'data' in response_json:
             assert self._columns
-            new_data = response_json['data']
+            new_data = self._transform_data(response_json['data'])
             self._decode_binary(new_data)
             self._data += map(tuple, new_data)
         if 'nextUri' not in response_json:
