@@ -265,7 +265,7 @@ class HiveDialect(default.DefaultDialect):
 
     def get_schema_names(self, connection, **kw):
         # Equivalent to SHOW DATABASES
-        return [row[0] for row in connection.execute('SHOW SCHEMAS')]
+        return [row['namespace'] for row in connection.execute('SHOW SCHEMAS')]
 
     def get_view_names(self, connection, schema=None, **kw):
         # Hive does not provide functionality to query tableType
@@ -308,7 +308,7 @@ class HiveDialect(default.DefaultDialect):
         # Strip whitespace
         rows = [[col.strip() if col else None for col in row] for row in rows]
         # Filter out empty rows and comment
-        rows = [row for row in rows if row[0] and row[0] != '# col_name']
+        rows = [row for row in rows if row['col_name'] and row['col_name'] != '# col_name']
         result = []
         for (col_name, col_type, _comment) in rows:
             if col_name == '# Partition Information':
@@ -361,7 +361,7 @@ class HiveDialect(default.DefaultDialect):
         query = 'SHOW TABLES'
         if schema:
             query += ' IN ' + self.identifier_preparer.quote_identifier(schema)
-        return [row[0] for row in connection.execute(query)]
+        return [row['tableName'] for row in connection.execute(query)]
 
     def do_rollback(self, dbapi_connection):
         # No transactions for Hive
