@@ -9,6 +9,8 @@ from __future__ import unicode_literals
 
 import contextlib
 import os
+from decimal import Decimal
+
 import requests
 
 from pyhive import exc
@@ -89,7 +91,7 @@ class TestTrino(TestPresto):
             {"1": 2, "3": 4},  # Trino converts all keys to strings so that they're valid JSON
             [1, 2],  # struct is returned as a list of elements
             # '{0:1}',
-            '0.1',
+            Decimal('0.1'),
         )]
         self.assertEqual(rows, expected)
         # catch unicode/str
