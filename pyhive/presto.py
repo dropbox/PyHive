@@ -316,7 +316,7 @@ class Cursor(common.DBAPICursor):
 
     def _process_data(self, rows):
         for i, col in enumerate(self.description):
-            col_type = col[1].split("(")[0]
+            col_type = col[1].split("(")[0].lower()
             if col_type in TYPES_CONVERTER:
                 for row in rows:
                     if row[i] is not None:
