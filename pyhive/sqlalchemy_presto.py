@@ -8,10 +8,12 @@ which is released under the MIT license.
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+from packaging import version
 import re
 from sqlalchemy import exc
 from sqlalchemy import types
 from sqlalchemy import util
+import sys
 
 # TODO shouldn't use mysql type
 from sqlalchemy.databases import mysql
@@ -116,6 +118,8 @@ class PrestoDialect(default.DefaultDialect):
     returns_unicode_strings = True
     description_encoding = None
     supports_native_boolean = True
+    if version.parse(sys.modules['sqlalchemy'].__version__) >= version.parse('1.4.5'):
+        supports_statement_cache = False
     type_compiler = PrestoTypeCompiler
 
     @classmethod
