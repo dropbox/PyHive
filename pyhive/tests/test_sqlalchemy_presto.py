@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from builtins import str
+from decimal import Decimal
 from pyhive.tests.sqlalchemy_test_case import SqlAlchemyTestCase
 from pyhive.tests.sqlalchemy_test_case import with_engine_connection
 from sqlalchemy import types
@@ -48,7 +49,7 @@ class TestSqlAlchemyPresto(unittest.TestCase, SqlAlchemyTestCase):
             {"1": 2, "3": 4},  # Presto converts all keys to strings so that they're valid JSON
             [1, 2],  # struct is returned as a list of elements
             # '{0:1}',
-            '0.1',
+            Decimal('0.1'),
         ])
 
         # TODO some of these types could be filled in better
