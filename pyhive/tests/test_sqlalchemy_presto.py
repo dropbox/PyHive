@@ -86,3 +86,16 @@ class TestSqlAlchemyPresto(unittest.TestCase, SqlAlchemyTestCase):
         self.assertIn('"current_timestamp"', query)
         self.assertNotIn('`select`', query)
         self.assertNotIn('`current_timestamp`', query)
+
+    @with_engine_connection
+    def test_multiple_catalogs(self, engine, connection):
+        system_table = Table(
+            'tables',
+            MetaData(bind=engine),
+            autoload=True,
+            schema='information_schema',
+            presto_catalog='system'
+        )
+        query = str(system_table.select())
+        self.assertIn('"system"."information_schema"', query)
+        self.assertNotIn('"hive"', query)
