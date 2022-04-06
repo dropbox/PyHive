@@ -20,7 +20,11 @@ from sqlalchemy.databases import mysql
 from sqlalchemy.engine import default
 from sqlalchemy.sql import compiler
 from sqlalchemy.sql.compiler import SQLCompiler
-from sqlalchemy.sql.expression import Alias
+from sqlalchemy.sql.expression import (
+    Alias,
+    CTE,
+    Subquery,
+)
 
 from pyhive import presto
 from pyhive.common import UniversalSet
@@ -68,7 +72,7 @@ class PrestoCompiler(SQLCompiler):
         if table is None:
             return sql
 
-        if isinstance(table, Alias):
+        if isinstance(table, (Alias, CTE, Subquery)):
             return sql
 
         if (
