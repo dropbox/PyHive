@@ -130,6 +130,7 @@ class PrestoDialect(default.DefaultDialect):
     if version.parse(sys.modules['sqlalchemy'].__version__) >= version.parse('1.4.5'):
         supports_statement_cache = False
     type_compiler = PrestoTypeCompiler
+    cte_follows_insert = True
 
     @classmethod
     def dbapi(cls):
