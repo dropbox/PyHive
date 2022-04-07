@@ -20,11 +20,16 @@ from sqlalchemy.databases import mysql
 from sqlalchemy.engine import default
 from sqlalchemy.sql import compiler
 from sqlalchemy.sql.compiler import SQLCompiler
-from sqlalchemy.sql.expression import (
-    Alias,
-    CTE,
-    Subquery,
-)
+try:
+    from sqlalchemy.sql.expression import (
+        Alias,
+        CTE,
+        Subquery,
+    )
+except ImportError:
+    from sqlalchemy.sql.expression import Alias
+    CTE = type(None)
+    Subquery = type(None)
 
 from pyhive import presto
 from pyhive.common import UniversalSet
