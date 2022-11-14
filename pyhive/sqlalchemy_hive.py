@@ -194,6 +194,12 @@ class HiveTypeCompiler(compiler.GenericTypeCompiler):
     def visit_BLOB(self, type_):
         return 'BINARY'
 
+    def visit_BINARY(self, type_):
+        return 'BINARY'
+
+    def visit_VARBINARY(self, type_):
+        return self.visit_BINARY(type_)
+
     def visit_TIME(self, type_):
         return 'TIMESTAMP'
 
