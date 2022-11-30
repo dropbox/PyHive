@@ -9,6 +9,8 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 from builtins import object
+from decimal import Decimal
+
 from pyhive import common
 from pyhive.common import DBAPITypeObject
 from presto_types_parser import build_row_parser
@@ -27,6 +29,7 @@ try:  # Python 3
 except ImportError:  # Python 2
     import urlparse
 
+
 # PEP 249 module globals
 apilevel = '2.0'
 threadsafety = 2  # Threads may share the module and connections.
@@ -34,6 +37,11 @@ paramstyle = 'pyformat'  # Python extended format codes, e.g. ...WHERE name=%(na
 
 _logger = logging.getLogger(__name__)
 
+TYPES_CONVERTER = {
+    "decimal": Decimal,
+    # As of Presto 0.69, binary data is returned as the varbinary type in base64 format
+    "varbinary": base64.b64decode
+}
 
 class PrestoParamEscaper(common.ParamEscaper):
     def escape_datetime(self, item, format):
@@ -313,14 +321,13 @@ class Cursor(common.DBAPICursor):
         """Fetch the next URI and update state"""
         self._process_response(self._requests_session.get(self._nextUri, **self._requests_kwargs))
 
-    def _decode_binary(self, rows):
-        # As of Presto 0.69, binary data is returned as the varbinary type in base64 format
-        # This function decodes base64 data in place
+    def _process_data(self, rows):
         for i, col in enumerate(self.description):
-            if col[1] == 'varbinary':
+            col_type = col[1].split("(")[0].lower()
+            if col_type in TYPES_CONVERTER:
                 for row in rows:
                     if row[i] is not None:
-                        row[i] = base64.b64decode(row[i])
+                        row[i] = TYPES_CONVERTER[col_type](row[i])
 
     def _process_response(self, response):
         """Given the JSON response from Presto's REST API, update the internal state with the next
@@ -347,7 +354,8 @@ class Cursor(common.DBAPICursor):
         if 'data' in response_json:
             assert self._columns
             new_data = response_json['data']
-
+            self._process_data(new_data)
+            self._data += map(tuple, new_data)
             self._process_new_data(new_data)
         if 'nextUri' not in response_json:
             self._state = self._STATE_FINISHED
