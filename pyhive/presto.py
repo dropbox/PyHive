@@ -29,7 +29,6 @@ try:  # Python 3
 except ImportError:  # Python 2
     import urlparse
 
-
 # PEP 249 module globals
 apilevel = '2.0'
 threadsafety = 2  # Threads may share the module and connections.
@@ -42,6 +41,7 @@ TYPES_CONVERTER = {
     # As of Presto 0.69, binary data is returned as the varbinary type in base64 format
     "varbinary": base64.b64decode
 }
+
 
 class PrestoParamEscaper(common.ParamEscaper):
     def escape_datetime(self, item, format):
@@ -238,7 +238,7 @@ class Cursor(common.DBAPICursor):
         # Sleep until we're done or we got the columns
         self._fetch_while(
             lambda: self._columns is None and
-            self._state not in (self._STATE_NONE, self._STATE_FINISHED)
+                    self._state not in (self._STATE_NONE, self._STATE_FINISHED)
         )
         if self._columns is None:
             return None
@@ -321,7 +321,7 @@ class Cursor(common.DBAPICursor):
         """Fetch the next URI and update state"""
         self._process_response(self._requests_session.get(self._nextUri, **self._requests_kwargs))
 
-    def _process_data(self, rows):
+    def _flat_process_data(self, rows):
         for i, col in enumerate(self.description):
             col_type = col[1].split("(")[0].lower()
             if col_type in TYPES_CONVERTER:
@@ -354,8 +354,8 @@ class Cursor(common.DBAPICursor):
         if 'data' in response_json:
             assert self._columns
             new_data = response_json['data']
-            self._process_data(new_data)
             self._data += map(tuple, new_data)
+
             self._process_new_data(new_data)
         if 'nextUri' not in response_json:
             self._state = self._STATE_FINISHED
@@ -368,7 +368,7 @@ class Cursor(common.DBAPICursor):
 
             self._data += map(row_parser.process_row, new_data)
         else:
-            self._decode_binary(new_data)
+            self._flat_process_data(new_data)
 
             self._data += map(tuple, new_data)
 

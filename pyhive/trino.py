@@ -124,8 +124,8 @@ class Cursor(PrestoCursor):
         if 'data' in response_json:
             assert self._columns
             new_data = response_json['data']
-            self._process_data(new_data)
             self._data += map(tuple, new_data)
+
             self._process_new_data(new_data)
         if 'nextUri' not in response_json:
             self._state = self._STATE_FINISHED
