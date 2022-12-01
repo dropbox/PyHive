@@ -174,7 +174,15 @@ class HiveTypeCompiler(compiler.GenericTypeCompiler):
         return 'INT'
 
     def visit_NUMERIC(self, type_):
-        return 'DECIMAL'
+        precision = getattr(type_, "precision", None)
+        if precision is None:
+            return "DECIMAL"
+        else:
+            scale = getattr(type_, "scale", None)
+            if scale is None:
+                return "DECIMAL(%(precision)s)" % {"precision": precision}
+            else:
+                return "DECIMAL(%(precision)s, %(scale)s)" % {"precision": precision, "scale": scale}
 
     def visit_CHAR(self, type_):
         return 'STRING'
