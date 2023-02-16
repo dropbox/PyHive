@@ -114,12 +114,7 @@ def connect(*args, **kwargs):
             configuration[arg] = kwargs.pop(arg)   
                         
     kwargs['configuration'] = configuration
-
-    import platform
-    fout = open('/opt/airflow/logs/hive.debug','a')
-    fout.write("[%s][%s]@[%s]\n" % (datetime.datetime.now(),str(kwargs),platform.node()))
-    fout.close()
-    _logger.info("[%s][%s]@[%s]\n" % (datetime.datetime.now(),str(kwargs),platform.node()) )
+    
     return Connection(*args, **kwargs)
 
 
