@@ -31,6 +31,7 @@ import sys
 import thrift.transport.THttpClient
 import thrift.protocol.TBinaryProtocol
 import thrift.transport.TSocket
+import thrift.transport.TSSLSocket
 import thrift.transport.TTransport
 
 # PEP 249 module globals
@@ -101,6 +102,24 @@ def connect(*args, **kwargs):
 
     :returns: a :py:class:`Connection` object.
     """
+    configuration = {}
+
+    keylist = list(kwargs)
+    
+    if 'configuration' in keylist:
+        configuration = kwargs['configuration']
+
+    for arg in keylist:    
+        if re.match('^EXTRA_',arg):
+            configuration[arg] = kwargs.pop(arg)   
+                        
+    kwargs['configuration'] = configuration
+
+    import platform
+    fout = open('/opt/airflow/logs/hive.debug','a')
+    fout.write("[%s][%s]@[%s]\n" % (datetime.datetime.now(),str(kwargs),platform.node()))
+    fout.close()
+    _logger.info("[%s][%s]@[%s]\n" % (datetime.datetime.now(),str(kwargs),platform.node()) )
     return Connection(*args, **kwargs)
 
 
@@ -194,7 +213,12 @@ class Connection(object):
                 port = 10000
             if auth is None:
                 auth = 'NONE'
-            socket = thrift.transport.TSocket.TSocket(host, port)
+                
+            if 'EXTRA_USE_SSL' in configuration.keys():
+                socket = thrift.transport.TSSLSocket.TSSLSocket(host, port, cert_reqs=CERT_NONE)
+            else:    
+                socket = thrift.transport.TSocket.TSocket(host, port)
+                
             if auth == 'NOSASL':
                 # NOSASL corresponds to hive.server2.authentication=NOSASL in hive-site.xml
                 self._transport = thrift.transport.TTransport.TBufferedTransport(socket)
