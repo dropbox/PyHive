@@ -211,6 +211,7 @@ class Connection(object):
                 
             if 'EXTRA_USE_SSL' in configuration.keys():
                 socket = thrift.transport.TSSLSocket.TSSLSocket(host, port, cert_reqs=CERT_NONE)
+                configuration.pop("EXTRA_USE_SSL")
             else:    
                 socket = thrift.transport.TSocket.TSocket(host, port)
                 
