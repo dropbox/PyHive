@@ -74,6 +74,7 @@ class PrestoDialect(default.DefaultDialect):
     preparer = PrestoIdentifierPreparer
     statement_compiler = PrestoCompiler
     supports_alter = False
+    supports_statement_cache = True
     supports_pk_autoincrement = False
     supports_default_values = False
     supports_empty_insert = False
