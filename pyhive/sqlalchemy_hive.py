@@ -228,8 +228,8 @@ class HiveExecutionContext(default.DefaultExecutionContext):
 
 
 class HiveDialect(default.DefaultDialect):
-    name = b'hive'
-    driver = b'thrift'
+    name = 'hive'
+    driver = 'thrift'
     execution_ctx_cls = HiveExecutionContext
     preparer = HiveIdentifierPreparer
     statement_compiler = HiveCompiler
