@@ -18,6 +18,11 @@ import datetime
 from future.utils import with_metaclass
 from itertools import islice
 
+try:
+    from collections.abc import Iterable
+except ImportError:
+    from collections import Iterable
+
 
 class DBAPICursor(with_metaclass(abc.ABCMeta, object)):
     """Base class for some common DB-API logic"""
@@ -245,7 +250,7 @@ class ParamEscaper(object):
             return self.escape_number(item)
         elif isinstance(item, basestring):
             return self.escape_string(item)
-        elif isinstance(item, collections.Iterable):
+        elif isinstance(item, Iterable):
             return self.escape_sequence(item)
         elif isinstance(item, datetime.datetime):
             return self.escape_datetime(item, self._DATETIME_FORMAT)
