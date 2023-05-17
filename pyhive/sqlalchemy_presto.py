@@ -13,11 +13,7 @@ from sqlalchemy import exc
 from sqlalchemy import types
 from sqlalchemy import util
 # TODO shouldn't use mysql type
-try:
-    from sqlalchemy.databases.mysql import MSTinyInteger
-except ImportError:
-    # Newer versions of sqlalchemy require:
-    from sqlalchemy.dialects.mysql import MSTinyInteger
+from sqlalchemy.databases import mysql
 from sqlalchemy.engine import default
 from sqlalchemy.sql import compiler
 from sqlalchemy.sql.compiler import SQLCompiler
@@ -33,7 +29,7 @@ class PrestoIdentifierPreparer(compiler.IdentifierPreparer):
 
 _type_map = {
     'boolean': types.Boolean,
-    'tinyint': MSTinyInteger,
+    'tinyint': mysql.MSTinyInteger,
     'smallint': types.SmallInteger,
     'integer': types.Integer,
     'bigint': types.BigInteger,
