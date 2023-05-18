@@ -120,7 +120,8 @@ class Connection(object):
         password=None,
         check_hostname=None,
         ssl_cert=None,
-        thrift_transport=None
+        thrift_transport=None,
+        sasl_maxbufsize=None
     ):
         """Connect to HiveServer2
 
@@ -133,6 +134,7 @@ class Connection(object):
         :param password: Use with auth='LDAP' or auth='CUSTOM' only
         :param thrift_transport: A ``TTransportBase`` for custom advanced usage.
             Incompatible with host, port, auth, kerberos_service_name, and password.
+        :param sasl_maxbufsize: The maxbufsize attribute for sasl_client
 
         The way to support LDAP and GSSAPI is originated from cloudera/Impyla:
         https://github.com/cloudera/impyla/blob/255b07ed973d47a3395214ed92d35ec0615ebf62
@@ -222,6 +224,8 @@ class Connection(object):
                         sasl_client.setAttr('password', password)
                     else:
                         raise AssertionError
+                    if sasl_maxbufsize is not None:
+                        sasl_client.setAttr('maxbufsize', sasl_maxbufsize)
                     sasl_client.init()
                     return sasl_client
                 self._transport = thrift_sasl.TSaslClientTransport(sasl_factory, sasl_auth, socket)
