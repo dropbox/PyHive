@@ -80,6 +80,7 @@ class PrestoDialect(default.DefaultDialect):
     supports_multivalues_insert = True
     supports_unicode_statements = True
     supports_unicode_binds = True
+    supports_multivalues_insert = True
     returns_unicode_strings = True
     description_encoding = None
     supports_native_boolean = True
