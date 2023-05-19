@@ -15,12 +15,9 @@ import subprocess
 import time
 import unittest
 from decimal import Decimal
-
 import mock
-import sasl
 import thrift.transport.TSocket
 import thrift.transport.TTransport
-import thrift_sasl
 from thrift.transport.TTransport import TTransportException
 
 from TCLIService import ttypes
@@ -205,13 +202,20 @@ class TestHive(unittest.TestCase, DBAPITestCase):
         sasl_auth = 'PLAIN'
 
         def sasl_factory():
-            sasl_client = sasl.Client()
-            sasl_client.setAttr('host', 'localhost')
-            sasl_client.setAttr('username', 'test_username')
-            sasl_client.setAttr('password', 'x')
-            sasl_client.init()
-            return sasl_client
+            try:
+                import sasl
+                sasl_client = sasl.Client()
+                sasl_client.setAttr('host', 'localhost')
+                sasl_client.setAttr('username', 'test_username')
+                sasl_client.setAttr('password', 'x')
+                sasl_client.init()
+                return sasl_client
+            except ImportError:
+                from pyhive.sasl_compat import PureSASLClient
+                sasl_client = PureSASLClient(host='localhost', username='test_username', password='x')
+                return sasl_client
 
+        import thrift_sasl
         transport = thrift_sasl.TSaslClientTransport(sasl_factory, sasl_auth, socket)
         conn = hive.connect(thrift_transport=transport)
         with contextlib.closing(conn):
