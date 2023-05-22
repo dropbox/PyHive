@@ -16,7 +16,7 @@ from sqlalchemy import exc
 try:
     from sqlalchemy import processors
 except ImportError:
-    # Required for SQLAlchemy>2.0
+    # Required for SQLAlchemy>=2.0
     from sqlalchemy.engine import processors
 from sqlalchemy import types
 from sqlalchemy import util
@@ -25,7 +25,7 @@ try:
     from sqlalchemy.databases import mysql
     mysql_tinyinteger = mysql.MSTinyInteger
 except ImportError:
-    # Required for SQLAlchemy>2.0
+    # Required for SQLAlchemy>=2.0
     from sqlalchemy.dialects import mysql
     mysql_tinyinteger = mysql.base.MSTinyInteger
 from sqlalchemy.engine import default
