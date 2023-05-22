@@ -200,8 +200,6 @@ class Connection(object):
                 self._transport = thrift.transport.TTransport.TBufferedTransport(socket)
             elif auth in ('LDAP', 'KERBEROS', 'NONE', 'CUSTOM'):
                 # Defer import so package dependency is optional
-                import sasl
-                import thrift_sasl
 
                 if auth == 'KERBEROS':
                     # KERBEROS mode in hive.server2.authentication is GSSAPI in sasl library
@@ -213,17 +211,35 @@ class Connection(object):
                         password = 'x'
 
                 def sasl_factory():
-                    sasl_client = sasl.Client()
-                    sasl_client.setAttr('host', host)
-                    if sasl_auth == 'GSSAPI':
-                        sasl_client.setAttr('service', kerberos_service_name)
-                    elif sasl_auth == 'PLAIN':
-                        sasl_client.setAttr('username', username)
-                        sasl_client.setAttr('password', password)
-                    else:
-                        raise AssertionError
-                    sasl_client.init()
-                    return sasl_client
+                    try:
+                        import sasl
+                        # The sasl library is available
+                        sasl_client = sasl.Client()
+                        sasl_client.setAttr('host', host)
+                        if sasl_auth == 'GSSAPI':
+                            sasl_client.setAttr('service', kerberos_service_name)
+                        elif sasl_auth == 'PLAIN':
+                            sasl_client.setAttr('username', username)
+                            sasl_client.setAttr('password', password)
+                        else:
+                            raise AssertionError
+                        sasl_client.init()
+                        return sasl_client
+                    except ImportError:
+                        # Fallback to pure-sasl library
+                        from pyhive.sasl_compat import PureSASLClient
+                        sasl_kwargs = {}
+                        if sasl_auth == 'GSSAPI':
+                            sasl_kwargs['service'] = kerberos_service_name
+                        elif sasl_auth == 'PLAIN':
+                            sasl_kwargs['username'] = username
+                            sasl_kwargs['password'] = password
+                        else:
+                            raise AssertionError
+                        sasl_client = PureSASLClient(host=host, **sasl_kwargs)
+                        return sasl_client               
+
+                import thrift_sasl
                 self._transport = thrift_sasl.TSaslClientTransport(sasl_factory, sasl_auth, socket)
             else:
                 # All HS2 config options:
