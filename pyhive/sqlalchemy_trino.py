@@ -13,7 +13,13 @@ from sqlalchemy import exc
 from sqlalchemy import types
 from sqlalchemy import util
 # TODO shouldn't use mysql type
-from sqlalchemy.databases import mysql
+try:
+    from sqlalchemy.databases import mysql
+    mysql_tinyinteger = mysql.MSTinyInteger
+except ImportError:
+    # Required for SQLAlchemy>=2.0
+    from sqlalchemy.dialects import mysql
+    mysql_tinyinteger = mysql.base.MSTinyInteger
 from sqlalchemy.engine import default
 from sqlalchemy.sql import compiler
 from sqlalchemy.sql.compiler import SQLCompiler
@@ -28,7 +34,7 @@ class TrinoIdentifierPreparer(PrestoIdentifierPreparer):
 
 _type_map = {
     'boolean': types.Boolean,
-    'tinyint': mysql.MSTinyInteger,
+    'tinyint': mysql_tinyinteger,
     'smallint': types.SmallInteger,
     'integer': types.Integer,
     'bigint': types.BigInteger,
@@ -67,7 +73,12 @@ class TrinoTypeCompiler(PrestoCompiler):
 
 class TrinoDialect(PrestoDialect):
     name = 'trino'
+    supports_statement_cache = False
 
     @classmethod
     def dbapi(cls):
         return trino
+    
+    @classmethod
+    def import_dbapi(cls):
+        return trino    

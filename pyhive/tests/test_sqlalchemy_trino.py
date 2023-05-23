@@ -1,29 +1,25 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from builtins import str
+from sqlalchemy.engine import create_engine
 from pyhive.tests.sqlalchemy_test_case import SqlAlchemyTestCase
 from pyhive.tests.sqlalchemy_test_case import with_engine_connection
-from sqlalchemy import types
-from sqlalchemy.engine import create_engine
-from sqlalchemy.schema import Column
-from sqlalchemy.schema import MetaData
-from sqlalchemy.schema import Table
-from sqlalchemy.sql import text
+from sqlalchemy.exc import NoSuchTableError, DatabaseError
+from sqlalchemy.schema import MetaData, Table, Column
 from sqlalchemy.types import String
+from sqlalchemy.sql import text
+from sqlalchemy import types
 from decimal import Decimal
 
-import contextlib
 import unittest
+import contextlib
 
 
-class TestSqlAlchemyPresto(unittest.TestCase, SqlAlchemyTestCase):
+class TestSqlAlchemyTrino(unittest.TestCase, SqlAlchemyTestCase):
     def create_engine(self):
-        return create_engine('presto://localhost:8080/hive/default?source={}'.format(self.id()))
-
+        return create_engine('trino+pyhive://localhost:18080/hive/default?source={}'.format(self.id()))
+    
     def test_bad_format(self):
         self.assertRaises(
             ValueError,
-            lambda: create_engine('presto://localhost:8080/hive/default/what'),
+            lambda: create_engine('trino+pyhive://localhost:18080/hive/default/what'),
         )
 
     @with_engine_connection
@@ -47,13 +43,11 @@ class TestSqlAlchemyPresto(unittest.TestCase, SqlAlchemyTestCase):
             '1970-01-01 00:00:00.000',
             b'123',
             [1, 2],
-            {"1": 2, "3": 4},  # Presto converts all keys to strings so that they're valid JSON
-            [1, 2],  # struct is returned as a list of elements
-            # '{0:1}',
+            {"1": 2, "3": 4},
+            [1, 2],
             Decimal('0.1'),
         ])
 
-        # TODO some of these types could be filled in better
         self.assertIsInstance(one_row_complex.c.boolean.type, types.Boolean)
         self.assertIsInstance(one_row_complex.c.tinyint.type, types.Integer)
         self.assertIsInstance(one_row_complex.c.smallint.type, types.Integer)
@@ -62,15 +56,25 @@ class TestSqlAlchemyPresto(unittest.TestCase, SqlAlchemyTestCase):
         self.assertIsInstance(one_row_complex.c.float.type, types.Float)
         self.assertIsInstance(one_row_complex.c.double.type, types.Float)
         self.assertIsInstance(one_row_complex.c.string.type, String)
-        self.assertIsInstance(one_row_complex.c.timestamp.type, types.TIMESTAMP)
+        self.assertIsInstance(one_row_complex.c.timestamp.type, types.NullType)
         self.assertIsInstance(one_row_complex.c.binary.type, types.VARBINARY)
         self.assertIsInstance(one_row_complex.c.array.type, types.NullType)
         self.assertIsInstance(one_row_complex.c.map.type, types.NullType)
         self.assertIsInstance(one_row_complex.c.struct.type, types.NullType)
         self.assertIsInstance(one_row_complex.c.decimal.type, types.NullType)
+    
+    @with_engine_connection
+    def test_reflect_no_such_table(self, engine, connection):
+        """reflecttable should throw an exception on an invalid table"""
+        self.assertRaises(
+            NoSuchTableError,
+            lambda: Table('this_does_not_exist', MetaData(), autoload_with=engine))
+        self.assertRaises(
+            DatabaseError,
+            lambda: Table('this_does_not_exist', MetaData(schema="also_does_not_exist"), autoload_with=engine))
 
     def test_url_default(self):
-        engine = create_engine('presto://localhost:8080/hive')
+        engine = create_engine('trino+pyhive://localhost:18080/hive')
         try:
             with contextlib.closing(engine.connect()) as connection:
                 self.assertEqual(connection.execute(text('SELECT 1 AS foobar FROM one_row')).scalar(), 1)
@@ -79,7 +83,7 @@ class TestSqlAlchemyPresto(unittest.TestCase, SqlAlchemyTestCase):
 
     @with_engine_connection
     def test_reserved_words(self, engine, connection):
-        """Presto uses double quotes, not backticks"""
+        """Trino uses double quotes, not backticks"""
         # Use keywords for the table/column name
         fake_table = Table('select', MetaData(), Column('current_timestamp', String))
         query = str(fake_table.select().where(fake_table.c.current_timestamp == 'a').compile(engine))
