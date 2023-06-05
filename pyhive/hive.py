@@ -49,6 +49,47 @@ ssl_cert_parameter_map = {
 }
 
 
+def get_sasl_client(host, sasl_auth, service=None, username=None, password=None):
+    import sasl
+    sasl_client = sasl.Client()
+    sasl_client.setAttr('host', host)
+
+    if sasl_auth == 'GSSAPI':
+        sasl_client.setAttr('service', service)
+    elif sasl_auth == 'PLAIN':
+        sasl_client.setAttr('username', username)
+        sasl_client.setAttr('password', password)
+    else:
+        raise AssertionError
+
+    sasl_client.init()
+    return sasl_client
+
+
+def get_pure_sasl_client(host, sasl_auth, service=None, username=None, password=None):
+    from pyhive.sasl_compat import PureSASLClient
+
+    if sasl_auth == 'GSSAPI':
+        sasl_kwargs = {'service': service}
+    elif sasl_auth == 'PLAIN':
+        sasl_kwargs = {'username': username, 'password': password}
+    else:
+        raise AssertionError
+
+    return PureSASLClient(host=host, **sasl_kwargs)
+
+
+def get_installed_sasl(host, sasl_auth, service=None, username=None, password=None):
+    try:
+        sasl_client = get_sasl_client(host=host, sasl_auth=sasl_auth, service=service, username=username, password=password)
+        # The sasl library is available
+    except ImportError:
+        # Fallback to pure-sasl library
+        sasl_client = get_pure_sasl_client(host=host, sasl_auth=sasl_auth, service=service, username=username, password=password)
+
+    return sasl_client
+
+
 def _parse_timestamp(value):
     if value:
         match = _TIMESTAMP_PATTERN.match(value)
@@ -211,48 +252,8 @@ class Connection(object):
                         # Password doesn't matter in NONE mode, just needs to be nonempty.
                         password = 'x'
 
-                def get_sasl_client():
-                    import sasl
-                    sasl_client = sasl.Client()
-                    sasl_client.setAttr('host', host)
 
-                    if sasl_auth == 'GSSAPI':
-                        sasl_client.setAttr('service', kerberos_service_name)
-                    elif sasl_auth == 'PLAIN':
-                        sasl_client.setAttr('username', username)
-                        sasl_client.setAttr('password', password)
-                    else:
-                        raise AssertionError
-
-                    sasl_client.init()
-                    return sasl_client
-
-
-                def get_pure_sasl_client():
-                    from pyhive.sasl_compat import PureSASLClient
-
-                    if sasl_auth == 'GSSAPI':
-                        sasl_kwargs = {'service': kerberos_service_name}
-                    elif sasl_auth == 'PLAIN':
-                        sasl_kwargs = {'username': username, 'password': password}
-                    else:
-                        raise AssertionError
-
-                    return PureSASLClient(host=host, **sasl_kwargs)
-
-
-                def get_installed_sasl():
-                    try:
-                        sasl_client = get_sasl_client()
-                        # The sasl library is available
-                    except ImportError:
-                        # Fallback to pure-sasl library
-                        sasl_client = get_pure_sasl_client()
-
-                    return sasl_client
-
-
-                self._transport = thrift_sasl.TSaslClientTransport(get_installed_sasl, sasl_auth, socket)
+                self._transport = thrift_sasl.TSaslClientTransport(get_installed_sasl(host=host, sasl_auth=sasl_auth, service=kerberos_service_name, username=username, password=password), sasl_auth, socket)
             else:
                 # All HS2 config options:
                 # https://cwiki.apache.org/confluence/display/Hive/Setting+Up+HiveServer2#SettingUpHiveServer2-Configuration
