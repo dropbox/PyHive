@@ -79,15 +79,6 @@ def get_pure_sasl_client(host, sasl_auth, service=None, username=None, password=
     return PureSASLClient(host=host, **sasl_kwargs)
 
 
-def get_installed_sasl(host, sasl_auth, service=None, username=None, password=None):
-    try:
-        return get_sasl_client(host=host, sasl_auth=sasl_auth, service=service, username=username, password=password)
-        # The sasl library is available
-    except ImportError:
-        # Fallback to pure-sasl library
-        return get_pure_sasl_client(host=host, sasl_auth=sasl_auth, service=service, username=username, password=password)
-
-
 def _parse_timestamp(value):
     if value:
         match = _TIMESTAMP_PATTERN.match(value)
@@ -250,8 +241,15 @@ class Connection(object):
                         # Password doesn't matter in NONE mode, just needs to be nonempty.
                         password = 'x'
 
+                def get_installed_sasl():
+                    try:
+                        return get_sasl_client(host=host, sasl_auth=sasl_auth, service=kerberos_service_name, username=username, password=password)
+                        # The sasl library is available
+                    except ImportError:
+                        # Fallback to pure-sasl library
+                        return get_pure_sasl_client(host=host, sasl_auth=sasl_auth, service=kerberos_service_name, username=username, password=password)
 
-                self._transport = thrift_sasl.TSaslClientTransport(get_installed_sasl(host=host, sasl_auth=sasl_auth, service=kerberos_service_name, username=username, password=password), sasl_auth, socket)
+                self._transport = thrift_sasl.TSaslClientTransport(get_installed_sasl, sasl_auth, socket)
             else:
                 # All HS2 config options:
                 # https://cwiki.apache.org/confluence/display/Hive/Setting+Up+HiveServer2#SettingUpHiveServer2-Configuration
