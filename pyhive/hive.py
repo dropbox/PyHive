@@ -81,13 +81,11 @@ def get_pure_sasl_client(host, sasl_auth, service=None, username=None, password=
 
 def get_installed_sasl(host, sasl_auth, service=None, username=None, password=None):
     try:
-        sasl_client = get_sasl_client(host=host, sasl_auth=sasl_auth, service=service, username=username, password=password)
+        return get_sasl_client(host=host, sasl_auth=sasl_auth, service=service, username=username, password=password)
         # The sasl library is available
     except ImportError:
         # Fallback to pure-sasl library
-        sasl_client = get_pure_sasl_client(host=host, sasl_auth=sasl_auth, service=service, username=username, password=password)
-
-    return sasl_client
+        return get_pure_sasl_client(host=host, sasl_auth=sasl_auth, service=service, username=username, password=password)
 
 
 def _parse_timestamp(value):
