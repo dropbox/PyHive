@@ -240,7 +240,7 @@ class Connection(object):
                     if password is None:
                         # Password doesn't matter in NONE mode, just needs to be nonempty.
                         password = 'x'
-
+                
                 def get_installed_sasl():
                     try:
                         return get_sasl_client(host=host, sasl_auth=sasl_auth, service=kerberos_service_name, username=username, password=password)
@@ -248,7 +248,7 @@ class Connection(object):
                     except ImportError:
                         # Fallback to pure-sasl library
                         return get_pure_sasl_client(host=host, sasl_auth=sasl_auth, service=kerberos_service_name, username=username, password=password)
-
+                
                 self._transport = thrift_sasl.TSaslClientTransport(get_installed_sasl, sasl_auth, socket)
             else:
                 # All HS2 config options:
