@@ -17,7 +17,6 @@ import unittest
 from decimal import Decimal
 
 import mock
-import sasl
 import thrift.transport.TSocket
 import thrift.transport.TTransport
 import thrift_sasl
@@ -204,15 +203,7 @@ class TestHive(unittest.TestCase, DBAPITestCase):
         socket = thrift.transport.TSocket.TSocket('localhost', 10000)
         sasl_auth = 'PLAIN'
 
-        def sasl_factory():
-            sasl_client = sasl.Client()
-            sasl_client.setAttr('host', 'localhost')
-            sasl_client.setAttr('username', 'test_username')
-            sasl_client.setAttr('password', 'x')
-            sasl_client.init()
-            return sasl_client
-
-        transport = thrift_sasl.TSaslClientTransport(sasl_factory, sasl_auth, socket)
+        transport = thrift_sasl.TSaslClientTransport(lambda: hive.get_installed_sasl(host='localhost', sasl_auth=sasl_auth, username='test_username', password='x'), sasl_auth, socket)
         conn = hive.connect(thrift_transport=transport)
         with contextlib.closing(conn):
             with contextlib.closing(conn.cursor()) as cursor:

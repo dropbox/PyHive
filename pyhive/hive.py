@@ -49,6 +49,45 @@ ssl_cert_parameter_map = {
 }
 
 
+def get_sasl_client(host, sasl_auth, service=None, username=None, password=None):
+    import sasl
+    sasl_client = sasl.Client()
+    sasl_client.setAttr('host', host)
+
+    if sasl_auth == 'GSSAPI':
+        sasl_client.setAttr('service', service)
+    elif sasl_auth == 'PLAIN':
+        sasl_client.setAttr('username', username)
+        sasl_client.setAttr('password', password)
+    else:
+        raise ValueError("sasl_auth only supports GSSAPI and PLAIN")
+
+    sasl_client.init()
+    return sasl_client
+
+
+def get_pure_sasl_client(host, sasl_auth, service=None, username=None, password=None):
+    from pyhive.sasl_compat import PureSASLClient
+
+    if sasl_auth == 'GSSAPI':
+        sasl_kwargs = {'service': service}
+    elif sasl_auth == 'PLAIN':
+        sasl_kwargs = {'username': username, 'password': password}
+    else:
+        raise ValueError("sasl_auth only supports GSSAPI and PLAIN")
+
+    return PureSASLClient(host=host, **sasl_kwargs)
+
+
+def get_installed_sasl(host, sasl_auth, service=None, username=None, password=None):
+    try:
+        return get_sasl_client(host=host, sasl_auth=sasl_auth, service=service, username=username, password=password)
+        # The sasl library is available
+    except ImportError:
+        # Fallback to pure-sasl library
+        return get_pure_sasl_client(host=host, sasl_auth=sasl_auth, service=service, username=username, password=password)
+    
+
 def _parse_timestamp(value):
     if value:
         match = _TIMESTAMP_PATTERN.match(value)
@@ -200,7 +239,6 @@ class Connection(object):
                 self._transport = thrift.transport.TTransport.TBufferedTransport(socket)
             elif auth in ('LDAP', 'KERBEROS', 'NONE', 'CUSTOM'):
                 # Defer import so package dependency is optional
-                import sasl
                 import thrift_sasl
 
                 if auth == 'KERBEROS':
@@ -211,20 +249,8 @@ class Connection(object):
                     if password is None:
                         # Password doesn't matter in NONE mode, just needs to be nonempty.
                         password = 'x'
-
-                def sasl_factory():
-                    sasl_client = sasl.Client()
-                    sasl_client.setAttr('host', host)
-                    if sasl_auth == 'GSSAPI':
-                        sasl_client.setAttr('service', kerberos_service_name)
-                    elif sasl_auth == 'PLAIN':
-                        sasl_client.setAttr('username', username)
-                        sasl_client.setAttr('password', password)
-                    else:
-                        raise AssertionError
-                    sasl_client.init()
-                    return sasl_client
-                self._transport = thrift_sasl.TSaslClientTransport(sasl_factory, sasl_auth, socket)
+                
+                self._transport = thrift_sasl.TSaslClientTransport(lambda: get_installed_sasl(host=host, sasl_auth=sasl_auth, service=kerberos_service_name, username=username, password=password), sasl_auth, socket)
             else:
                 # All HS2 config options:
                 # https://cwiki.apache.org/confluence/display/Hive/Setting+Up+HiveServer2#SettingUpHiveServer2-Configuration
