@@ -13,11 +13,22 @@ import decimal
 
 import re
 from sqlalchemy import exc
-from sqlalchemy import processors
+from sqlalchemy.sql import text
+try:
+    from sqlalchemy import processors
+except ImportError:
+    # Required for SQLAlchemy>=2.0
+    from sqlalchemy.engine import processors
 from sqlalchemy import types
 from sqlalchemy import util
 # TODO shouldn't use mysql type
-from sqlalchemy.databases import mysql
+try:
+    from sqlalchemy.databases import mysql
+    mysql_tinyinteger = mysql.MSTinyInteger
+except ImportError:
+    # Required for SQLAlchemy>2.0
+    from sqlalchemy.dialects import mysql
+    mysql_tinyinteger = mysql.base.MSTinyInteger
 from sqlalchemy.engine import default
 from sqlalchemy.sql import compiler
 from sqlalchemy.sql.compiler import SQLCompiler
@@ -121,7 +132,7 @@ class HiveIdentifierPreparer(compiler.IdentifierPreparer):
 
 _type_map = {
     'boolean': types.Boolean,
-    'tinyint': mysql.MSTinyInteger,
+    'tinyint': mysql_tinyinteger,
     'smallint': types.SmallInteger,
     'int': types.Integer,
     'bigint': types.BigInteger,
@@ -247,9 +258,14 @@ class HiveDialect(default.DefaultDialect):
     supports_multivalues_insert = True
     type_compiler = HiveTypeCompiler
     supports_sane_rowcount = False
+    supports_statement_cache = False
 
     @classmethod
     def dbapi(cls):
+        return hive
+    
+    @classmethod
+    def import_dbapi(cls):
         return hive
 
     def create_connect_args(self, url):
@@ -265,7 +281,7 @@ class HiveDialect(default.DefaultDialect):
 
     def get_schema_names(self, connection, **kw):
         # Equivalent to SHOW DATABASES
-        return [row[0] for row in connection.execute('SHOW SCHEMAS')]
+        return [row[0] for row in connection.execute(text('SHOW SCHEMAS'))]
 
     def get_view_names(self, connection, schema=None, **kw):
         # Hive does not provide functionality to query tableType
@@ -280,7 +296,7 @@ class HiveDialect(default.DefaultDialect):
         # Using DESCRIBE works but is uglier.
         try:
             # This needs the table name to be unescaped (no backticks).
-            rows = connection.execute('DESCRIBE {}'.format(full_table)).fetchall()
+            rows = connection.execute(text('DESCRIBE {}'.format(full_table))).fetchall()
         except exc.OperationalError as e:
             # Does the table exist?
             regex_fmt = r'TExecuteStatementResp.*SemanticException.*Table not found {}'
@@ -296,7 +312,7 @@ class HiveDialect(default.DefaultDialect):
                 raise exc.NoSuchTableError(full_table)
             return rows
 
-    def has_table(self, connection, table_name, schema=None):
+    def has_table(self, connection, table_name, schema=None, **kw):
         try:
             self._get_table_columns(connection, table_name, schema)
             return True
@@ -361,7 +377,7 @@ class HiveDialect(default.DefaultDialect):
         query = 'SHOW TABLES'
         if schema:
             query += ' IN ' + self.identifier_preparer.quote_identifier(schema)
-        return [row[0] for row in connection.execute(query)]
+        return [row[0] for row in connection.execute(text(query))]
 
     def do_rollback(self, dbapi_connection):
         # No transactions for Hive

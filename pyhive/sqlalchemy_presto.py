@@ -9,11 +9,19 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import re
+import sqlalchemy
 from sqlalchemy import exc
 from sqlalchemy import types
 from sqlalchemy import util
 # TODO shouldn't use mysql type
-from sqlalchemy.databases import mysql
+from sqlalchemy.sql import text
+try:
+    from sqlalchemy.databases import mysql
+    mysql_tinyinteger = mysql.MSTinyInteger
+except ImportError:
+    # Required for SQLAlchemy>=2.0
+    from sqlalchemy.dialects import mysql
+    mysql_tinyinteger = mysql.base.MSTinyInteger
 from sqlalchemy.engine import default
 from sqlalchemy.sql import compiler
 from sqlalchemy.sql.compiler import SQLCompiler
@@ -21,6 +29,7 @@ from sqlalchemy.sql.compiler import SQLCompiler
 from pyhive import presto
 from pyhive.common import UniversalSet
 
+sqlalchemy_version = float(re.search(r"^([\d]+\.[\d]+)\..+", sqlalchemy.__version__).group(1))
 
 class PrestoIdentifierPreparer(compiler.IdentifierPreparer):
     # Just quote everything to make things simpler / easier to upgrade
@@ -29,7 +38,7 @@ class PrestoIdentifierPreparer(compiler.IdentifierPreparer):
 
 _type_map = {
     'boolean': types.Boolean,
-    'tinyint': mysql.MSTinyInteger,
+    'tinyint': mysql_tinyinteger,
     'smallint': types.SmallInteger,
     'integer': types.Integer,
     'bigint': types.BigInteger,
@@ -80,6 +89,7 @@ class PrestoDialect(default.DefaultDialect):
     supports_multivalues_insert = True
     supports_unicode_statements = True
     supports_unicode_binds = True
+    supports_statement_cache = False
     returns_unicode_strings = True
     description_encoding = None
     supports_native_boolean = True
@@ -87,6 +97,10 @@ class PrestoDialect(default.DefaultDialect):
 
     @classmethod
     def dbapi(cls):
+        return presto
+    
+    @classmethod
+    def import_dbapi(cls):
         return presto
 
     def create_connect_args(self, url):
@@ -108,14 +122,14 @@ class PrestoDialect(default.DefaultDialect):
         return [], kwargs
 
     def get_schema_names(self, connection, **kw):
-        return [row.Schema for row in connection.execute('SHOW SCHEMAS')]
+        return [row.Schema for row in connection.execute(text('SHOW SCHEMAS'))]
 
     def _get_table_columns(self, connection, table_name, schema):
         full_table = self.identifier_preparer.quote_identifier(table_name)
         if schema:
             full_table = self.identifier_preparer.quote_identifier(schema) + '.' + full_table
         try:
-            return connection.execute('SHOW COLUMNS FROM {}'.format(full_table))
+            return connection.execute(text('SHOW COLUMNS FROM {}'.format(full_table)))
         except (presto.DatabaseError, exc.DatabaseError) as e:
             # Normally SQLAlchemy should wrap this exception in sqlalchemy.exc.DatabaseError, which
             # it successfully does in the Hive version. The difference with Presto is that this
@@ -134,7 +148,7 @@ class PrestoDialect(default.DefaultDialect):
             else:
                 raise
 
-    def has_table(self, connection, table_name, schema=None):
+    def has_table(self, connection, table_name, schema=None, **kw):
         try:
             self._get_table_columns(connection, table_name, schema)
             return True
@@ -176,6 +190,8 @@ class PrestoDialect(default.DefaultDialect):
             # - a boolean column named "Partition Key"
             # - a string in the "Comment" column
             # - a string in the "Extra" column
+            if sqlalchemy_version >= 1.4:
+                row = row._mapping
             is_partition_key = (
                 (part_key in row and row[part_key])
                 or row['Comment'].startswith(part_key)
@@ -192,7 +208,7 @@ class PrestoDialect(default.DefaultDialect):
         query = 'SHOW TABLES'
         if schema:
             query += ' FROM ' + self.identifier_preparer.quote_identifier(schema)
-        return [row.Table for row in connection.execute(query)]
+        return [row.Table for row in connection.execute(text(query))]
 
     def do_rollback(self, dbapi_connection):
         # No transactions for Presto
