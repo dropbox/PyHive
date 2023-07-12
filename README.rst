@@ -14,8 +14,8 @@ PyHive
 ======
 
 PyHive is a collection of Python `DB-API <http://www.python.org/dev/peps/pep-0249/>`_ and
-`SQLAlchemy <http://www.sqlalchemy.org/>`_ interfaces for `Presto <http://prestodb.io/>`_ and
-`Hive <http://hive.apache.org/>`_.
+`SQLAlchemy <http://www.sqlalchemy.org/>`_ interfaces for `Presto <http://prestodb.io/>`_ ,
+`Hive <http://hive.apache.org/>`_ and `Trino <https://trino.io/>`_.
 
 Usage
 =====
@@ -25,7 +25,7 @@ DB-API
 .. code-block:: python
 
     from pyhive import presto  # or import hive or import trino
-    cursor = presto.connect('localhost').cursor()
+    cursor = presto.connect('localhost').cursor()  # or use hive.connect or use trino.connect
     cursor.execute('SELECT * FROM my_awesome_data LIMIT 10')
     print cursor.fetchone()
     print cursor.fetchall()
@@ -61,7 +61,7 @@ In Python 3.7 `async` became a keyword; you can use `async_` instead:
 
 SQLAlchemy
 ----------
-First install this package to register it with SQLAlchemy (see ``setup.py``).
+First install this package to register it with SQLAlchemy, see ``entry_points`` in ``setup.py``.
 
 .. code-block:: python
 
@@ -117,7 +117,7 @@ Passing session configuration
                       'session_props': {'query_max_run_time': '1234m'}}
     )
     create_engine(
-        'trino://user@host:443/hive',
+        'trino+pyhive://user@host:443/hive',
         connect_args={'protocol': 'https',
                       'session_props': {'query_max_run_time': '1234m'}}
     )
@@ -136,15 +136,18 @@ Requirements
 
 Install using
 
-- ``pip install 'pyhive[hive]'`` for the Hive interface and
-- ``pip install 'pyhive[presto]'`` for the Presto interface.
+- ``pip install 'pyhive[hive]'`` or ``pip install 'pyhive[hive_pure_sasl]'`` for the Hive interface
+- ``pip install 'pyhive[presto]'`` for the Presto interface
 - ``pip install 'pyhive[trino]'`` for the Trino interface
+
+Note: ``'pyhive[hive]'`` extras uses `sasl <https://pypi.org/project/sasl/>`_ that doesn't support Python 3.11, See `github issue <https://github.com/cloudera/python-sasl/issues/30>`_.
+Hence PyHive also supports `pure-sasl <https://pypi.org/project/pure-sasl/>`_ via additional extras ``'pyhive[hive_pure_sasl]'`` which support Python 3.11.
 
 PyHive works with
 
 - Python 2.7 / Python 3
-- For Presto: Presto install
-- For Trino: Trino install
+- For Presto: `Presto installation <https://prestodb.io/docs/current/installation.html>`_
+- For Trino: `Trino installation <https://trino.io/docs/current/installation.html>`_
 - For Hive: `HiveServer2 <https://cwiki.apache.org/confluence/display/Hive/Setting+up+HiveServer2>`_ daemon
 
 Changelog
@@ -161,6 +164,26 @@ Contributing
     Features that can be implemented on top of PyHive, such integration with your favorite data analysis library, are likely out of scope.
   - We prefer having a small number of generic features over a large number of specialized, inflexible features.
     For example, the Presto code takes an arbitrary ``requests_session`` argument for customizing HTTP calls, as opposed to having a separate parameter/branch for each ``requests`` option.
+
+Tips for test environment setup
+================================
+You can setup test environment by following ``.travis.yaml`` in this repository. It uses `Cloudera's CDH 5 <https://docs.cloudera.com/documentation/enterprise/release-notes/topics/cdh_vd_cdh_download_510.html>`_ which requires username and password for download.
+It may not be feasible for everyone to get those credentials. Hence below are alternative instructions to setup test environment.
+
+You can clone `this repository <https://github.com/big-data-europe/docker-hive/blob/master/docker-compose.yml>`_ which has Docker Compose setup for Presto and Hive.
+You can add below lines to its docker-compose.yaml to start Trino in same environment::
+ 
+    trino:
+        image: trinodb/trino:351    
+        ports:     
+            - "18080:18080"    
+        volumes:    
+            - ./trino:/etc/trino
+
+Note: ``./trino`` for docker volume defined above is `trino config from PyHive repository <https://github.com/dropbox/PyHive/tree/master/scripts/travis-conf/trino>`_
+
+Then run::
+    docker-compose up -d
 
 Testing
 =======
