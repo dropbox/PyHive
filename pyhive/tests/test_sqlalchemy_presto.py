@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from builtins import str
+from decimal import Decimal
 from pyhive.tests.sqlalchemy_test_case import SqlAlchemyTestCase
 from pyhive.tests.sqlalchemy_test_case import with_engine_connection
 from sqlalchemy import types
@@ -87,3 +88,16 @@ class TestSqlAlchemyPresto(unittest.TestCase, SqlAlchemyTestCase):
         self.assertIn('"current_timestamp"', query)
         self.assertNotIn('`select`', query)
         self.assertNotIn('`current_timestamp`', query)
+
+    @with_engine_connection
+    def test_multiple_catalogs(self, engine, connection):
+        system_table = Table(
+            'tables',
+            MetaData(bind=engine),
+            autoload=True,
+            schema='information_schema',
+            presto_catalog='system'
+        )
+        query = str(system_table.select())
+        self.assertIn('"system"."information_schema"', query)
+        self.assertNotIn('"hive"', query)
