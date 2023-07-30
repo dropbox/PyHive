@@ -13,6 +13,7 @@ from decimal import Decimal
 
 from pyhive import common
 from pyhive.common import DBAPITypeObject
+from presto_types_parser import build_row_parser
 # Make all exceptions visible in this module per DB-API
 from pyhive.exc import *  # noqa
 import base64
@@ -28,7 +29,6 @@ try:  # Python 3
 except ImportError:  # Python 2
     import urlparse
 
-
 # PEP 249 module globals
 apilevel = '2.0'
 threadsafety = 2  # Threads may share the module and connections.
@@ -41,6 +41,7 @@ TYPES_CONVERTER = {
     # As of Presto 0.69, binary data is returned as the varbinary type in base64 format
     "varbinary": base64.b64decode
 }
+
 
 class PrestoParamEscaper(common.ParamEscaper):
     def escape_datetime(self, item, format):
@@ -99,6 +100,7 @@ class Cursor(common.DBAPICursor):
     def __init__(self, host, port='8080', username=None, principal_username=None, catalog='hive',
                  schema='default', poll_interval=1, source='pyhive', session_props=None,
                  protocol='http', password=None, requests_session=None, requests_kwargs=None,
+                 process_complex_columns=False,
                  KerberosRemoteServiceName=None, KerberosPrincipal=None,
                  KerberosConfigPath=None, KerberosKeytabPath=None,
                  KerberosCredentialCachePath=None, KerberosUseCanonicalHostname=None):
@@ -123,6 +125,10 @@ class Cursor(common.DBAPICursor):
             class will use the default requests behavior of making a new session per HTTP request.
             Caller is responsible for closing session.
         :param requests_kwargs: Additional ``**kwargs`` to pass to requests
+        :param process_complex_columns: boolean -- determine whether to perform deep processes
+            of complex columns, enabling it will cause structs (known in presto as ROW data type)
+            to appear as dictionary. Also inner varbinary values will be casted
+            from base64 encoded string to bytes.
         :param KerberosRemoteServiceName: string -- Presto coordinator Kerberos service name.
             This parameter is required for Kerberos authentiation.
         :param KerberosPrincipal: string -- The principal to use when authenticating to
@@ -202,6 +208,7 @@ class Cursor(common.DBAPICursor):
                 if protocol != 'https':
                     raise ValueError("Protocol must be https when passing a password")
         self._requests_kwargs = requests_kwargs
+        self._process_complex_columns = process_complex_columns
 
         self._reset_state()
 
@@ -231,7 +238,7 @@ class Cursor(common.DBAPICursor):
         # Sleep until we're done or we got the columns
         self._fetch_while(
             lambda: self._columns is None and
-            self._state not in (self._STATE_NONE, self._STATE_FINISHED)
+                    self._state not in (self._STATE_NONE, self._STATE_FINISHED)
         )
         if self._columns is None:
             return None
@@ -314,7 +321,7 @@ class Cursor(common.DBAPICursor):
         """Fetch the next URI and update state"""
         self._process_response(self._requests_session.get(self._nextUri, **self._requests_kwargs))
 
-    def _process_data(self, rows):
+    def _flat_process_data(self, rows):
         for i, col in enumerate(self.description):
             col_type = col[1].split("(")[0].lower()
             if col_type in TYPES_CONVERTER:
@@ -347,12 +354,23 @@ class Cursor(common.DBAPICursor):
         if 'data' in response_json:
             assert self._columns
             new_data = response_json['data']
-            self._process_data(new_data)
             self._data += map(tuple, new_data)
+
+            self._process_new_data(new_data)
         if 'nextUri' not in response_json:
             self._state = self._STATE_FINISHED
         if 'error' in response_json:
             raise DatabaseError(response_json['error'])
+
+    def _process_new_data(self, new_data):
+        if self._process_complex_columns:
+            row_parser = build_row_parser(self._columns)
+
+            self._data += map(row_parser.process_row, new_data)
+        else:
+            self._flat_process_data(new_data)
+
+            self._data += map(tuple, new_data)
 
 
 #

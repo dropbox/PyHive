@@ -17,11 +17,29 @@ def with_cursor(fn):
 
     The cursor is taken from ``self.connect()``.
     """
+
     @functools.wraps(fn)
     def wrapped_fn(self, *args, **kwargs):
         with contextlib.closing(self.connect()) as connection:
             with contextlib.closing(connection.cursor()) as cursor:
                 fn(self, cursor, *args, **kwargs)
+
+    return wrapped_fn
+
+
+def with_complex_processing_cursor(fn):
+    """Pass a cursor to the given function and handle cleanup.
+    The cursor will be configured to process complex rows deeply.
+
+    The cursor is taken from ``self.connect(process_complex_columns=True)``.
+    """
+
+    @functools.wraps(fn)
+    def wrapped_fn(self, *args, **kwargs):
+        with contextlib.closing(self.connect(process_complex_columns=True)) as connection:
+            with contextlib.closing(connection.cursor()) as cursor:
+                fn(self, cursor, *args, **kwargs)
+
     return wrapped_fn
 
 

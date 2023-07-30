@@ -5,5 +5,6 @@
 
 $(dirname $0)/make_one_row.sh
 $(dirname $0)/make_one_row_complex.sh
+$(dirname $0)/make_one_row_deep_complex.sh
 $(dirname $0)/make_many_rows.sh
 $(dirname $0)/make_test_database.sh
