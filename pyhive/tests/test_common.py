@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 from pyhive import common
 import datetime
 import unittest
+import decimal
 
 
 class TestCommon(unittest.TestCase):
@@ -15,6 +16,8 @@ class TestCommon(unittest.TestCase):
                          {'foo': 123})
         self.assertEqual(escaper.escape_args({'foo': 123.456}),
                          {'foo': 123.456})
+        self.assertEqual(escaper.escape_args({'foo': decimal.Decimal('123.456')}),
+                         {'foo': decimal.Decimal('123.456')})
         self.assertEqual(escaper.escape_args({'foo': ['a', 'b', 'c']}),
                          {'foo': "('a','b','c')"})
         self.assertEqual(escaper.escape_args({'foo': ('a', 'b', 'c')}),
