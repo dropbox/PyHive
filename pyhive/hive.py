@@ -107,8 +107,21 @@ def _parse_timestamp(value):
     return value
 
 
+def _parse_date(value):
+    if value:
+        try:
+            value = datetime.date.fromisoformat(value)
+        except:
+            raise Exception(
+                'Cannot convert "{}" into a date'.format(value))
+    else:
+        value = None
+    return value
+
+
 TYPES_CONVERTER = {"DECIMAL_TYPE": Decimal,
-                   "TIMESTAMP_TYPE": _parse_timestamp}
+                   "TIMESTAMP_TYPE": _parse_timestamp,
+                   "DATE_TYPE" : _parse_date}
 
 
 class HiveParamEscaper(common.ParamEscaper):
