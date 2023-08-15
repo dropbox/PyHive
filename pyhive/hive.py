@@ -475,7 +475,7 @@ class Cursor(common.DBAPICursor):
         _logger.info('%s', sql)
 
         req = ttypes.TExecuteStatementReq(self._connection.sessionHandle,
-                                          sql, runAsync=async_)
+                                          sql, kwargs.get("confOverlay", None), runAsync=async_)
         _logger.debug(req)
         response = self._connection.client.ExecuteStatement(req)
         _check_status(response)
