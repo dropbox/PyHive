@@ -38,3 +38,7 @@ class TestCommon(unittest.TestCase):
                          ("'2020-04-17'",))
         self.assertEqual(escaper.escape_args((datetime.datetime(2020, 4, 17, 12, 0, 0, 123456),)),
                          ("'2020-04-17 12:00:00.123456'",))
+        self.assertEqual(escaper.escape_args((datetime.date(2020, 4, 17),)),
+                         ("'2020-04-17'",))
+        self.assertEqual(escaper.escape_args((datetime.datetime(20, 4, 17, 12, 0, 0, 123456),)),
+                         ("'0020-04-17 12:00:00.123456'",))
