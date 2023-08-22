@@ -57,6 +57,64 @@ In Python 3.7 `async` became a keyword; you can use `async_` instead:
 .. code-block:: python
 
     cursor.execute('SELECT * FROM my_awesome_data LIMIT 10', async_=True)
+    
+
+DB-API (Dict Cursors)
+---------------------
+
+A simple class for dict cursors 
+
+.. code-block:: python
+
+    class Client():    
+        PRESTO_ADDRESS = 'xxx'
+        PRESTO_PORT = xxx
+        PROTOCOL = 'https'
+        USERNAME = 'xxx'
+        PASSWORD = 'xxx' 
+        SCHEMA = 'xxx'
+
+        def __init__(self, batch_size=100000):
+            self.conn = presto.connect( 
+                            self.PRESTO_ADDRESS,
+                            port = self.PRESTO_PORT, 
+                            protocol= self.PROTOCOL,
+                            username = self.USERNAME, 
+                            password = self.PASSWORD,
+                            schema = self.SCHEMA
+                        )
+
+            self.curs = self.conn.cursor()
+            self.batch_size = batch_size
+
+        def execute(self, query, types="fetchall"):
+            ''' A DictCursor executor
+            '''
+            resp = list()
+
+            self.curs.execute(query)
+
+            colnames = [ desc[0] for desc in self.curs.description ]
+
+            if types == "fetchall":
+                rows = self.curs.fetchall()
+            elif types == "fetchone":
+                rows = self.curs.fetchone()
+            else:
+                raise AttributeError
+
+            if rows:
+                for tup in rows:
+                    resp.append( dict( zip(colnames, tup)) )
+
+            self.curs.close()
+            self.conn.close()
+
+            return resp 
+            
+    driver = Client()
+    response = driver.execute(query)
+    print(response)
 
 
 SQLAlchemy
