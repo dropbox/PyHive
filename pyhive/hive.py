@@ -478,7 +478,11 @@ class Cursor(common.DBAPICursor):
                                           sql, runAsync=async_)
         _logger.debug(req)
         response = self._connection.client.ExecuteStatement(req)
-        _check_status(response)
+        try:
+            _check_status(response)
+        except OperationalError:
+            self._state = self._STATE_FINISHED
+            raise
         self._operationHandle = response.operationHandle
 
     def cancel(self):
