@@ -354,6 +354,9 @@ class Connection(object):
     def sessionHandle(self):
         return self._sessionHandle
 
+    def is_open(self):
+        return self._transport.isOpen()
+
     def rollback(self):
         raise NotSupportedError("Hive does not have transactions")  # pragma: no cover
 
