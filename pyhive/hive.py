@@ -41,6 +41,9 @@ paramstyle = 'pyformat'  # Python extended format codes, e.g. ...WHERE name=%(na
 _logger = logging.getLogger(__name__)
 
 _TIMESTAMP_PATTERN = re.compile(r'(\d+-\d+-\d+ \d+:\d+:\d+(\.\d{,6})?)')
+_MATCH_INSERT_SQL = re.compile(
+    r"\s*((?:INSERT)\b.+\bVALUES?\s*)(\(\s*(?:%s|%\(.+\)s)\s*(?:,\s*(?:%s|%\(.+\)s)\s*)*\))",
+    re.IGNORECASE | re.DOTALL)
 
 ssl_cert_parameter_map = {
     "none": CERT_NONE,
@@ -480,6 +483,26 @@ class Cursor(common.DBAPICursor):
         response = self._connection.client.ExecuteStatement(req)
         _check_status(response)
         self._operationHandle = response.operationHandle
+
+    def executemany(self, operation, seq_of_parameters):
+        """Prepare a database operation (query or command) and then execute it against all parameter
+        sequences or mappings found in the sequence ``seq_of_parameters``.
+
+        Only the final result set is retained.
+
+        Return values are not defined.
+        """
+        match = _MATCH_INSERT_SQL.match(operation)
+        if match:
+            part1, part2 = match.group(1), match.group(2).rstrip()
+            values = []
+            for parameter in seq_of_parameters:
+                record = part2 % _escaper.escape_args(parameter)
+                values.append(record)
+            sql = part1 + ",".join(values)
+            self.execute(sql)
+        else:
+            return super(Cursor, self).executemany(operation, seq_of_parameters)
 
     def cancel(self):
         req = ttypes.TCancelOperationReq(
