@@ -98,7 +98,7 @@ class Cursor(common.DBAPICursor):
 
     def __init__(self, host, port='8080', username=None, principal_username=None, catalog='hive',
                  schema='default', poll_interval=1, source='pyhive', session_props=None,
-                 protocol='http', password=None, requests_session=None, requests_kwargs=None,
+                 protocol='http', tz=None, password=None, requests_session=None, requests_kwargs=None,
                  KerberosRemoteServiceName=None, KerberosPrincipal=None,
                  KerberosConfigPath=None, KerberosKeytabPath=None,
                  KerberosCredentialCachePath=None, KerberosUseCanonicalHostname=None):
@@ -115,6 +115,7 @@ class Cursor(common.DBAPICursor):
         :param source: string -- arbitrary identifier (shows up in the Presto monitoring page)
         :param protocol: string -- network protocol, valid options are ``http`` and ``https``.
             defaults to ``http``
+        :param tz: string -- timezone to use for timezone-aware timestamps. Defaults to ``None``.
         :param password: string -- Deprecated. Defaults to ``None``.
             Using BasicAuth, requires ``https``.
             Prefer ``requests_kwargs={'auth': HTTPBasicAuth(username, password)}``.
@@ -158,6 +159,7 @@ class Cursor(common.DBAPICursor):
         self._username = principal_username or username or getpass.getuser()
         self._catalog = catalog
         self._schema = schema
+        self._tz = tz
         self._arraysize = 1
         self._poll_interval = poll_interval
         self._source = source
@@ -251,6 +253,7 @@ class Cursor(common.DBAPICursor):
             'X-Presto-Schema': self._schema,
             'X-Presto-Source': self._source,
             'X-Presto-User': self._username,
+            'X-Presto-Time-Zone': self._tz,
         }
 
         if self._session_props:
