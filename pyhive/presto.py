@@ -260,7 +260,7 @@ class Cursor(common.DBAPICursor):
             )
 
         # Prepare statement
-        if parameters is None:
+        if parameters is None or len(parameters) == 0:
             sql = operation
         else:
             sql = operation % _escaper.escape_args(parameters)
