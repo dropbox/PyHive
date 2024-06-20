@@ -71,6 +71,12 @@ class Connection(object):
         self._args = args
         self._kwargs = kwargs
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        return self.close()
+
     def close(self):
         """Presto does not have anything to close"""
         # TODO cancel outstanding queries?
