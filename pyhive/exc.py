@@ -4,6 +4,8 @@ Package private common utilities. Do not use directly.
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+import json
+
 __all__ = [
     'Error', 'Warning', 'InterfaceError', 'DatabaseError', 'InternalError', 'OperationalError',
     'ProgrammingError', 'DataError', 'NotSupportedError',
@@ -15,7 +17,13 @@ class Error(Exception):
 
     You can use this to catch all errors with one single except statement.
     """
-    pass
+    def __str__(self):
+        """Returns the string representation of the error.
+        If it was created with a dictionary, pretty format it."""
+        if len(self.args) == 1 and isinstance(self.args[0], dict):
+            return json.dumps(self.args[0], indent=4, separators=(',', ': '))
+        else:
+            return super(Error, self).__str__()
 
 
 class Warning(Exception):
