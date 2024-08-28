@@ -43,12 +43,12 @@ class DBAPICursor(with_metaclass(abc.ABCMeta, object)):
 
         # Internal helper state
         self._state = self._STATE_NONE
-        self._data = collections.deque()
+        self._data = None
         self._columns = None
 
-    def _fetch_while(self, fn):
+    def _fetch_while(self, fn, schema):
         while fn():
-            self._fetch_more()
+            self._fetch_more(schema)
             if fn():
                 time.sleep(self._poll_interval)
 

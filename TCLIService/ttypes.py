@@ -8,6 +8,7 @@
 
 from thrift.Thrift import TType, TMessageType, TFrozenDict, TException, TApplicationException
 from thrift.protocol.TProtocol import TProtocolException
+import numpy as np
 import sys
 
 from thrift.transport import TTransport
@@ -2013,9 +2014,7 @@ class TBoolColumn(object):
                 if ftype == TType.LIST:
                     self.values = []
                     (_etype51, _size48) = iprot.readListBegin()
-                    for _i52 in range(_size48):
-                        _elem53 = iprot.readBool()
-                        self.values.append(_elem53)
+                    self.values = np.frombuffer(iprot.trans.readAll(1 * _size48), dtype='>?')
                     iprot.readListEnd()
                 else:
                     iprot.skip(ftype)
@@ -2097,9 +2096,7 @@ class TByteColumn(object):
                 if ftype == TType.LIST:
                     self.values = []
                     (_etype58, _size55) = iprot.readListBegin()
-                    for _i59 in range(_size55):
-                        _elem60 = iprot.readByte()
-                        self.values.append(_elem60)
+                    self.values = np.frombuffer(iprot.trans.readAll(1 * _size55), dtype='>i1')
                     iprot.readListEnd()
                 else:
                     iprot.skip(ftype)
@@ -2181,9 +2178,7 @@ class TI16Column(object):
                 if ftype == TType.LIST:
                     self.values = []
                     (_etype65, _size62) = iprot.readListBegin()
-                    for _i66 in range(_size62):
-                        _elem67 = iprot.readI16()
-                        self.values.append(_elem67)
+                    self.values = np.frombuffer(iprot.trans.readAll(2 * _size62), dtype='>i2')
                     iprot.readListEnd()
                 else:
                     iprot.skip(ftype)
@@ -2265,9 +2260,7 @@ class TI32Column(object):
                 if ftype == TType.LIST:
                     self.values = []
                     (_etype72, _size69) = iprot.readListBegin()
-                    for _i73 in range(_size69):
-                        _elem74 = iprot.readI32()
-                        self.values.append(_elem74)
+                    self.values = np.frombuffer(iprot.trans.readAll(4 * _size69), dtype='>i4')
                     iprot.readListEnd()
                 else:
                     iprot.skip(ftype)
@@ -2349,9 +2342,7 @@ class TI64Column(object):
                 if ftype == TType.LIST:
                     self.values = []
                     (_etype79, _size76) = iprot.readListBegin()
-                    for _i80 in range(_size76):
-                        _elem81 = iprot.readI64()
-                        self.values.append(_elem81)
+                    self.values = np.frombuffer(iprot.trans.readAll(8 * _size76), dtype='>i8')
                     iprot.readListEnd()
                 else:
                     iprot.skip(ftype)
@@ -2433,9 +2424,7 @@ class TDoubleColumn(object):
                 if ftype == TType.LIST:
                     self.values = []
                     (_etype86, _size83) = iprot.readListBegin()
-                    for _i87 in range(_size83):
-                        _elem88 = iprot.readDouble()
-                        self.values.append(_elem88)
+                    self.values = np.frombuffer(iprot.trans.readAll(8 * _size83), dtype='>f8')
                     iprot.readListEnd()
                 else:
                     iprot.skip(ftype)
