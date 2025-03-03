@@ -344,6 +344,7 @@ class HiveDialect(default.DefaultDialect):
                 'type': coltype,
                 'nullable': True,
                 'default': None,
+                'comment': _comment,
             })
         return result
 
