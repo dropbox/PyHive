@@ -32,6 +32,7 @@ import thrift.transport.THttpClient
 import thrift.protocol.TBinaryProtocol
 import thrift.transport.TSocket
 import thrift.transport.TTransport
+import thrift.transport.TSSLSocket
 
 # PEP 249 module globals
 apilevel = '2.0'
@@ -159,7 +160,10 @@ class Connection(object):
         password=None,
         check_hostname=None,
         ssl_cert=None,
-        thrift_transport=None
+        thrift_transport=None,
+        timeout=None,
+        query_timeout=None,
+        thrift_keepalive=False
     ):
         """Connect to HiveServer2
 
@@ -191,6 +195,7 @@ class Connection(object):
                 ),
                 ssl_context=ssl_context,
             )
+            thrift_transport.setTimeout(timeout)
 
             if auth in ("BASIC", "NOSASL", "NONE", None):
                 # Always needs the Authorization header
@@ -233,7 +238,20 @@ class Connection(object):
                 port = 10000
             if auth is None:
                 auth = 'NONE'
-            socket = thrift.transport.TSocket.TSocket(host, port)
+            if configuration.get('use_ssl', False):
+                _logger.info("Using SSL for Hive connection")
+                hive_ssl_context = create_default_context()
+                hive_ssl_context.load_verify_locations(capath=configuration.get('ca_certs_dir', '/etc/ssl/certs/'))
+                hive_ssl_context.check_hostname = check_hostname == configuration.get('ssl_check_hostname', "true")
+                socket = thrift.transport.TSSLSocket.TSSLSocket(host, port, ssl_context=hive_ssl_context,
+                                                                socket_keepalive=thrift_keepalive)
+                configuration.pop("use_ssl", None)
+                configuration.pop("ca_certs_dir", None)
+                configuration.pop("ssl_check_hostname", None)
+            else:
+                _logger.info("Using Non-SSL for Hive connection")
+                socket = thrift.transport.TSocket.TSocket(host, port, socket_keepalive=thrift_keepalive)
+            socket.setTimeout(timeout)
             if auth == 'NOSASL':
                 # NOSASL corresponds to hive.server2.authentication=NOSASL in hive-site.xml
                 self._transport = thrift.transport.TTransport.TBufferedTransport(socket)
@@ -278,6 +296,7 @@ class Connection(object):
             self._sessionHandle = response.sessionHandle
             assert response.serverProtocolVersion == protocol_version, \
                 "Unable to handle protocol version {}".format(response.serverProtocolVersion)
+            socket.setTimeout(query_timeout)
             with contextlib.closing(self.cursor()) as cursor:
                 cursor.execute('USE `{}`'.format(database))
         except:

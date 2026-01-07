@@ -21,7 +21,7 @@ from TCLIService.ttypes import *
 
 if len(sys.argv) <= 1 or sys.argv[1] == '--help':
     print('')
-    print('Usage: ' + sys.argv[0] + ' [-h host[:port]] [-u url] [-f[ramed]] [-s[sl]] [-novalidate] [-ca_certs certs] [-keyfile keyfile] [-certfile certfile] function [arg1 [arg2...]]')
+    print('Usage: ' + sys.argv[0] + ' [-h host[:port]] [-u url] [-f[ramed]] [-s[sl]] [-novalidate] [-keepalive] [-ca_certs certs] [-keyfile keyfile] [-certfile certfile] function [arg1 [arg2...]]')
     print('')
     print('Functions:')
     print('  TOpenSessionResp OpenSession(TOpenSessionReq req)')
@@ -56,6 +56,7 @@ uri = ''
 framed = False
 ssl = False
 validate = True
+keepalive = False
 ca_certs = None
 keyfile = None
 certfile = None
@@ -95,6 +96,10 @@ if sys.argv[argi] == '-novalidate':
     validate = False
     argi += 1
 
+if sys.argv[argi] == '-keepalive':
+    keepalive = True
+    argi += 1
+
 if sys.argv[argi] == '-ca_certs':
     ca_certs = sys.argv[argi+1]
     argi += 2
@@ -114,9 +119,9 @@ if http:
     transport = THttpClient.THttpClient(host, port, uri)
 else:
     if ssl:
-        socket = TSSLSocket.TSSLSocket(host, port, validate=validate, ca_certs=ca_certs, keyfile=keyfile, certfile=certfile)
+        socket = TSSLSocket.TSSLSocket(host, port, validate=validate, ca_certs=ca_certs, keyfile=keyfile, certfile=certfile, socket_keepalive=keepalive)
     else:
-        socket = TSocket.TSocket(host, port)
+        socket = TSocket.TSocket(host, port, socket_keepalive=keepalive)
     if framed:
         transport = TTransport.TFramedTransport(socket)
     else:

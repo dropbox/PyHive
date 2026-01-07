@@ -199,6 +199,8 @@ class TestHive(unittest.TestCase, DBAPITestCase):
             lambda: hive.connect(_HOST, thrift_transport=transport)
         )
 
+    # TODO test keepalive
+
     def test_custom_transport(self):
         socket = thrift.transport.TSocket.TSocket('localhost', 10000)
         sasl_auth = 'PLAIN'
