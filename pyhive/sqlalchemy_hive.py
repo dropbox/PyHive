@@ -258,6 +258,17 @@ class HiveDialect(default.DefaultDialect):
     supports_multivalues_insert = True
     type_compiler = HiveTypeCompiler
     supports_sane_rowcount = False
+    # Give this dialect its own colspecs dict rather than inheriting
+    # DefaultDialect's directly. Every SQLAlchemy built-in dialect
+    # (postgresql, mysql, etc.) defines its own colspecs for the same
+    # reason: without one, HiveDialect.colspecs IS
+    # sqlalchemy.engine.default.DefaultDialect.colspecs (same object), so
+    # any code that does HiveDialect.colspecs[SomeType] = ... -- a common
+    # pattern for customizing type rendering on a per-dialect basis --
+    # silently corrupts type handling for every other dialect in the
+    # process that also hasn't defined its own colspecs. See
+    # apache/superset#44707 for a real downstream project that hit this.
+    colspecs = {}
     supports_statement_cache = False
 
     @classmethod
